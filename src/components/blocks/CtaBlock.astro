@@ -1,0 +1,28 @@
+---
+import type { CtaBlock as CtaBlockType } from "../../contracts/homepage"
+
+const { block } = Astro.props as { block: CtaBlockType }
+const { primaryCTA } = block.content
+---
+
+{primaryCTA?.visible !== false && primaryCTA?.href && (
+  <section class="cta">
+    <a href={primaryCTA.href}>{primaryCTA.label}</a>
+  </section>
+)}
+
+<style>
+  .cta {
+    padding: 40px 0 16px;
+  }
+
+  .cta a {
+    display: inline-block;
+    padding: 14px 20px;
+    border-radius: 12px;
+    background: #111827;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+  }
+</style>

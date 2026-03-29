@@ -1,0 +1,55 @@
+---
+import type { ServicesBlock as ServicesBlockType } from "../../contracts/homepage"
+
+const { block } = Astro.props as { block: ServicesBlockType }
+const { title, items } = block.content
+---
+
+<section class="services">
+  {title && <h2>{title}</h2>}
+
+  <div class="grid">
+    {items.map((item) => (
+      <article class="card">
+        <strong>{item.title}</strong>
+        {item.description && <p>{item.description}</p>}
+      </article>
+    ))}
+  </div>
+</section>
+
+<style>
+  .services {
+    padding: 32px 0;
+  }
+
+  .services h2 {
+    margin: 0 0 20px;
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+    line-height: 1.15;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    padding: 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #fff;
+  }
+
+  .card strong {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 1rem;
+  }
+
+  .card p {
+    margin: 0;
+    color: #6b7280;
+  }
+</style>

@@ -1,0 +1,40 @@
+---
+import type { TrustBlock as TrustBlockType } from "../../contracts/homepage"
+
+const { block } = Astro.props as { block: TrustBlockType }
+const { items, hasContent } = block.content
+---
+
+{hasContent && (
+  <section class="trust">
+    <ul>
+      {items.map((item) => (
+        <li>{item}</li>
+      ))}
+    </ul>
+  </section>
+)}
+
+<style>
+  .trust {
+    padding: 8px 0 28px;
+  }
+
+  .trust ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .trust li {
+    padding: 10px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    background: #f9fafb;
+    font-size: 0.95rem;
+    color: #374151;
+  }
+</style>

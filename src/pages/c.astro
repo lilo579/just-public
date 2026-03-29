@@ -1,0 +1,256 @@
+---
+export const prerender = false;
+
+import { supabase } from '../lib/supabase'
+
+// Host real (prod) vem do header.
+// No dev local, host será localhost:4321 -> não resolve tenant.
+// Então aceitamos override via query ?host=www.3djewish.com.br
+const url = new URL(Astro.request.url)
+const hostOverride = url.searchParams.get('host')?.trim() ?? ''
+const baseOverride = url.searchParams.get('base')?.trim() ?? ''
+
+const hostHeader = Astro.request.headers.get('host') ?? ''
+const hostFromHeader = hostHeader.split(':')[0].toLowerCase()
+
+const host =
+  hostOverride ||
+  (hostFromHeader === 'localhost' ? 'www.3djewish.com.br' : hostFromHeader)
+
+const { data: rows, error } = await supabase.rpc('public_get_products_by_host', {
+  p_host: host,
+})
+
+if (error) console.error('RPC error:', error)
+
+const products = (rows ?? []).map((p) => ({
+  ...p,
+  price_display: p.price == null ? '' : Number(p.price).toFixed(0),
+}))
+
+const featured = products.filter((p) => p.featured)
+const rest = products.filter((p) => !p.featured)
+
+const companyName = products[0]?.company_name ?? 'Loja'
+const whatsappNumberRaw = products[0]?.whatsapp_number ?? ''
+const whatsappNumber = whatsappNumberRaw.replace(/\D/g, '')
+
+const baseUrl = baseOverride || `https://${host}`
+const pageUrl = `${baseUrl}/c`
+const seller = url.searchParams.get('s')?.trim() ?? ''
+const camp = url.searchParams.get('camp')?.trim() ?? ''
+const msgVariant = url.searchParams.get('msg')?.trim() ?? '1'
+
+const shareUrl = new URL(pageUrl)
+
+if (hostOverride) shareUrl.searchParams.set('host', hostOverride)
+if (seller) shareUrl.searchParams.set('s', seller)
+if (camp) shareUrl.searchParams.set('camp', camp)
+if (msgVariant) shareUrl.searchParams.set('msg', msgVariant)
+
+const shareLink = shareUrl.toString()
+
+const msg1 = `Catálogo ${companyName} (${products.length} itens): ${shareLink}\n\nMe chama aqui pra comprar.`
+const msg2 = `Oi! Segue o catálogo ${companyName}: ${shareLink}\n\nQual item você quer?`
+const msg3 = `✅ Catálogo ${companyName}\n${shareLink}\n\nMe chama no WhatsApp pra fechar.`
+
+const shareMessage =
+  msgVariant === '2' ? msg2 :
+  msgVariant === '3' ? msg3 :
+  msg1
+
+const title = `${companyName} — Catálogo`
+const description = `Veja o catálogo completo de ${companyName} e compre pelo WhatsApp.`
+
+// OG image: usa a primeira imagem featured (se existir), senão a primeira do catálogo
+const ogImage =
+  featured[0]?.image_url ||
+  products[0]?.image_url ||
+  ''
+
+const waText = `Olá! Quero ver/comprar pelo catálogo: ${pageUrl}`
+const waLink = whatsappNumber
+  ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(waText)}`
+  : null
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={pageUrl} />
+
+    <!-- Open Graph (WhatsApp) -->
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={companyName} />
+    <meta property="og:url" content={pageUrl} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {ogImage && (
+      <>
+        <meta property="og:image" content={ogImage} />
+        <meta property="og:image:secure_url" content={ogImage} />
+        <meta property="og:image:type" content="image/webp" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+      </>
+    )}
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
+
+    {hostFromHeader === 'localhost' && <meta name="robots" content="noindex,nofollow" />}
+
+    <style>
+      :root { color-scheme: light; }
+      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; padding: 0; background: #fafafa; color: #111; }
+      .wrap { max-width: 1100px; margin: 0 auto; padding: 18px; }
+      .top { display:flex; align-items:flex-start; justify-content:space-between; gap: 12px; }
+      h1 { margin: 0; font-size: 22px; line-height: 1.2; }
+      .sub { margin-top: 6px; color: #444; }
+      .pill { display:inline-flex; gap: 8px; align-items:center; padding: 10px 12px; border-radius: 12px; background: #fff; border: 1px solid #eee; }
+      .grid { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+      @media (min-width: 720px){ .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+      .card { background:#fff; border:1px solid #eee; border-radius: 14px; overflow:hidden; text-decoration:none; color: inherit; display:block; }
+      .img { width: 100%; aspect-ratio: 1/1; background:#f3f3f3; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+      .img img { width: 100%; height: 100%; object-fit: cover; display:block; }
+      .meta { padding: 10px 10px 12px; }
+      .name { font-weight: 650; font-size: 14px; line-height: 1.2; margin: 0; }
+      .price { margin-top: 6px; font-size: 13px; color:#111; }
+      .badge { display:inline-block; margin-top: 8px; font-size: 12px; padding: 4px 8px; border-radius: 999px; background:#111; color:#fff; }
+      .sectionTitle { margin: 18px 0 10px; font-weight: 700; }
+      .footerSpace { height: 86px; }
+
+      .waBar {
+        position: fixed; left: 0; right: 0; bottom: 0;
+        background: rgba(250,250,250,0.92);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid #eee;
+        padding: 10px 12px;
+      }
+      .waBarInner { max-width: 1100px; margin: 0 auto; display:flex; gap: 10px; align-items:center; justify-content:space-between; }
+      .waBtn {
+        display:inline-block; padding: 12px 14px; border-radius: 12px;
+        background:#111; color:#fff; text-decoration:none; font-weight: 650;
+      }
+      .ghostBtn {
+        display:inline-block; padding: 12px 14px; border-radius: 12px;
+        background:#fff; border: 1px solid #eee; color:#111; text-decoration:none; font-weight: 650;
+      }
+      .small { font-size: 12px; color:#444; }
+      .row { display:flex; gap: 10px; align-items:center; flex-wrap: wrap; justify-content:flex-end; }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <div>
+          <h1>{companyName}</h1>
+          <div class="sub">Catálogo compartilhável • {products.length} itens</div>
+          <div class="small" style="margin-top:8px;">
+            Link para compartilhar:
+            <a href={shareLink} style="color:#111;">{shareLink}</a>
+          </div>
+
+          <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+            <button id="copyLink" class="ghostBtn" type="button">Copiar link</button>
+            <button id="copyMsg" class="ghostBtn" type="button">Copiar mensagem pronta</button>
+            <button id="shareBtn" class="waBtn" type="button">Compartilhar catálogo</button>
+          </div>
+
+          <div class="small" style="margin-top:8px; white-space:pre-line;">
+          {shareMessage}
+          </div>
+        </div>
+
+        <div class="pill">
+          <div class="small">Abrir no WhatsApp</div>
+          {waLink ? <a class="waBtn" href={waLink}>Falar agora</a> : <span class="small">WhatsApp não configurado</span>}
+        </div>
+      </div>
+
+      {featured.length > 0 && (
+        <>
+          <div class="sectionTitle">Destaques</div>
+          <div class="grid">
+            {featured.slice(0, 12).map((p) => (
+              <a class="card" href={`/p/${p.slug}${hostFromHeader === 'localhost' ? `?host=${encodeURIComponent(host)}` : ''}`}>
+                <div class="img">
+                  {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" /> : null}
+                </div>
+                <div class="meta">
+                  <p class="name">{p.name}</p>
+                  {p.price != null ? <div class="price">R$ {p.price_display}</div> : <div class="price">Consultar</div>}
+                  <span class="badge">Destaque</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </>
+      )}
+
+      <div class="sectionTitle" style="margin-top:22px;">Todos os produtos</div>
+      <div class="grid">
+        {products.map((p) => (
+          <a class="card" href={`/p/${p.slug}${hostFromHeader === 'localhost' ? `?host=${encodeURIComponent(host)}` : ''}`}>
+            <div class="img">
+              {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" /> : null}
+            </div>
+            <div class="meta">
+              <p class="name">{p.name}</p>
+              {p.price != null ? <div class="price">R$ {p.price_display}</div> : <div class="price">Consultar</div>}
+              {p.featured ? <span class="badge">Destaque</span> : null}
+            </div>
+          </a>
+        ))}
+      </div>
+
+      <div class="footerSpace"></div>
+    </div>
+
+    <div class="waBar">
+      <div class="waBarInner">
+        <div>
+          <div style="font-weight:700;">Comprar pelo WhatsApp</div>
+          <div class="small">Toque e fale direto com {companyName}</div>
+        </div>
+
+        <div class="row">
+          <a class="ghostBtn" href="/">Início</a>
+          {waLink ? <a class="waBtn" href={waLink}>Abrir WhatsApp</a> : <span class="small">WhatsApp não configurado</span>}
+        </div>
+      </div>
+    </div>
+  <script define:vars={{ shareLink, shareMessage }}>
+  const copy = async (txt) => {
+    await navigator.clipboard.writeText(txt)
+    alert("Copiado ✅")
+  }
+
+  document.getElementById("copyLink")?.addEventListener("click", () => copy(shareLink))
+  document.getElementById("copyMsg")?.addEventListener("click", () => copy(shareMessage))
+
+  document.getElementById("shareBtn")?.addEventListener("click", async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Catálogo",
+          text: shareMessage,
+          url: shareLink
+        })
+      } else {
+        await copy(shareMessage)
+      }
+    } catch {}
+  })
+  </script>
+  </body>
+</html>

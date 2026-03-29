@@ -1,0 +1,83 @@
+---
+/**
+ * ⚠️ TECHNICAL VALIDATION ROUTE (B → D bridge)
+ *
+ * This page MUST run in SSR mode.
+ * Do NOT prerender.
+ *
+ * ⚠️ TEMP: technical validation only.
+ * Do NOT treat hardcoded tenantId as final routing strategy.
+ */
+export const prerender = false
+
+import { PUBLIC_SITE_PAYLOAD_URL } from "../../config/publicSite"
+import type { ResolvedHomepage } from "../../contracts/homepage"
+
+import HeroBlock from "../../components/blocks/HeroBlock.astro"
+import TrustBlock from "../../components/blocks/TrustBlock.astro"
+import ServicesBlock from "../../components/blocks/ServicesBlock.astro"
+import AboutBlock from "../../components/blocks/AboutBlock.astro"
+import CtaBlock from "../../components/blocks/CtaBlock.astro"
+
+// ⚠️ TEMP: technical validation only. Do not treat hardcoded tenantId as final routing strategy.
+const TENANT_ID = "76a96afa-80f9-4782-a08d-e869e79d7d84"
+const MODE = "preview"
+
+const url = `${PUBLIC_SITE_PAYLOAD_URL}?tenantId=${TENANT_ID}&mode=${MODE}`
+
+const res = await fetch(url)
+
+if (!res.ok) {
+  const text = await res.text()
+
+  throw new Error(
+    `Failed to fetch homepage payload\nStatus: ${res.status}\nBody: ${text}`
+  )
+}
+
+const homepage = (await res.json()) as ResolvedHomepage
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Homepage Renderer Test</title>
+  </head>
+  <body>
+    <main>
+      <h1>Homepage Renderer Test</h1>
+
+      <p>Status: {homepage.status}</p>
+
+      <pre style="white-space: pre-wrap; margin-top: 24px;">
+        {JSON.stringify(homepage, null, 2)}
+      </pre>
+
+      <section>
+        {
+          homepage.blocks.map((block) => {
+            switch (block.type) {
+              case "hero":
+                return <HeroBlock block={block} />
+
+              case "trust":
+                return <TrustBlock block={block} />
+
+              case "services":
+                return <ServicesBlock block={block} />
+
+              case "about":
+                return <AboutBlock block={block} />
+
+              case "cta":
+                return <CtaBlock block={block} />
+
+              default:
+                return null
+            }
+          })
+        }
+      </section>
+    </main>
+  </body>
+</html>

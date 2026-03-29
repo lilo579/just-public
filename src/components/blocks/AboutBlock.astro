@@ -1,0 +1,29 @@
+---
+import type { AboutBlock as AboutBlockType } from "../../contracts/homepage"
+
+const { block } = Astro.props as { block: AboutBlockType }
+const { title, body } = block.content
+---
+
+<section class="about">
+  {title && <h2>{title}</h2>}
+  {body && <div class="body">{body}</div>}
+</section>
+
+<style>
+  .about {
+    padding: 32px 0;
+  }
+
+  .about h2 {
+    margin: 0 0 16px;
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+    line-height: 1.15;
+  }
+
+  .body {
+    white-space: pre-wrap;
+    color: #374151;
+    font-size: 1.05rem;
+  }
+</style>

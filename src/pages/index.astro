@@ -1,0 +1,29 @@
+---
+import { supabase } from '../lib/supabase'
+
+const host = 'www.3djewish.com.br'
+
+const { data: products, error } = await supabase
+  .rpc('public_list_products_by_host', { p_host: host })
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Produtos</title>
+  </head>
+  <body>
+    <h1>Produtos</h1>
+
+    {error && <pre>{JSON.stringify(error, null, 2)}</pre>}
+
+    <ul>
+      {products?.map((p) => (
+        <li>
+          <a href={`/p/${p.slug}`}>{p.name}</a> — R$ {p.price}
+        </li>
+      ))}
+    </ul>
+  </body>
+</html>

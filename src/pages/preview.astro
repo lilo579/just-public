@@ -1,0 +1,76 @@
+---
+export const prerender = false
+
+import { PUBLIC_SITE_PAYLOAD_URL } from "../config/publicSite"
+import type { ResolvedHomepage } from "../contracts/homepage"
+
+import HeroBlock from "../components/blocks/HeroBlock.astro"
+import TrustBlock from "../components/blocks/TrustBlock.astro"
+import ServicesBlock from "../components/blocks/ServicesBlock.astro"
+import AboutBlock from "../components/blocks/AboutBlock.astro"
+import CtaBlock from "../components/blocks/CtaBlock.astro"
+
+/**
+ * Preview route (technical, SSR)
+ * Requires explicit tenantId
+ */
+
+const tenantId = Astro.url.searchParams.get("tenantId")
+const MODE = "preview"
+
+if (!tenantId) {
+  throw new Error(
+    "Missing tenantId. Use /preview?tenantId=YOUR_TENANT_ID"
+  )
+}
+
+const url = `${PUBLIC_SITE_PAYLOAD_URL}?tenantId=${tenantId}&mode=${MODE}`
+
+const res = await fetch(url)
+
+if (!res.ok) {
+  const text = await res.text()
+  throw new Error(
+    `Failed to fetch homepage payload
+TenantId: ${tenantId}
+Status: ${res.status}
+Body: ${text}`
+  )
+}
+
+const homepage = (await res.json()) as ResolvedHomepage
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Preview</title>
+  </head>
+  <body>
+    <main style="max-width: 960px; margin: 0 auto; padding: 40px 20px;">
+      {
+        homepage.blocks.map((block) => {
+          switch (block.type) {
+            case "hero":
+              return <HeroBlock block={block} />
+
+            case "trust":
+              return <TrustBlock block={block} />
+
+            case "services":
+              return <ServicesBlock block={block} />
+
+            case "about":
+              return <AboutBlock block={block} />
+
+            case "cta":
+              return <CtaBlock block={block} />
+
+            default:
+              return null
+          }
+        })
+      }
+    </main>
+  </body>
+</html>

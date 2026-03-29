@@ -1,0 +1,77 @@
+---
+export const prerender = false
+
+import { PUBLIC_SITE_PAYLOAD_URL } from "../../config/publicSite"
+import type { ResolvedHomepage } from "../../contracts/homepage"
+
+import HeroBlock from "../../components/blocks/HeroBlock.astro"
+import TrustBlock from "../../components/blocks/TrustBlock.astro"
+import ServicesBlock from "../../components/blocks/ServicesBlock.astro"
+import AboutBlock from "../../components/blocks/AboutBlock.astro"
+import CtaBlock from "../../components/blocks/CtaBlock.astro"
+
+// ⚠️ TEMP fallback — only used when tenantId is NOT provided
+const FALLBACK_TENANT_ID = "f396b3dd-c20e-4c7d-a46e-8380fd8be578"
+const MODE = "preview"
+
+// Read tenantId from query param
+const tenantIdFromQuery = Astro.url.searchParams.get("tenantId")
+
+// Rule:
+// - if absent → use fallback
+// - if present → MUST use it (no silent fallback)
+const tenantId = tenantIdFromQuery ?? FALLBACK_TENANT_ID
+
+const url = `${PUBLIC_SITE_PAYLOAD_URL}?tenantId=${tenantId}&mode=${MODE}`
+
+const res = await fetch(url)
+
+if (!res.ok) {
+  const text = await res.text()
+
+  // 🔥 important: if tenantId was explicitly provided, show error clearly
+  throw new Error(
+    `Failed to fetch homepage payload
+TenantId: ${tenantId}
+Status: ${res.status}
+Body: ${text}`
+  )
+}
+
+// ⚠️ TEMP TYPE — must migrate to shared contract soon
+const homepage = (await res.json()) as ResolvedHomepage
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Professional Home</title>
+  </head>
+  <body>
+    <main>
+      {
+        homepage.blocks.map((block) => {
+          switch (block.type) {
+            case "hero":
+              return <HeroBlock block={block} />
+
+            case "trust":
+              return <TrustBlock block={block} />
+
+            case "services":
+              return <ServicesBlock block={block} />
+
+            case "about":
+              return <AboutBlock block={block} />
+
+            case "cta":
+              return <CtaBlock block={block} />
+
+            default:
+              return null
+          }
+        })
+      }
+    </main>
+  </body>
+</html>
