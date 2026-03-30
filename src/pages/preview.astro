@@ -1,27 +1,28 @@
 ---
 export const prerender = false
 
-import { PUBLIC_SITE_PAYLOAD_URL } from "../config/publicSite"
+import { PUBLIC_SITE_PAYLOAD_URL, SUPABASE_ANON_KEY } from "../config/publicSite"
 import type { ResolvedHomepage } from "../contracts/homepage"
 import HomepageRenderer from "../components/HomepageRenderer.astro"
-
-/**
- * Preview route (technical, SSR)
- * Requires explicit slug
- */
+import Header from "../components/Header.astro"
+import Footer from "../components/Footer.astro"
+import JustSignature from "../components/JustSignature.astro"
 
 const slug = Astro.url.searchParams.get("slug")?.trim()
 const MODE = "preview"
 
 if (!slug) {
-  throw new Error(
-    "Missing slug. Use /preview?slug=YOUR_SLUG"
-  )
+  throw new Error("Missing slug. Use /preview?slug=YOUR_SLUG")
 }
 
 const url = `${PUBLIC_SITE_PAYLOAD_URL}?slug=${encodeURIComponent(slug)}&mode=${MODE}`
 
-const res = await fetch(url)
+const res = await fetch(url, {
+  headers: {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+  },
+})
 
 if (!res.ok) {
   const text = await res.text()
@@ -34,16 +35,27 @@ Body: ${text}`
 }
 
 const homepage = (await res.json()) as ResolvedHomepage
+const footer = homepage.footer
 ---
 
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Preview</title>
   </head>
   <body>
-    <main style="max-width: 960px; margin: 0 auto; padding: 40px 20px;">
+    <Header
+      siteTitle={footer.companyName || "Site"}
+      logoUrl={footer.logoUrl || ""}
+      logoAlt={footer.companyName || "Logo"}
+    />
+
+    <main>
       <HomepageRenderer homepage={homepage} />
     </main>
+
+    <JustSignature />
+    <Footer footer={footer} />
   </body>
 </html>

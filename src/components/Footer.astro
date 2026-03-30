@@ -1,0 +1,199 @@
+---
+import type { HomepageFooter } from "../contracts/homepage"
+
+const { footer } = Astro.props as {
+  footer: HomepageFooter
+}
+
+function formatPhoneDisplay(phone: string) {
+  if (!phone || phone.length < 10) return phone
+  const cleaned = phone.startsWith("55") ? phone.slice(2) : phone
+  if (cleaned.length === 11) {
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`
+  }
+  if (cleaned.length === 10) {
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`
+  }
+  return phone
+}
+
+const hasContactInfo =
+  (footer.whatsappVisible && footer.whatsappNumber) ||
+  footer.email ||
+  footer.address
+
+const visibleLinks = (footer.socialLinks ?? []).filter((link) => (link.url ?? "").trim() !== "")
+const year = new Date().getFullYear()
+
+function socialLabel(type: string) {
+  switch (type) {
+    case "instagram":
+      return "Instagram"
+    case "facebook":
+      return "Facebook"
+    case "youtube":
+      return "YouTube"
+    case "linkedin":
+      return "LinkedIn"
+    case "tiktok":
+      return "TikTok"
+    case "x":
+      return "X"
+    default:
+      return type
+  }
+}
+---
+
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <div class="site-footer__brand">
+      {footer.logoUrl && (
+        <a href="/">
+          <img src={footer.logoUrl} alt={footer.companyName || "Logo"} class="site-footer__logo" />
+        </a>
+      )}
+
+      {footer.tagline && <p class="site-footer__tagline">{footer.tagline}</p>}
+
+      <p class="site-footer__copyright">
+        © {year} {footer.companyName || "Empresa"}. Todos os direitos reservados.
+      </p>
+    </div>
+
+    <div class="site-footer__meta">
+      {hasContactInfo && (
+        <div class="site-footer__section">
+          <h3>Contato</h3>
+          <ul class="site-footer__list">
+            {footer.whatsappVisible && footer.whatsappNumber && (
+              <li>
+                <a
+                  href={`https://wa.me/${footer.whatsappNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {formatPhoneDisplay(footer.whatsappNumber)}
+                </a>
+              </li>
+            )}
+
+            {footer.email && (
+              <li>
+                <a href={`mailto:${footer.email}`}>{footer.email}</a>
+              </li>
+            )}
+
+            {footer.address && (
+              <li class="site-footer__address">{footer.address}</li>
+            )}
+          </ul>
+        </div>
+      )}
+
+      {visibleLinks.length > 0 && (
+        <div class="site-footer__section">
+          <h3>Redes Sociais</h3>
+          <ul class="site-footer__list">
+            {visibleLinks.map((link) => (
+              <li>
+                <a href={link.url} target="_blank" rel="noopener noreferrer">
+                  {socialLabel(link.type)}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: rgba(130, 90, 239, 0.08);
+  }
+
+  .site-footer__inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 20px 48px;
+    display: grid;
+    gap: 28px;
+  }
+
+  .site-footer__brand {
+    display: grid;
+    gap: 14px;
+  }
+
+  .site-footer__logo {
+    display: block;
+    height: 44px;
+    max-width: 180px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .site-footer__tagline,
+  .site-footer__copyright,
+  .site-footer__list li,
+  .site-footer__list a {
+    color: rgba(17, 24, 39, 0.72);
+    text-decoration: none;
+    line-height: 1.65;
+  }
+
+  .site-footer__tagline,
+  .site-footer__copyright,
+  .site-footer__list li,
+  .site-footer__list a {
+    font-size: 0.95rem;
+  }
+
+  .site-footer__meta {
+    display: grid;
+    gap: 24px;
+  }
+
+  .site-footer__section h3 {
+    margin: 0 0 10px;
+    color: #111827;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .site-footer__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+  }
+
+  .site-footer__list a:hover {
+    color: hsl(145 63% 42%);
+  }
+
+  .site-footer__address {
+    white-space: pre-line;
+  }
+
+  @media (min-width: 768px) {
+    .site-footer__inner {
+      grid-template-columns: 1.3fr 1fr;
+      gap: 40px;
+      padding: 48px 20px 56px;
+    }
+
+    .site-footer__meta {
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+
+    .site-footer__logo {
+      height: 52px;
+      max-width: 220px;
+    }
+  }
+</style>

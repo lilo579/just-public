@@ -1,9 +1,12 @@
 ---
 export const prerender = false
 
-import { PUBLIC_SITE_PAYLOAD_URL } from "../config/publicSite"
+import { PUBLIC_SITE_PAYLOAD_URL, SUPABASE_ANON_KEY } from "../config/publicSite"
 import type { ResolvedHomepage } from "../contracts/homepage"
 import HomepageRenderer from "../components/HomepageRenderer.astro"
+import Header from "../components/Header.astro"
+import Footer from "../components/Footer.astro"
+import JustSignature from "../components/JustSignature.astro"
 
 // --- Host forwarding (public homepage) ---
 const host = Astro.request.headers.get("host")?.trim()
@@ -16,7 +19,12 @@ const MODE = "public"
 
 const url = `${PUBLIC_SITE_PAYLOAD_URL}?host=${host}&mode=${MODE}`
 
-const res = await fetch(url)
+const res = await fetch(url, {
+  headers: {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+  },
+})
 
 if (!res.ok) {
   const text = await res.text()
@@ -29,16 +37,41 @@ Body: ${text}`
 }
 
 const homepage = (await res.json()) as ResolvedHomepage
+const footer = homepage.footer
 ---
 
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <title>Site</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{footer.companyName || "Site"}</title>
   </head>
   <body>
-    <main style="max-width: 960px; margin: 0 auto; padding: 40px 20px;">
+    <Header
+      siteTitle={footer.companyName || "Site"}
+      logoUrl={footer.logoUrl || ""}
+      logoAlt={footer.companyName || "Logo"}
+    />
+
+    <main class="page-shell">
       <HomepageRenderer homepage={homepage} />
     </main>
+
+    <JustSignature />
+    <Footer footer={footer} />
   </body>
 </html>
+
+<style>
+  .page-shell {
+    margin: 0 auto;
+    max-width: 1100px;
+    padding: 0 20px;
+  }
+
+  @media (max-width: 720px) {
+    .page-shell {
+      padding: 0 18px;
+    }
+  }
+</style>

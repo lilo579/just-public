@@ -1,55 +1,206 @@
 ---
-import type { ServicesBlock as ServicesBlockType } from "../../contracts/homepage"
+import type { ServicesBlock as ServicesBlockType } from "../../contracts/homepage";
 
-const { block } = Astro.props as { block: ServicesBlockType }
-const { title, items } = block.content
+const { block } = Astro.props as { block: ServicesBlockType };
+const { title, items } = block.content;
+
+const visibleItems = (items ?? []).filter(
+  (item) => item?.title && item?.description
+);
+
+const leftItems = visibleItems.slice(0, 2);
+const rightItems = visibleItems.slice(2);
 ---
 
-<section class="services">
-  {title && <h2>{title}</h2>}
+{visibleItems.length > 0 && (
+  <section class="services">
+    <div class="services__container">
+      {title && (
+        <div class="services__heading">
+          <h2>{title}</h2>
+        </div>
+      )}
 
-  <div class="grid">
-    {items.map((item) => (
-      <article class="card">
-        <strong>{item.title}</strong>
-        {item.description && <p>{item.description}</p>}
-      </article>
-    ))}
-  </div>
-</section>
+      <div class="services__grid">
+        <div class="services__column services__column--left">
+          {leftItems.map((item) => (
+            <article class="services__item">
+              <div class="services__icon">
+                <span class="services__dot"></span>
+              </div>
+
+              <div class="services__content">
+                <h3>{item.title}</h3>
+                <p>{item.description}</p>
+              </div>
+            </article>
+          ))}
+
+          {rightItems.map((item) => (
+            <article class="services__item services__item--mobile">
+              <div class="services__icon">
+                <span class="services__dot"></span>
+              </div>
+
+              <div class="services__content">
+                <h3>{item.title}</h3>
+                <p>{item.description}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        {rightItems.length > 0 && (
+          <div class="services__column services__column--right">
+            {rightItems.map((item) => (
+              <article class="services__item">
+                <div class="services__icon">
+                  <span class="services__dot"></span>
+                </div>
+
+                <div class="services__content">
+                  <h3>{item.title}</h3>
+                  <p>{item.description}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+)}
 
 <style>
   .services {
-    padding: 32px 0;
+    padding: 4rem 0;
+  }
+
+  .services__container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .services__heading {
+    max-width: 48rem;
+    margin: 0 auto 3rem;
+    text-align: left;
   }
 
   .services h2 {
-    margin: 0 0 20px;
-    font-size: clamp(1.5rem, 2.5vw, 2rem);
-    line-height: 1.15;
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
-  }
-
-  .card {
-    padding: 18px;
-    border: 1px solid #e5e7eb;
-    border-radius: 16px;
-    background: #fff;
-  }
-
-  .card strong {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 1rem;
-  }
-
-  .card p {
     margin: 0;
-    color: #6b7280;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 1.875rem;
+    line-height: 1.15;
+    font-weight: 700;
+    color: hsl(220 15% 15%);
   }
+
+  .services__grid {
+    display: block;
+    max-width: 80rem;
+    margin: 0 auto;
+  }
+
+  .services__column {
+    display: grid;
+    gap: 2rem;
+  }
+
+  .services__column--right {
+    display: none;
+  }
+
+  .services__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .services__icon {
+    flex: 0 0 auto;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-top: 0.125rem;
+    border-radius: 999px;
+    background: hsl(145 50% 95%);
+    border: 1px solid hsl(145 63% 42% / 0.2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .services__dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: hsl(145 12% 55%);
+    display: block;
+  }
+
+  .services__content h3 {
+    margin: 0 0 0.5rem;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.35;
+    font-weight: 600;
+    color: hsl(220 15% 15%);
+  }
+
+  .services__content p {
+    margin: 0;
+    color: hsl(220 15% 15% / 0.7);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .services__item--mobile {
+    display: flex;
+  }
+
+  @media (min-width: 1024px) {
+  .services {
+    padding: 6rem 0;
+  }
+
+  .services__heading {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .services h2 {
+    font-size: 2.25rem;
+  }
+
+  .services__grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 4rem;
+    align-items: start;
+    max-width: 68rem; /* ← diminui largura total */
+    margin: 0 auto;
+  }
+
+  .services__column {
+    display: grid;
+    gap: 2.5rem;
+  }
+
+  .services__column--left {
+    padding-right: 1rem;
+  }
+
+  .services__column--right {
+    display: grid !important;
+    gap: 2.5rem;
+    padding-top: 4rem;
+    padding-left: 1rem;
+  }
+
+  .services__item--mobile {
+    display: none !important;
+  }
+}
 </style>

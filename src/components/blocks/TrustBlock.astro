@@ -3,38 +3,126 @@ import type { TrustBlock as TrustBlockType } from "../../contracts/homepage"
 
 const { block } = Astro.props as { block: TrustBlockType }
 const { items, hasContent } = block.content
+const visibleItems = (items ?? []).filter(Boolean)
 ---
 
-{hasContent && (
+{hasContent && visibleItems.length > 0 && (
   <section class="trust">
-    <ul>
-      {items.map((item) => (
-        <li>{item}</li>
-      ))}
-    </ul>
+    <div class="trust__container">
+      <ul class="trust__list">
+        {visibleItems.map((item, index) => (
+          <li class:list={["trust__item", visibleItems.length === 3 && index === 2 ? "trust__item--full" : ""]}>
+            <span class="trust__icon" aria-hidden="true">✓</span>
+            <span class="trust__text">{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   </section>
 )}
 
 <style>
   .trust {
-    padding: 8px 0 28px;
+    position: relative;
+    z-index: 10;
+    margin-top: -1.5rem;
+    padding: 0 0 1.5rem;
   }
 
-  .trust ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+  .trust__container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .trust__list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  .trust li {
-    padding: 10px 14px;
-    border: 1px solid #e5e7eb;
+  .trust__item {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.85rem 0.95rem;
+    border: 1px solid hsl(30 8% 88%);
+    border-radius: 1rem;
+    background: hsl(0 0% 100% / 0.88);
+    box-shadow:
+      0 1px 3px 0 hsl(220 15% 15% / 0.04),
+      0 4px 16px -4px hsl(220 15% 15% / 0.06);
+    box-sizing: border-box;
+  }
+
+  .trust__item--full {
+    grid-column: 1 / -1;
+  }
+
+  .trust__icon {
+    flex: 0 0 auto;
+    width: 1.1rem;
+    height: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 999px;
-    background: #f9fafb;
-    font-size: 0.95rem;
-    color: #374151;
+    border: 1px solid hsl(145 12% 55% / 0.45);
+    color: hsl(145 12% 55%);
+    font-size: 0.78rem;
+    line-height: 1;
+    font-weight: 700;
+    box-sizing: border-box;
+  }
+
+  .trust__text {
+    min-width: 0;
+    color: hsl(220 15% 15% / 0.82);
+    font-size: 0.9rem;
+    line-height: 1.25;
+    font-weight: 500;
+    word-break: normal;
+    overflow-wrap: anywhere;
+  }
+
+  @media (min-width: 1024px) {
+    .trust {
+      margin-top: -2rem;
+      padding: 0 0 1rem;
+    }
+
+    .trust__list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .trust__item,
+    .trust__item--full {
+      grid-column: auto;
+      width: auto;
+      max-width: none;
+      border-radius: 999px;
+      padding: 0.65rem 1rem;
+    }
+
+    .trust__icon {
+      width: 1rem;
+      height: 1rem;
+      font-size: 0.72rem;
+    }
+
+    .trust__text {
+      font-size: 0.875rem;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow-wrap: normal;
+    }
   }
 </style>
