@@ -5,16 +5,19 @@ import { PUBLIC_SITE_PAYLOAD_URL } from "../config/publicSite"
 import type { ResolvedHomepage } from "../contracts/homepage"
 import HomepageRenderer from "../components/HomepageRenderer.astro"
 
-// --- Host forwarding (public homepage) ---
+/**
+ * Host preview route (technical, SSR)
+ * Reads Host header and forwards it to Edge as bridge_v1
+ */
+
 const host = Astro.request.headers.get("host")?.trim()
+const MODE = "public"
 
 if (!host) {
   throw new Error("Missing Host header")
 }
 
-const MODE = "public"
-
-const url = `${PUBLIC_SITE_PAYLOAD_URL}?host=${host}&mode=${MODE}`
+const url = `${PUBLIC_SITE_PAYLOAD_URL}?host=${encodeURIComponent(host)}&mode=${MODE}`
 
 const res = await fetch(url)
 
@@ -34,7 +37,7 @@ const homepage = (await res.json()) as ResolvedHomepage
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <title>Site</title>
+    <title>Host Preview</title>
   </head>
   <body>
     <main style="max-width: 960px; margin: 0 auto; padding: 40px 20px;">

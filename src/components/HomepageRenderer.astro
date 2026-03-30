@@ -1,0 +1,35 @@
+---
+import type { ResolvedHomepage } from "../contracts/homepage";
+
+import HeroBlock from "./blocks/HeroBlock.astro";
+import TrustBlock from "./blocks/TrustBlock.astro";
+import ServicesBlock from "./blocks/ServicesBlock.astro";
+import AboutBlock from "./blocks/AboutBlock.astro";
+import CtaBlock from "./blocks/CtaBlock.astro";
+
+const { homepage } = Astro.props as { homepage: ResolvedHomepage };
+---
+
+{
+  homepage.blocks.map((block) => {
+    switch (block.type) {
+      case "hero":
+        return <HeroBlock block={block} />;
+
+      case "trust":
+        return <TrustBlock block={block} />;
+
+      case "services":
+        return <ServicesBlock block={block} />;
+
+      case "about":
+        return <AboutBlock block={block} />;
+
+      case "cta":
+        return <CtaBlock block={block} />;
+
+      default:
+        return null;
+    }
+  })
+}
