@@ -1,0 +1,250 @@
+---
+type Step = {
+  number: number;
+  title: string;
+  description?: string | null;
+};
+
+const { block } = Astro.props as {
+  block: {
+    type: "process";
+    content: {
+      title?: string | null;
+      steps?: Step[];
+    };
+  };
+};
+
+const title = block.content?.title;
+const steps = (block.content?.steps ?? []).filter((step) => step?.title);
+
+function iconFor(stepNumber: number) {
+  if (stepNumber === 1) return "message";
+  if (stepNumber === 2) return "calendar";
+  return "heart";
+}
+---
+
+{steps.length > 0 && (
+  <section class="process">
+    <div class="process__container">
+      {title && (
+        <div class="process__heading">
+          <h2>{title}</h2>
+        </div>
+      )}
+
+      <div class="process__grid">
+        {steps.map((step) => (
+          <article class="process__card">
+            <div class="process__badge">{step.number}</div>
+
+            <div class="process__icon-shell" aria-hidden="true">
+              {iconFor(step.number) === "message" && (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M20 11.5a8 8 0 0 1-8 8 8.7 8.7 0 0 1-3.2-.6L4 20l1.1-4.1A8 8 0 1 1 20 11.5Z"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              )}
+
+              {iconFor(step.number) === "calendar" && (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect
+                    x="4"
+                    y="5"
+                    width="16"
+                    height="15"
+                    rx="2"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  />
+                  <path
+                    d="M8 3v4M16 3v4M4 10h16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              )}
+
+              {iconFor(step.number) === "heart" && (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              )}
+            </div>
+
+            <h3>{step.title}</h3>
+            {step.description && <p>{step.description}</p>}
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .process {
+    padding: 4rem 0;
+  }
+
+  .process__container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .process__heading {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .process h2 {
+    margin: 0;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 1.875rem;
+    line-height: 1.15;
+    font-weight: 700;
+    color: hsl(220 15% 15%);
+  }
+
+  .process__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    max-width: 64rem;
+    margin: 0 auto;
+  }
+
+  .process__card {
+    position: relative;
+    text-align: center;
+    padding: 1.75rem 1.25rem 1.4rem;
+    border-radius: 0.875rem;
+    background: #ffffff;
+    border: 1px solid hsl(30 8% 88% / 0.45);
+    box-shadow:
+      0 1px 3px 0 hsl(220 15% 15% / 0.04),
+      0 4px 16px -4px hsl(220 15% 15% / 0.06);
+    transition:
+      transform 300ms ease,
+      box-shadow 300ms ease;
+  }
+
+  .process__card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 1px 3px 0 hsl(220 15% 15% / 0.04),
+      0 8px 24px -6px hsl(220 15% 15% / 0.10);
+  }
+
+  .process__badge {
+    position: absolute;
+    top: -0.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 999px;
+    background: hsl(145 12% 52%);
+    color: #ffffff;
+    display: grid;
+    place-items: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    box-shadow: 0 4px 10px hsl(145 12% 52% / 0.22);
+  }
+
+  .process__icon-shell {
+    width: 3.3rem;
+    height: 3.3rem;
+    margin: 0.7rem auto 1rem;
+    border-radius: 999px;
+    background: hsl(30 10% 94%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: hsl(145 12% 52%);
+  }
+
+  .process__icon-shell svg {
+    width: 2.35rem;
+    height: 2.35rem;
+    display: block;
+    color: hsl(145 12% 52%);
+  }
+
+  .process__card h3 {
+    margin: 0 0 0.65rem;
+    color: hsl(220 15% 15%);
+    font-size: 1.1rem;
+    line-height: 1.35;
+    font-weight: 600;
+  }
+
+  .process__card p {
+    margin: 0;
+    color: hsl(220 15% 15% / 0.7);
+    font-size: 0.98rem;
+    line-height: 1.65;
+  }
+
+  @media (min-width: 768px) {
+    .process__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .process {
+      padding: 6rem 0;
+    }
+
+    .process__heading {
+      margin-bottom: 4rem;
+    }
+
+    .process h2 {
+      font-size: 2.25rem;
+    }
+
+    .process__grid {
+      gap: 2rem;
+    }
+
+    .process__card {
+      padding: 2rem 1.4rem 1.6rem;
+    }
+
+    .process__icon-shell {
+      width: 3.15rem;
+      height: 3.15rem;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .process__heading {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .process h2 {
+      font-size: 1.6rem;
+    }
+  }
+</style>

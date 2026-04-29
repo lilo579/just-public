@@ -1,0 +1,100 @@
+---
+type SocialProofImage = {
+  url: string;
+  alt?: string | null;
+};
+
+const { block } = Astro.props as {
+  block: {
+    type: "testimonials";
+    content: {
+      title?: string | null;
+      images?: SocialProofImage[];
+    };
+  };
+};
+
+const title = block.content?.title;
+const images = (block.content?.images ?? []).filter((img) => img?.url);
+---
+
+{images.length > 0 && (
+  <section class="testimonials">
+    <div class="testimonials__inner">
+      {title && <h2>{title}</h2>}
+
+      <div class="testimonials__grid">
+        {images.map((img) => (
+          <figure class="testimonials__item">
+            <img src={img.url} alt={img.alt || "Depoimento"} loading="lazy" />
+          </figure>
+        ))}
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .testimonials {
+    padding: 40px 0 56px;
+  }
+
+  .testimonials__inner {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  .testimonials h2 {
+    margin: 0 0 24px;
+    text-align: center;
+    color: hsl(220 15% 15%);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    line-height: 1.12;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+  }
+
+  .testimonials__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .testimonials__item {
+    margin: 0;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  }
+
+  .testimonials__item img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  @media (min-width: 768px) {
+    .testimonials__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 720px) {
+    .testimonials {
+      padding: 28px 0 36px;
+    }
+
+    .testimonials h2 {
+      margin-bottom: 20px;
+      text-align: left;
+      font-size: 1.6rem;
+    }
+
+    .testimonials__item {
+      border-radius: 16px;
+    }
+  }
+</style>

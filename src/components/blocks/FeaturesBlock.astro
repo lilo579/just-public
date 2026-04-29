@@ -1,0 +1,192 @@
+---
+import JustFeatureIcon from "../icons/JustFeatureIcon.astro";
+
+type FeatureItem = {
+  title?: string;
+  description?: string | null;
+};
+
+const { block } = Astro.props as {
+  block: {
+    type: "features";
+    content: {
+      title?: string | null;
+      items?: FeatureItem[];
+    };
+  };
+};
+
+const title = block.content?.title;
+const items = (block.content?.items ?? []).filter((item) => item?.title);
+
+const iconNames = ["shield", "heart", "users", "clock", "star"] as const;
+
+function iconFor(index: number) {
+  return iconNames[index % iconNames.length];
+}
+---
+
+{items.length > 0 && (
+  <section class="features">
+    <div class="features__overlay" aria-hidden="true"></div>
+
+    <div class="features__container">
+      {title && (
+        <div class="features__heading">
+          <h2>{title}</h2>
+        </div>
+      )}
+
+      <div class="features__grid">
+        {items.map((item, index) => (
+          <article class="features__card">
+            <div class="features__icon">
+              <JustFeatureIcon name={iconFor(index)} />
+            </div>
+
+            <div class="features__content">
+              <h3>{item.title}</h3>
+              {item.description && <p>{item.description}</p>}
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .features {
+    position: relative;
+    padding: 4rem 0;
+  }
+
+  .features__overlay {
+    position: absolute;
+    inset: 0;
+    background: #ffffff;
+  }
+
+  .features__container {
+    position: relative;
+    z-index: 1;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .features__heading {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .features h2 {
+    margin: 0;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 1.875rem;
+    line-height: 1.15;
+    font-weight: 700;
+    color: hsl(220 15% 15%);
+  }
+
+  .features__grid {
+    display: grid;
+    gap: 1rem;
+    max-width: 64rem;
+    margin: 0 auto;
+    grid-template-columns: 1fr;
+  }
+
+  .features__card {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 1rem 1rem;
+    border-radius: 0.75rem;
+    background: #ffffff;
+    border: 1px solid hsl(30 8% 88% / 0.4);
+    box-shadow:
+      0 1px 3px 0 hsl(220 15% 15% / 0.04),
+      0 4px 16px -4px hsl(220 15% 15% / 0.06);
+    transition:
+      transform 300ms ease,
+      box-shadow 300ms ease;
+  }
+
+  .features__card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 1px 3px 0 hsl(220 15% 15% / 0.04),
+      0 8px 24px -6px hsl(220 15% 15% / 0.10);
+  }
+
+  /* 🔥 ICON BASE (container) */
+  .features__icon {
+    flex: 0 0 auto;
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 999px;
+    background: hsl(145 20% 92%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 🔥 ICON SVG CONTROL (ESSENCIAL) */
+  .features__content {
+    min-width: 0;
+  }
+
+  .features__content h3 {
+    margin: 0;
+    color: hsl(220 15% 15% / 0.92);
+    font-size: 1rem;
+    line-height: 1.45;
+    font-weight: 500;
+    text-align: left;
+  }
+
+  .features__content p {
+    margin: 0.45rem 0 0;
+    color: hsl(220 15% 15% / 0.7);
+    font-size: 0.98rem;
+    line-height: 1.65;
+    text-align: left;
+  }
+
+  @media (min-width: 640px) {
+    .features__overlay {
+      background: hsl(220 15% 15% / 0.015);
+    }
+
+    .features__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .features {
+      padding: 6rem 0;
+    }
+
+    .features__heading {
+      margin-bottom: 4rem;
+    }
+
+    .features h2 {
+      font-size: 2.25rem;
+    }
+
+    .features__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      max-width: 64rem;
+      gap: 1rem;
+    }
+
+    .features__card {
+      gap: 1rem;
+      padding: 1.25rem 1.25rem;
+    }
+  }
+</style>

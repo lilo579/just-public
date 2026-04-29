@@ -1,31 +1,135 @@
 ---
-import type { HeroBlock as HeroBlockType } from "../../contracts/homepage"
+import type { HeroBlock as HeroBlockType } from "../../contracts/homepage";
 
-const { block } = Astro.props as { block: HeroBlockType }
-const { title, subtitle } = block.content
+const { block } = Astro.props as { block: HeroBlockType };
+const { title, subtitle, eyebrow } = block.content as {
+  title?: string;
+  subtitle?: string;
+  eyebrow?: string;
+};
 ---
 
 <section class="hero">
-  {title && <h1>{title}</h1>}
-  {subtitle && <p>{subtitle}</p>}
+  <div class="hero__container">
+    <div class="hero__content">
+      {eyebrow && <span class="hero__eyebrow">{eyebrow}</span>}
+
+      {title && <h1>{title}</h1>}
+
+      {subtitle && <p>{subtitle}</p>}
+    </div>
+  </div>
 </section>
 
 <style>
   .hero {
-    padding: 32px 0 20px;
+    position: relative;
+    background: linear-gradient(
+      180deg,
+      hsl(145 50% 95% / 0.4) 0%,
+      hsl(30 10% 97%) 100%
+    );
+  }
+
+  .hero__container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-top: 80px;
+    padding-bottom: 80px;
+  }
+
+  .hero__content {
+    max-width: 768px;
+  }
+
+  .hero__eyebrow {
+    display: block;
+    margin-bottom: 12px;
+    color: hsl(145 63% 42%);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 12px;
+    font-weight: 400;
   }
 
   .hero h1 {
-    margin: 0 0 16px;
-    font-size: clamp(2rem, 4vw, 3.5rem);
-    line-height: 1.05;
-    letter-spacing: -0.02em;
+    margin: 0;
+    color: hsl(220 15% 15%);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
   }
 
   .hero p {
-    margin: 0;
-    max-width: 760px;
-    font-size: 1.1rem;
-    color: #4b5563;
+    margin: 24px 0 0;
+    max-width: 672px;
+    color: hsl(220 15% 15% / 0.72);
+    font-size: 18px;
+    line-height: 1.625;
+  }
+
+  @media (min-width: 640px) {
+    .hero h1 {
+      font-size: 60px;
+    }
+
+    .hero p {
+      font-size: 20px;
+    }
+
+    .hero__eyebrow {
+      font-size: 14px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .hero__container {
+      padding-top: 128px;
+      padding-bottom: 144px;
+    }
+
+    .hero h1 {
+      font-size: 72px;
+    }
+
+    .hero p {
+      color: hsl(220 15% 15% / 0.75);
+    }
+
+    .hero__eyebrow {
+      letter-spacing: 0.025em;
+      font-weight: 500;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .hero__container {
+      padding-left: 20px;
+      padding-right: 20px;
+      padding-top: 72px;
+      padding-bottom: 56px;
+    }
+
+    .hero__content {
+      max-width: 100%;
+    }
+
+    .hero h1 {
+      font-size: 42px;
+      line-height: 1.04;
+      text-wrap: pretty;
+    }
+
+    .hero p {
+      margin-top: 20px;
+      font-size: 17px;
+      line-height: 1.65;
+      max-width: 100%;
+    }
   }
 </style>

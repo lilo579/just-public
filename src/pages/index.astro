@@ -6,7 +6,6 @@ import type { ResolvedHomepage } from "../contracts/homepage"
 import HomepageRenderer from "../components/HomepageRenderer.astro"
 import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
-import JustSignature from "../components/JustSignature.astro"
 
 // --- Host forwarding (public homepage) ---
 const host = Astro.request.headers.get("host")?.trim()
@@ -57,7 +56,6 @@ const footer = homepage.footer
       <HomepageRenderer homepage={homepage} />
     </main>
 
-    <JustSignature />
     <Footer footer={footer} />
   </body>
 </html>

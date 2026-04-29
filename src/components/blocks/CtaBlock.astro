@@ -1,28 +1,116 @@
 ---
-import type { CtaBlock as CtaBlockType } from "../../contracts/homepage"
+const { block } = Astro.props as {
+  block: {
+    type: "cta";
+    content: {
+      primaryCTA?: {
+        href?: string;
+        label: string;
+        visible?: boolean;
+      } | null;
+      title?: string | null;
+      body?: string | null;
+      buttonLabel?: string | null;
+    };
+  };
+};
 
-const { block } = Astro.props as { block: CtaBlockType }
-const { primaryCTA } = block.content
+const { primaryCTA, title, body, buttonLabel } = block.content;
+const finalLabel = buttonLabel || primaryCTA?.label;
+const showButton = primaryCTA?.visible !== false && primaryCTA?.href && finalLabel;
 ---
 
-{primaryCTA?.visible !== false && primaryCTA?.href && (
-  <section class="cta">
-    <a href={primaryCTA.href}>{primaryCTA.label}</a>
+{(title || body || showButton) && (
+  <section class="cta" id="cta-final">
+    <div class="cta__inner">
+      {title && <h2>{title}</h2>}
+      {body && <p>{body}</p>}
+
+      {showButton && (
+        <a href={primaryCTA!.href} class="cta__button">
+          {finalLabel}
+        </a>
+      )}
+    </div>
   </section>
 )}
 
 <style>
   .cta {
-    padding: 40px 0 16px;
+    padding: 48px 0 72px;
   }
 
-  .cta a {
-    display: inline-block;
-    padding: 14px 20px;
-    border-radius: 12px;
-    background: #111827;
+  .cta__inner {
+    max-width: 720px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .cta h2 {
+    margin: 0;
+    color: hsl(220 15% 15%);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: clamp(1.9rem, 3vw, 2.6rem);
+    line-height: 1.12;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+
+  .cta p {
+    margin: 16px 0 0;
+    color: #4b5563;
+    font-size: 1.02rem;
+    line-height: 1.72;
+  }
+
+  .cta__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 28px;
+    padding: 16px 24px;
+    border-radius: 999px;
+    background: hsl(145 63% 42%);
     color: #ffffff;
     text-decoration: none;
     font-weight: 600;
+    font-size: 1rem;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    min-height: 56px;
+  }
+
+  @media (max-width: 720px) {
+    .cta {
+      padding: 32px 0 48px;
+    }
+
+    .cta__inner {
+      max-width: 100%;
+      padding-left: 8px;
+      padding-right: 8px;
+      text-align: center;
+    }
+
+    .cta h2 {
+      font-size: 1.62rem;
+      line-height: 1.18;
+      text-wrap: balance;
+    }
+
+    .cta p {
+      font-size: 0.98rem;
+      line-height: 1.68;
+      margin-top: 14px;
+    }
+
+    .cta__button {
+      width: 74%;
+      text-align: center;
+      margin-top: 36px;
+      padding: 15px 18px;
+      font-size: 1.2rem;
+      min-height: 26px;
+    }
   }
 </style>
