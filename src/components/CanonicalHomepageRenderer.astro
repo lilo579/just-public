@@ -47,56 +47,67 @@ type RenderableNode =
       kind: "hero"
       node: SerializableHomepageRenderNode
       block: HeroBlockType
+      warnings: string[]
     }
   | {
       kind: "trust"
       node: SerializableHomepageRenderNode
       block: TrustBlockType
+      warnings: string[]
     }
   | {
       kind: "services"
       node: SerializableHomepageRenderNode
       block: ServicesBlockType
+      warnings: string[]
     }
   | {
       kind: "rich_text"
       node: SerializableHomepageRenderNode
       block: RichTextBlockType
+      warnings: string[]
     }
   | {
       kind: "about"
       node: SerializableHomepageRenderNode
       block: AboutBlockType
+      warnings: string[]
     }
   | {
       kind: "features"
       node: SerializableHomepageRenderNode
       block: FeaturesBlockType
+      warnings: string[]
     }
   | {
       kind: "process"
       node: SerializableHomepageRenderNode
       block: ProcessBlockType
+      warnings: string[]
     }
   | {
       kind: "info_card"
       node: SerializableHomepageRenderNode
       block: InfoCardBlockType
+      warnings: string[]
     }
   | {
       kind: "testimonials"
       node: SerializableHomepageRenderNode
       block: TestimonialsBlockType
+      warnings: string[]
     }
   | {
       kind: "cta_final"
       node: SerializableHomepageRenderNode
       block: CtaBlockType
+      warnings: string[]
     }
   | {
       kind: "unsupported"
       node: SerializableHomepageRenderNode
       reason: string
+      warnings: string[]
     }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -118,6 +129,10 @@ function readNamespacedSource(
 
 function asOptionalString(value: unknown): string | null | undefined {
   return typeof value === "string" ? value : undefined
+}
+
+function hasTextContent(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0
 }
 
 function asStringArray(value: unknown): string[] {
@@ -142,81 +157,137 @@ function commentFor(node: SerializableHomepageRenderNode, reason: string) {
   return `<!-- CanonicalHomepageRenderer skipped node id=${safeId} componentKey=${safeKey} reason=${safeReason} -->`
 }
 
-function adaptHero(node: SerializableHomepageRenderNode): HeroBlockType {
+function warn(node: SerializableHomepageRenderNode, message: string) {
+  return `${node.componentKey}: ${message}`
+}
+
+function adaptHero(node: SerializableHomepageRenderNode): {
+  block: HeroBlockType
+  warnings: string[]
+} {
   const source = readNamespacedSource(node.props, "hero")
-  return {
-    type: "hero",
+  const block = {
+    type: "hero" as const,
     content: {
       title: asOptionalString(source.title),
       subtitle: asOptionalString(source.subtitle),
       eyebrow: asOptionalString(source.eyebrow),
     },
   }
+
+  return {
+    block,
+    warnings: [],
+  }
 }
 
-function adaptTrust(node: SerializableHomepageRenderNode): TrustBlockType {
+function adaptTrust(node: SerializableHomepageRenderNode): {
+  block: TrustBlockType
+  warnings: string[]
+} {
   const source = readNamespacedSource(node.props, "trust")
   const items = asStringArray(source.items)
 
   return {
-    type: "trust",
-    content: {
-      items,
-      hasContent: items.length > 0,
+    block: {
+      type: "trust",
+      content: {
+        items,
+        hasContent: items.length > 0,
+      },
     },
+    warnings: [],
   }
 }
 
-function adaptServices(node: SerializableHomepageRenderNode): ServicesBlockType {
+function adaptServices(node: SerializableHomepageRenderNode): {
+  block: ServicesBlockType
+  warnings: string[]
+} {
   const source = readNamespacedSource(node.props, "services")
+  const warnings: string[] = []
   const items = Array.isArray(source.items)
     ? source.items
         .filter(isRecord)
-        .map((item) => ({
-          title: asOptionalString(item.title) ?? "",
-          description: asOptionalString(item.description) ?? "",
-        }))
+        .map((item, index) => {
+          const title = asOptionalString(item.title) ?? ""
+          const description = asOptionalString(item.description) ?? ""
+
+          if (title && !hasTextContent(description)) {
+            warnings.push(
+              warn(
+                node,
+                `services item ${index + 1} has title but empty description; ServicesBlock will not render this item`
+              )
+            )
+          }
+
+          return {
+            title,
+            description,
+          }
+        })
         .filter((item) => item.title)
     : []
 
   return {
-    type: "services",
-    content: {
-      source: "canonical_preview",
-      title: asOptionalString(source.title),
-      items,
+    block: {
+      type: "services",
+      content: {
+        source: "canonical_preview",
+        title: asOptionalString(source.title),
+        items,
+      },
     },
+    warnings,
   }
 }
 
-function adaptRichText(node: SerializableHomepageRenderNode): RichTextBlockType {
+function adaptRichText(node: SerializableHomepageRenderNode): {
+  block: RichTextBlockType
+  warnings: string[]
+} {
   const source = readContentSource(node.props)
   return {
-    type: "rich_text",
-    content: {
-      title: asOptionalString(source.title),
-      paragraphs: asStringArray(source.paragraphs),
+    block: {
+      type: "rich_text",
+      content: {
+        title: asOptionalString(source.title),
+        paragraphs: asStringArray(source.paragraphs),
+      },
     },
+    warnings: [],
   }
 }
 
-function adaptAbout(node: SerializableHomepageRenderNode): AboutBlockType {
+function adaptAbout(node: SerializableHomepageRenderNode): {
+  block: AboutBlockType
+  warnings: string[]
+} {
   const source = readContentSource(node.props)
   return {
-    type: "about",
-    content: {
-      title: asOptionalString(source.title),
-      body: asOptionalString(source.body),
-      photoUrl: asOptionalString(source.photoUrl),
+    block: {
+      type: "about",
+      content: {
+        title: asOptionalString(source.title),
+        body: asOptionalString(source.body),
+        photoUrl: asOptionalString(source.photoUrl),
+      },
     },
+    warnings: [],
   }
 }
 
-function adaptFeatures(node: SerializableHomepageRenderNode): FeaturesBlockType {
+function adaptFeatures(node: SerializableHomepageRenderNode): {
+  block: FeaturesBlockType
+  warnings: string[]
+} {
+  const isBenefits = normalizeComponentKey(node.componentKey) === "benefits"
   const source =
-    normalizeComponentKey(node.componentKey) === "benefits"
+    isBenefits
       ? readNamespacedSource(node.props, "benefits")
       : readContentSource(node.props)
+  const warnings: string[] = []
   const items = Array.isArray(source.items)
     ? source.items
         .filter(isRecord)
@@ -227,16 +298,41 @@ function adaptFeatures(node: SerializableHomepageRenderNode): FeaturesBlockType 
         .filter((item) => item.title)
     : []
 
+  if (isBenefits) {
+    const metricsCount = Array.isArray(source.metrics) ? source.metrics.filter(isRecord).length : 0
+    const droppedFields = [
+      hasTextContent(source.kicker) ? "kicker" : null,
+      hasTextContent(source.body) ? "body" : null,
+      hasTextContent(source.summary) ? "summary" : null,
+      metricsCount > 0 ? `metrics(${metricsCount})` : null,
+    ].filter((value): value is string => value !== null)
+
+    if (droppedFields.length > 0) {
+      warnings.push(
+        warn(
+          node,
+          `benefits content not rendered by FeaturesBlock: ${droppedFields.join(", ")}`
+        )
+      )
+    }
+  }
+
   return {
-    type: "features",
-    content: {
-      title: asOptionalString(source.title),
-      items,
+    block: {
+      type: "features",
+      content: {
+        title: asOptionalString(source.title),
+        items,
+      },
     },
+    warnings,
   }
 }
 
-function adaptProcess(node: SerializableHomepageRenderNode): ProcessBlockType {
+function adaptProcess(node: SerializableHomepageRenderNode): {
+  block: ProcessBlockType
+  warnings: string[]
+} {
   const source = readNamespacedSource(node.props, "process")
   const steps = Array.isArray(source.steps)
     ? source.steps
@@ -250,27 +346,39 @@ function adaptProcess(node: SerializableHomepageRenderNode): ProcessBlockType {
     : []
 
   return {
-    type: "process",
-    content: {
-      title: asOptionalString(source.title),
-      steps,
+    block: {
+      type: "process",
+      content: {
+        title: asOptionalString(source.title),
+        steps,
+      },
     },
+    warnings: [],
   }
 }
 
-function adaptInfoCard(node: SerializableHomepageRenderNode): InfoCardBlockType {
+function adaptInfoCard(node: SerializableHomepageRenderNode): {
+  block: InfoCardBlockType
+  warnings: string[]
+} {
   const source = readContentSource(node.props)
   return {
-    type: "info_card",
-    content: {
-      title: asOptionalString(source.title),
-      body: asOptionalString(source.body),
-      pills: asStringArray(source.pills),
+    block: {
+      type: "info_card",
+      content: {
+        title: asOptionalString(source.title),
+        body: asOptionalString(source.body),
+        pills: asStringArray(source.pills),
+      },
     },
+    warnings: [],
   }
 }
 
-function adaptTestimonials(node: SerializableHomepageRenderNode): TestimonialsBlockType {
+function adaptTestimonials(node: SerializableHomepageRenderNode): {
+  block: TestimonialsBlockType
+  warnings: string[]
+} {
   const source = readNamespacedSource(node.props, "testimonials")
   const images = Array.isArray(source.images)
     ? source.images
@@ -283,39 +391,60 @@ function adaptTestimonials(node: SerializableHomepageRenderNode): TestimonialsBl
     : []
 
   return {
-    type: "testimonials",
-    content: {
-      title: asOptionalString(source.title),
-      images,
+    block: {
+      type: "testimonials",
+      content: {
+        title: asOptionalString(source.title),
+        images,
+      },
     },
+    warnings: [],
   }
 }
 
-function adaptCta(node: SerializableHomepageRenderNode): CtaBlockType {
+function adaptCta(node: SerializableHomepageRenderNode): {
+  block: CtaBlockType
+  warnings: string[]
+} {
   const source = readNamespacedSource(node.props, "ctaFinal")
   const contact = isRecord(node.props.contact) ? node.props.contact : {}
   const whatsappNumber = sanitizeWhatsappNumber(contact.whatsappNumber)
   const whatsappVisible = contact.whatsappVisible === true
+  const email = asOptionalString(contact.email)
+  const emailVisible = contact.emailVisible === true
   const href =
     whatsappVisible && whatsappNumber ? `https://wa.me/${whatsappNumber}` : undefined
   const label =
     asOptionalString(source.buttonLabel) ?? "Falar pelo WhatsApp"
+  const warnings: string[] = []
+
+  if (emailVisible && hasTextContent(email) && !href) {
+    warnings.push(
+      warn(
+        node,
+        "email fallback exists but adapter does not generate primaryCTA without WhatsApp"
+      )
+    )
+  }
 
   return {
-    type: "cta",
-    content: {
-      title: asOptionalString(source.title),
-      body: asOptionalString(source.body),
-      buttonLabel: asOptionalString(source.buttonLabel),
-      primaryCTA: href
-        ? {
-            type: "whatsapp",
-            label,
-            href,
-            visible: true,
-          }
-        : null,
+    block: {
+      type: "cta",
+      content: {
+        title: asOptionalString(source.title),
+        body: asOptionalString(source.body),
+        buttonLabel: asOptionalString(source.buttonLabel),
+        primaryCTA: href
+          ? {
+              type: "whatsapp",
+              label,
+              href,
+              visible: true,
+            }
+          : null,
+      },
     },
+    warnings,
   }
 }
 
@@ -343,40 +472,186 @@ function adaptNode(node: SerializableHomepageRenderNode): RenderableNode {
   const componentKey = normalizeComponentKey(node.componentKey)
 
   switch (componentKey) {
-    case "hero":
-      return { kind: "hero", node, block: adaptHero(node) }
-    case "trust":
-      return { kind: "trust", node, block: adaptTrust(node) }
-    case "services":
-      return { kind: "services", node, block: adaptServices(node) }
-    case "rich_text":
-      return { kind: "rich_text", node, block: adaptRichText(node) }
-    case "about":
-      return { kind: "about", node, block: adaptAbout(node) }
+    case "hero": {
+      const { block, warnings } = adaptHero(node)
+      return { kind: "hero", node, block, warnings }
+    }
+    case "trust": {
+      const { block, warnings } = adaptTrust(node)
+      return { kind: "trust", node, block, warnings }
+    }
+    case "services": {
+      const { block, warnings } = adaptServices(node)
+      return { kind: "services", node, block, warnings }
+    }
+    case "rich_text": {
+      const { block, warnings } = adaptRichText(node)
+      return { kind: "rich_text", node, block, warnings }
+    }
+    case "about": {
+      const { block, warnings } = adaptAbout(node)
+      return { kind: "about", node, block, warnings }
+    }
     case "benefits":
-    case "features":
-      return { kind: "features", node, block: adaptFeatures(node) }
-    case "process":
-      return { kind: "process", node, block: adaptProcess(node) }
-    case "info_card":
-      return { kind: "info_card", node, block: adaptInfoCard(node) }
-    case "testimonials":
-      return { kind: "testimonials", node, block: adaptTestimonials(node) }
-    case "cta_final":
-      return { kind: "cta_final", node, block: adaptCta(node) }
+    case "features": {
+      const { block, warnings } = adaptFeatures(node)
+      return { kind: "features", node, block, warnings }
+    }
+    case "process": {
+      const { block, warnings } = adaptProcess(node)
+      return { kind: "process", node, block, warnings }
+    }
+    case "info_card": {
+      const { block, warnings } = adaptInfoCard(node)
+      return { kind: "info_card", node, block, warnings }
+    }
+    case "testimonials": {
+      const { block, warnings } = adaptTestimonials(node)
+      return { kind: "testimonials", node, block, warnings }
+    }
+    case "cta_final": {
+      const { block, warnings } = adaptCta(node)
+      return { kind: "cta_final", node, block, warnings }
+    }
     default:
       return {
         kind: "unsupported",
         node,
         reason: "componentKey_not_supported_in_canonical_preview",
+        warnings: [
+          warn(node, "unsupported componentKey; node skipped by canonical preview adapter"),
+        ],
       }
+  }
+}
+
+function hasUsefulContent(entry: Exclude<RenderableNode, { kind: "unsupported" }>) {
+  switch (entry.kind) {
+    case "hero":
+      return Boolean(
+        hasTextContent(entry.block.content.title) ||
+          hasTextContent(entry.block.content.subtitle) ||
+          hasTextContent(entry.block.content.eyebrow)
+      )
+    case "trust":
+      return entry.block.content.hasContent && entry.block.content.items.some(hasTextContent)
+    case "services":
+      return entry.block.content.items.some(
+        (item) => hasTextContent(item.title) && hasTextContent(item.description)
+      )
+    case "rich_text":
+      return Boolean(
+        hasTextContent(entry.block.content.title) ||
+          entry.block.content.paragraphs.some(hasTextContent)
+      )
+    case "about":
+      return Boolean(
+        hasTextContent(entry.block.content.title) ||
+          hasTextContent(entry.block.content.body) ||
+          hasTextContent(entry.block.content.photoUrl)
+      )
+    case "features":
+      return entry.block.content.items.some((item) => hasTextContent(item.title))
+    case "process":
+      return entry.block.content.steps.some((step) => hasTextContent(step.title))
+    case "info_card":
+      return Boolean(
+        hasTextContent(entry.block.content.title) ||
+          hasTextContent(entry.block.content.body) ||
+          entry.block.content.pills.some(hasTextContent)
+      )
+    case "testimonials":
+      return entry.block.content.images.some((image) => hasTextContent(image.url))
+    case "cta_final": {
+      const { title, body, buttonLabel, primaryCTA } = entry.block.content
+      const finalLabel = buttonLabel ?? primaryCTA?.label
+      const showButton =
+        primaryCTA?.visible !== false && hasTextContent(primaryCTA?.href) && hasTextContent(finalLabel)
+      return Boolean(hasTextContent(title) || hasTextContent(body) || showButton)
+    }
   }
 }
 
 const renderableNodes = [...(plan.nodes ?? [])]
   .sort((left, right) => left.order - right.order)
   .map(adaptNode)
+
+const diagnosticWarnings = renderableNodes.flatMap((entry) => {
+  if (entry.kind === "unsupported") {
+    return entry.warnings
+  }
+
+  const warnings = [...entry.warnings]
+
+  if (!hasUsefulContent(entry)) {
+    warnings.push(warn(entry.node, "adapter produced block with no useful renderable content"))
+  }
+
+  return warnings
+})
+
+const unsupportedEntries = renderableNodes.filter(
+  (entry): entry is Extract<RenderableNode, { kind: "unsupported" }> => entry.kind === "unsupported"
+)
+const unsupportedComponentKeys = unsupportedEntries.map((entry) => entry.node.componentKey)
+const renderedCount = renderableNodes.filter(
+  (entry) => entry.kind !== "unsupported" && hasUsefulContent(entry)
+).length
 ---
+
+<section class="canonical-diagnostics" aria-label="Canonical renderer diagnostics">
+  <div class="canonical-diagnostics__header">
+    <strong>Canonical SSR Diagnostics</strong>
+    <span>{plan.contractVersion || "unknown contract"}</span>
+  </div>
+
+  <dl class="canonical-diagnostics__stats">
+    <div>
+      <dt>Total nodes</dt>
+      <dd>{plan.nodes?.length ?? 0}</dd>
+    </div>
+    <div>
+      <dt>Rendered</dt>
+      <dd>{renderedCount}</dd>
+    </div>
+    <div>
+      <dt>Unsupported</dt>
+      <dd>{unsupportedEntries.length}</dd>
+    </div>
+    <div>
+      <dt>Warnings</dt>
+      <dd>{diagnosticWarnings.length}</dd>
+    </div>
+  </dl>
+
+  <div class="canonical-diagnostics__body">
+    <div>
+      <h2>Unsupported componentKeys</h2>
+      {unsupportedComponentKeys.length > 0 ? (
+        <ul>
+          {unsupportedComponentKeys.map((componentKey) => (
+            <li>{componentKey}</li>
+          ))}
+        </ul>
+      ) : (
+        <p>None</p>
+      )}
+    </div>
+
+    <div>
+      <h2>Adapter warnings</h2>
+      {diagnosticWarnings.length > 0 ? (
+        <ul>
+          {diagnosticWarnings.map((message) => (
+            <li>{message}</li>
+          ))}
+        </ul>
+      ) : (
+        <p>None</p>
+      )}
+    </div>
+  </div>
+</section>
 
 {
   renderableNodes.map((entry) => {
@@ -416,3 +691,108 @@ const renderableNodes = [...(plan.nodes ?? [])]
     }
   })
 }
+
+<style>
+  .canonical-diagnostics {
+    margin: 1.5rem auto 2rem;
+    max-width: 1100px;
+    padding: 1rem 1.25rem;
+    border: 1px solid hsl(35 15% 82%);
+    border-radius: 0.75rem;
+    background: hsl(40 33% 97%);
+    color: hsl(220 15% 15%);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+      "Courier New", monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .canonical-diagnostics__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: baseline;
+  }
+
+  .canonical-diagnostics__header strong {
+    font-size: 0.95rem;
+  }
+
+  .canonical-diagnostics__stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0 0;
+  }
+
+  .canonical-diagnostics__stats div {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: hsl(0 0% 100% / 0.85);
+    border: 1px solid hsl(35 15% 86%);
+  }
+
+  .canonical-diagnostics__stats dt {
+    margin: 0;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: hsl(220 10% 35%);
+  }
+
+  .canonical-diagnostics__stats dd {
+    margin: 0.25rem 0 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .canonical-diagnostics__body {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .canonical-diagnostics__body h2 {
+    margin: 0 0 0.5rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: hsl(220 10% 35%);
+  }
+
+  .canonical-diagnostics__body p,
+  .canonical-diagnostics__body ul {
+    margin: 0;
+  }
+
+  .canonical-diagnostics__body ul {
+    padding-left: 1.2rem;
+  }
+
+  .canonical-diagnostics__body li + li {
+    margin-top: 0.35rem;
+  }
+
+  @media (min-width: 900px) {
+    .canonical-diagnostics__body {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    }
+  }
+
+  @media (max-width: 720px) {
+    .canonical-diagnostics {
+      margin: 1rem 1rem 1.5rem;
+      padding: 0.9rem 1rem;
+      font-size: 0.84rem;
+    }
+
+    .canonical-diagnostics__header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .canonical-diagnostics__stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>
