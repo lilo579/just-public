@@ -37,8 +37,9 @@ Body: ${text}`
 
 const homepage = (await res.json()) as ResolvedHomepage
 const footer = homepage.footer
+const wantsCanonicalRenderer = renderer === "canonical"
 const shouldUseCanonicalRenderer =
-  renderer === "canonical" && Boolean(homepage.serializablePlan)
+  wantsCanonicalRenderer && Boolean(homepage.serializablePlan)
 ---
 
 <html lang="pt-BR">
@@ -59,7 +60,19 @@ const shouldUseCanonicalRenderer =
       {shouldUseCanonicalRenderer ? (
         <CanonicalHomepageRenderer plan={homepage.serializablePlan} />
       ) : (
-        <HomepageRenderer homepage={homepage} />
+        <>
+          {wantsCanonicalRenderer && !homepage.serializablePlan && (
+            <section
+              aria-label="Canonical preview fallback warning"
+              style="margin: 1.5rem auto 0; max-width: 1100px; padding: 1rem 1.25rem; border: 1px solid hsl(12 75% 78%); border-radius: 0.75rem; background: hsl(12 100% 97%); color: hsl(12 45% 22%); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 0.95rem; line-height: 1.5;"
+            >
+              Canonical renderer requested, but serializablePlan was not present in the
+              payload. Falling back to legacy HomepageRenderer.
+            </section>
+          )}
+
+          <HomepageRenderer homepage={homepage} />
+        </>
       )}
     </main>
 
