@@ -9,6 +9,7 @@ import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
 
 const slug = Astro.url.searchParams.get("slug")?.trim()
+const renderer = Astro.url.searchParams.get("renderer")?.trim()
 const MODE = "preview"
 
 if (!slug) {
@@ -36,6 +37,8 @@ Body: ${text}`
 
 const homepage = (await res.json()) as ResolvedHomepage
 const footer = homepage.footer
+const shouldUseCanonicalRenderer =
+  renderer === "canonical" && Boolean(homepage.serializablePlan)
 ---
 
 <html lang="pt-BR">
@@ -52,7 +55,8 @@ const footer = homepage.footer
     />
 
     <main>
-      {homepage.serializablePlan ? (
+      {/* canonical preview is opt-in while adapters are being aligned with producer props */}
+      {shouldUseCanonicalRenderer ? (
         <CanonicalHomepageRenderer plan={homepage.serializablePlan} />
       ) : (
         <HomepageRenderer homepage={homepage} />
