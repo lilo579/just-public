@@ -1,14 +1,18 @@
 ---
 import HeroBlock from "./blocks/HeroBlock.astro"
+import TrustBlock from "./blocks/TrustBlock.astro"
+import ServicesBlock from "./blocks/ServicesBlock.astro"
 import RichTextBlock from "./blocks/RichTextBlock.astro"
 import AboutBlock from "./blocks/AboutBlock.astro"
 import FeaturesBlock from "./blocks/FeaturesBlock.astro"
 import ProcessBlock from "./blocks/ProcessBlock.astro"
 import InfoCardBlock from "./blocks/InfoCardBlock.astro"
 import TestimonialsBlock from "./blocks/TestimonialsBlock.astro"
+import CtaBlock from "./blocks/CtaBlock.astro"
 
 import type {
   AboutBlock as AboutBlockType,
+  CtaBlock as CtaBlockType,
   FeaturesBlock as FeaturesBlockType,
   HeroBlock as HeroBlockType,
   InfoCardBlock as InfoCardBlockType,
@@ -16,7 +20,9 @@ import type {
   RichTextBlock as RichTextBlockType,
   SerializableHomepageRenderNode,
   SerializableHomepageRenderPlan,
+  ServicesBlock as ServicesBlockType,
   TestimonialsBlock as TestimonialsBlockType,
+  TrustBlock as TrustBlockType,
 } from "../contracts/homepage"
 
 const { plan } = Astro.props as {
@@ -25,18 +31,32 @@ const { plan } = Astro.props as {
 
 type SupportedComponentKey =
   | "hero"
+  | "trust"
+  | "services"
   | "rich_text"
   | "about"
+  | "benefits"
   | "features"
   | "process"
   | "info_card"
   | "testimonials"
+  | "cta_final"
 
 type RenderableNode =
   | {
       kind: "hero"
       node: SerializableHomepageRenderNode
       block: HeroBlockType
+    }
+  | {
+      kind: "trust"
+      node: SerializableHomepageRenderNode
+      block: TrustBlockType
+    }
+  | {
+      kind: "services"
+      node: SerializableHomepageRenderNode
+      block: ServicesBlockType
     }
   | {
       kind: "rich_text"
@@ -69,6 +89,11 @@ type RenderableNode =
       block: TestimonialsBlockType
     }
   | {
+      kind: "cta_final"
+      node: SerializableHomepageRenderNode
+      block: CtaBlockType
+    }
+  | {
       kind: "unsupported"
       node: SerializableHomepageRenderNode
       reason: string
@@ -83,6 +108,14 @@ function readContentSource(props: Record<string, unknown>): Record<string, unkno
   return props
 }
 
+function readNamespacedSource(
+  props: Record<string, unknown>,
+  namespace: string
+): Record<string, unknown> {
+  if (isRecord(props[namespace])) return props[namespace]
+  return readContentSource(props)
+}
+
 function asOptionalString(value: unknown): string | null | undefined {
   return typeof value === "string" ? value : undefined
 }
@@ -90,6 +123,12 @@ function asOptionalString(value: unknown): string | null | undefined {
 function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return []
   return value.filter((item): item is string => typeof item === "string")
+}
+
+function sanitizeWhatsappNumber(value: unknown): string | null {
+  if (typeof value !== "string") return null
+  const digits = value.replace(/\D/g, "")
+  return digits ? digits : null
 }
 
 function sanitizeCommentValue(value: string): string {
@@ -104,13 +143,48 @@ function commentFor(node: SerializableHomepageRenderNode, reason: string) {
 }
 
 function adaptHero(node: SerializableHomepageRenderNode): HeroBlockType {
-  const source = readContentSource(node.props)
+  const source = readNamespacedSource(node.props, "hero")
   return {
     type: "hero",
     content: {
       title: asOptionalString(source.title),
       subtitle: asOptionalString(source.subtitle),
       eyebrow: asOptionalString(source.eyebrow),
+    },
+  }
+}
+
+function adaptTrust(node: SerializableHomepageRenderNode): TrustBlockType {
+  const source = readNamespacedSource(node.props, "trust")
+  const items = asStringArray(source.items)
+
+  return {
+    type: "trust",
+    content: {
+      items,
+      hasContent: items.length > 0,
+    },
+  }
+}
+
+function adaptServices(node: SerializableHomepageRenderNode): ServicesBlockType {
+  const source = readNamespacedSource(node.props, "services")
+  const items = Array.isArray(source.items)
+    ? source.items
+        .filter(isRecord)
+        .map((item) => ({
+          title: asOptionalString(item.title) ?? "",
+          description: asOptionalString(item.description) ?? "",
+        }))
+        .filter((item) => item.title)
+    : []
+
+  return {
+    type: "services",
+    content: {
+      source: "canonical_preview",
+      title: asOptionalString(source.title),
+      items,
     },
   }
 }
@@ -139,7 +213,10 @@ function adaptAbout(node: SerializableHomepageRenderNode): AboutBlockType {
 }
 
 function adaptFeatures(node: SerializableHomepageRenderNode): FeaturesBlockType {
-  const source = readContentSource(node.props)
+  const source =
+    normalizeComponentKey(node.componentKey) === "benefits"
+      ? readNamespacedSource(node.props, "benefits")
+      : readContentSource(node.props)
   const items = Array.isArray(source.items)
     ? source.items
         .filter(isRecord)
@@ -160,7 +237,7 @@ function adaptFeatures(node: SerializableHomepageRenderNode): FeaturesBlockType 
 }
 
 function adaptProcess(node: SerializableHomepageRenderNode): ProcessBlockType {
-  const source = readContentSource(node.props)
+  const source = readNamespacedSource(node.props, "process")
   const steps = Array.isArray(source.steps)
     ? source.steps
         .filter(isRecord)
@@ -194,7 +271,7 @@ function adaptInfoCard(node: SerializableHomepageRenderNode): InfoCardBlockType 
 }
 
 function adaptTestimonials(node: SerializableHomepageRenderNode): TestimonialsBlockType {
-  const source = readContentSource(node.props)
+  const source = readNamespacedSource(node.props, "testimonials")
   const images = Array.isArray(source.images)
     ? source.images
         .filter(isRecord)
@@ -214,16 +291,48 @@ function adaptTestimonials(node: SerializableHomepageRenderNode): TestimonialsBl
   }
 }
 
+function adaptCta(node: SerializableHomepageRenderNode): CtaBlockType {
+  const source = readNamespacedSource(node.props, "ctaFinal")
+  const contact = isRecord(node.props.contact) ? node.props.contact : {}
+  const whatsappNumber = sanitizeWhatsappNumber(contact.whatsappNumber)
+  const whatsappVisible = contact.whatsappVisible === true
+  const href =
+    whatsappVisible && whatsappNumber ? `https://wa.me/${whatsappNumber}` : undefined
+  const label =
+    asOptionalString(source.buttonLabel) ?? "Falar pelo WhatsApp"
+
+  return {
+    type: "cta",
+    content: {
+      title: asOptionalString(source.title),
+      body: asOptionalString(source.body),
+      buttonLabel: asOptionalString(source.buttonLabel),
+      primaryCTA: href
+        ? {
+            type: "whatsapp",
+            label,
+            href,
+            visible: true,
+          }
+        : null,
+    },
+  }
+}
+
 function normalizeComponentKey(componentKey: string): SupportedComponentKey | null {
   const [baseKey] = componentKey.split(":")
   switch (baseKey) {
     case "hero":
+    case "trust":
+    case "services":
     case "rich_text":
     case "about":
+    case "benefits":
     case "features":
     case "process":
     case "info_card":
     case "testimonials":
+    case "cta_final":
       return baseKey
     default:
       return null
@@ -236,10 +345,15 @@ function adaptNode(node: SerializableHomepageRenderNode): RenderableNode {
   switch (componentKey) {
     case "hero":
       return { kind: "hero", node, block: adaptHero(node) }
+    case "trust":
+      return { kind: "trust", node, block: adaptTrust(node) }
+    case "services":
+      return { kind: "services", node, block: adaptServices(node) }
     case "rich_text":
       return { kind: "rich_text", node, block: adaptRichText(node) }
     case "about":
       return { kind: "about", node, block: adaptAbout(node) }
+    case "benefits":
     case "features":
       return { kind: "features", node, block: adaptFeatures(node) }
     case "process":
@@ -248,6 +362,8 @@ function adaptNode(node: SerializableHomepageRenderNode): RenderableNode {
       return { kind: "info_card", node, block: adaptInfoCard(node) }
     case "testimonials":
       return { kind: "testimonials", node, block: adaptTestimonials(node) }
+    case "cta_final":
+      return { kind: "cta_final", node, block: adaptCta(node) }
     default:
       return {
         kind: "unsupported",
@@ -268,6 +384,12 @@ const renderableNodes = [...(plan.nodes ?? [])]
       case "hero":
         return <HeroBlock block={entry.block} />
 
+      case "trust":
+        return <TrustBlock block={entry.block} />
+
+      case "services":
+        return <ServicesBlock block={entry.block} />
+
       case "rich_text":
         return <RichTextBlock block={entry.block} />
 
@@ -285,6 +407,9 @@ const renderableNodes = [...(plan.nodes ?? [])]
 
       case "testimonials":
         return <TestimonialsBlock block={entry.block} />
+
+      case "cta_final":
+        return <CtaBlock block={entry.block} />
 
       case "unsupported":
         return <Fragment set:html={commentFor(entry.node, entry.reason)} />
