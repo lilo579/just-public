@@ -1,0 +1,293 @@
+---
+import HeroBlock from "./blocks/HeroBlock.astro"
+import RichTextBlock from "./blocks/RichTextBlock.astro"
+import AboutBlock from "./blocks/AboutBlock.astro"
+import FeaturesBlock from "./blocks/FeaturesBlock.astro"
+import ProcessBlock from "./blocks/ProcessBlock.astro"
+import InfoCardBlock from "./blocks/InfoCardBlock.astro"
+import TestimonialsBlock from "./blocks/TestimonialsBlock.astro"
+
+import type {
+  AboutBlock as AboutBlockType,
+  FeaturesBlock as FeaturesBlockType,
+  HeroBlock as HeroBlockType,
+  InfoCardBlock as InfoCardBlockType,
+  ProcessBlock as ProcessBlockType,
+  RichTextBlock as RichTextBlockType,
+  SerializableHomepageRenderNode,
+  SerializableHomepageRenderPlan,
+  TestimonialsBlock as TestimonialsBlockType,
+} from "../contracts/homepage"
+
+const { plan } = Astro.props as {
+  plan: SerializableHomepageRenderPlan
+}
+
+type SupportedComponentKey =
+  | "hero"
+  | "rich_text"
+  | "about"
+  | "features"
+  | "process"
+  | "info_card"
+  | "testimonials"
+
+type RenderableNode =
+  | {
+      kind: "hero"
+      node: SerializableHomepageRenderNode
+      block: HeroBlockType
+    }
+  | {
+      kind: "rich_text"
+      node: SerializableHomepageRenderNode
+      block: RichTextBlockType
+    }
+  | {
+      kind: "about"
+      node: SerializableHomepageRenderNode
+      block: AboutBlockType
+    }
+  | {
+      kind: "features"
+      node: SerializableHomepageRenderNode
+      block: FeaturesBlockType
+    }
+  | {
+      kind: "process"
+      node: SerializableHomepageRenderNode
+      block: ProcessBlockType
+    }
+  | {
+      kind: "info_card"
+      node: SerializableHomepageRenderNode
+      block: InfoCardBlockType
+    }
+  | {
+      kind: "testimonials"
+      node: SerializableHomepageRenderNode
+      block: TestimonialsBlockType
+    }
+  | {
+      kind: "unsupported"
+      node: SerializableHomepageRenderNode
+      reason: string
+    }
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function readContentSource(props: Record<string, unknown>): Record<string, unknown> {
+  if (isRecord(props.content)) return props.content
+  return props
+}
+
+function asOptionalString(value: unknown): string | null | undefined {
+  return typeof value === "string" ? value : undefined
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((item): item is string => typeof item === "string")
+}
+
+function sanitizeCommentValue(value: string): string {
+  return value.replaceAll("--", " ").trim()
+}
+
+function commentFor(node: SerializableHomepageRenderNode, reason: string) {
+  const safeKey = sanitizeCommentValue(node.componentKey)
+  const safeId = sanitizeCommentValue(node.id)
+  const safeReason = sanitizeCommentValue(reason)
+  return `<!-- CanonicalHomepageRenderer skipped node id=${safeId} componentKey=${safeKey} reason=${safeReason} -->`
+}
+
+function adaptHero(node: SerializableHomepageRenderNode): HeroBlockType {
+  const source = readContentSource(node.props)
+  return {
+    type: "hero",
+    content: {
+      title: asOptionalString(source.title),
+      subtitle: asOptionalString(source.subtitle),
+      eyebrow: asOptionalString(source.eyebrow),
+    },
+  }
+}
+
+function adaptRichText(node: SerializableHomepageRenderNode): RichTextBlockType {
+  const source = readContentSource(node.props)
+  return {
+    type: "rich_text",
+    content: {
+      title: asOptionalString(source.title),
+      paragraphs: asStringArray(source.paragraphs),
+    },
+  }
+}
+
+function adaptAbout(node: SerializableHomepageRenderNode): AboutBlockType {
+  const source = readContentSource(node.props)
+  return {
+    type: "about",
+    content: {
+      title: asOptionalString(source.title),
+      body: asOptionalString(source.body),
+      photoUrl: asOptionalString(source.photoUrl),
+    },
+  }
+}
+
+function adaptFeatures(node: SerializableHomepageRenderNode): FeaturesBlockType {
+  const source = readContentSource(node.props)
+  const items = Array.isArray(source.items)
+    ? source.items
+        .filter(isRecord)
+        .map((item) => ({
+          title: asOptionalString(item.title) ?? "",
+          description: asOptionalString(item.description),
+        }))
+        .filter((item) => item.title)
+    : []
+
+  return {
+    type: "features",
+    content: {
+      title: asOptionalString(source.title),
+      items,
+    },
+  }
+}
+
+function adaptProcess(node: SerializableHomepageRenderNode): ProcessBlockType {
+  const source = readContentSource(node.props)
+  const steps = Array.isArray(source.steps)
+    ? source.steps
+        .filter(isRecord)
+        .map((step, index) => ({
+          number: typeof step.number === "number" ? step.number : index + 1,
+          title: asOptionalString(step.title) ?? "",
+          description: asOptionalString(step.description),
+        }))
+        .filter((step) => step.title)
+    : []
+
+  return {
+    type: "process",
+    content: {
+      title: asOptionalString(source.title),
+      steps,
+    },
+  }
+}
+
+function adaptInfoCard(node: SerializableHomepageRenderNode): InfoCardBlockType {
+  const source = readContentSource(node.props)
+  return {
+    type: "info_card",
+    content: {
+      title: asOptionalString(source.title),
+      body: asOptionalString(source.body),
+      pills: asStringArray(source.pills),
+    },
+  }
+}
+
+function adaptTestimonials(node: SerializableHomepageRenderNode): TestimonialsBlockType {
+  const source = readContentSource(node.props)
+  const images = Array.isArray(source.images)
+    ? source.images
+        .filter(isRecord)
+        .map((image) => ({
+          url: asOptionalString(image.url) ?? "",
+          alt: asOptionalString(image.alt),
+        }))
+        .filter((image) => image.url)
+    : []
+
+  return {
+    type: "testimonials",
+    content: {
+      title: asOptionalString(source.title),
+      images,
+    },
+  }
+}
+
+function normalizeComponentKey(componentKey: string): SupportedComponentKey | null {
+  const [baseKey] = componentKey.split(":")
+  switch (baseKey) {
+    case "hero":
+    case "rich_text":
+    case "about":
+    case "features":
+    case "process":
+    case "info_card":
+    case "testimonials":
+      return baseKey
+    default:
+      return null
+  }
+}
+
+function adaptNode(node: SerializableHomepageRenderNode): RenderableNode {
+  const componentKey = normalizeComponentKey(node.componentKey)
+
+  switch (componentKey) {
+    case "hero":
+      return { kind: "hero", node, block: adaptHero(node) }
+    case "rich_text":
+      return { kind: "rich_text", node, block: adaptRichText(node) }
+    case "about":
+      return { kind: "about", node, block: adaptAbout(node) }
+    case "features":
+      return { kind: "features", node, block: adaptFeatures(node) }
+    case "process":
+      return { kind: "process", node, block: adaptProcess(node) }
+    case "info_card":
+      return { kind: "info_card", node, block: adaptInfoCard(node) }
+    case "testimonials":
+      return { kind: "testimonials", node, block: adaptTestimonials(node) }
+    default:
+      return {
+        kind: "unsupported",
+        node,
+        reason: "componentKey_not_supported_in_canonical_preview",
+      }
+  }
+}
+
+const renderableNodes = [...(plan.nodes ?? [])]
+  .sort((left, right) => left.order - right.order)
+  .map(adaptNode)
+---
+
+{
+  renderableNodes.map((entry) => {
+    switch (entry.kind) {
+      case "hero":
+        return <HeroBlock block={entry.block} />
+
+      case "rich_text":
+        return <RichTextBlock block={entry.block} />
+
+      case "about":
+        return <AboutBlock block={entry.block} />
+
+      case "features":
+        return <FeaturesBlock block={entry.block} />
+
+      case "process":
+        return <ProcessBlock block={entry.block} />
+
+      case "info_card":
+        return <InfoCardBlock block={entry.block} />
+
+      case "testimonials":
+        return <TestimonialsBlock block={entry.block} />
+
+      case "unsupported":
+        return <Fragment set:html={commentFor(entry.node, entry.reason)} />
+    }
+  })
+}

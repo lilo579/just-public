@@ -4,6 +4,7 @@ export const prerender = false
 import { PUBLIC_SITE_PAYLOAD_URL, SUPABASE_ANON_KEY } from "../config/publicSite"
 import type { ResolvedHomepage } from "../contracts/homepage"
 import HomepageRenderer from "../components/HomepageRenderer.astro"
+import CanonicalHomepageRenderer from "../components/CanonicalHomepageRenderer.astro"
 import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
 
@@ -51,7 +52,11 @@ const footer = homepage.footer
     />
 
     <main>
-      <HomepageRenderer homepage={homepage} />
+      {homepage.serializablePlan ? (
+        <CanonicalHomepageRenderer plan={homepage.serializablePlan} />
+      ) : (
+        <HomepageRenderer homepage={homepage} />
+      )}
     </main>
 
     <Footer footer={footer} />
