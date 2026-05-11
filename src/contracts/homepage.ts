@@ -26,6 +26,27 @@ export type HomepageFooter = {
   socialLinks: FooterSocialLink[]
 }
 
+export type HomepageSourceBranding = {
+  logoUrl?: string | null
+  logoHorizontalUrl?: string | null
+  logoWhiteUrl?: string | null
+  primaryColor?: string | null
+  secondaryColor?: string | null
+  accentColor?: string | null
+  typography?: string | null
+}
+
+export type HomepageSourceContact = {
+  companyName?: string | null
+}
+
+export type HomepageSourcePayload = {
+  contact?: HomepageSourceContact
+  meta?: {
+    branding?: HomepageSourceBranding
+  }
+}
+
 export type HeroBlock = {
   type: "hero"
   content: {
@@ -200,5 +221,6 @@ export type ResolvedHomepage = {
   status: HomepageStatus
   blocks: HomepageBlock[]
   footer: HomepageFooter
+  source?: HomepageSourcePayload
   serializablePlan?: SerializableHomepageRenderPlan
 }

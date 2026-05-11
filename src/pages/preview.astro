@@ -46,6 +46,17 @@ const footer = homepage.footer ?? {
   address: "",
 }
 const wantsCanonicalRenderer = renderer === "canonical"
+const sourceBranding = homepage.source?.meta?.branding
+const brandingName = homepage.source?.contact?.companyName ?? footer.companyName ?? "Site"
+const brandingLogo =
+  sourceBranding?.logoHorizontalUrl ?? sourceBranding?.logoUrl ?? footer.logoUrl ?? ""
+const shellFooter = wantsCanonicalRenderer
+  ? {
+      ...footer,
+      companyName: brandingName,
+      logoUrl: brandingLogo,
+    }
+  : footer
 const shouldUseCanonicalRenderer =
   wantsCanonicalRenderer && Boolean(homepage.serializablePlan)
 ---
@@ -58,9 +69,9 @@ const shouldUseCanonicalRenderer =
   </head>
   <body>
     <Header
-      siteTitle={footer.companyName || "Site"}
-      logoUrl={footer.logoUrl || ""}
-      logoAlt={footer.companyName || "Logo"}
+      siteTitle={wantsCanonicalRenderer ? brandingName : footer.companyName || "Site"}
+      logoUrl={wantsCanonicalRenderer ? brandingLogo : footer.logoUrl || ""}
+      logoAlt={wantsCanonicalRenderer ? brandingName : footer.companyName || "Logo"}
     />
 
     <main>
@@ -84,6 +95,6 @@ const shouldUseCanonicalRenderer =
       )}
     </main>
 
-    <Footer footer={footer} />
+    <Footer footer={shellFooter} />
   </body>
 </html>
