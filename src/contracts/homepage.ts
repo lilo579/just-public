@@ -140,21 +140,59 @@ export type HomepageBlock =
   | InfoCardBlock
   | CtaBlock
 
-export type SerializableHomepageRenderPlanNode = {
+export type SerializableHomepageRecipeBlock = {
   id: string
-  variant?: string
-  order?: number
-  componentKey?: string
-  runtime?: string
-  capabilities?: Record<string, unknown>
-  props?: Record<string, unknown>
+  order: number
+  variant: string
+}
+
+export type SerializableHomepageRecipe = {
+  id: string
+  version: string
+  blocks: SerializableHomepageRecipeBlock[]
+}
+
+export type SerializableHomepageBlockInstance = {
+  id: string
+  order: number
+  variant: string
+  visible: boolean
+}
+
+export type SerializableHomepageRuntime = {
+  key: string
+  analyticsId: string
+  hydration: string
+  lazy: boolean
+  ssr: boolean
+  priority: string
+}
+
+export type SerializableHomepageCapabilities = {
+  supportsHydration: boolean
+  supportsLazyLoading: boolean
+  supportsSSR: boolean
+  supportsStreaming: boolean
+  supportsAnimation: boolean
+  supportsPersonalization: boolean
+  supportsABTesting: boolean
+}
+
+export type SerializableHomepageRenderNode = {
+  id: string
+  variant: string
+  order: number
+  componentKey: string
+  runtime: SerializableHomepageRuntime
+  capabilities: SerializableHomepageCapabilities
+  props: Record<string, unknown>
 }
 
 export type SerializableHomepageRenderPlan = {
-  contractVersion?: string
-  recipe?: string
-  instances?: Record<string, unknown>
-  nodes?: SerializableHomepageRenderPlanNode[]
+  contractVersion: string
+  recipe: SerializableHomepageRecipe
+  instances: SerializableHomepageBlockInstance[]
+  nodes: SerializableHomepageRenderNode[]
 }
 
 export type ResolvedHomepage = {
