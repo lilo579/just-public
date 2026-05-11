@@ -297,7 +297,7 @@ function adaptAbout(node: SerializableHomepageRenderNode): {
   block: AboutBlockType
   warnings: string[]
 } {
-  const source = readContentSource(node.props)
+  const source = readNamespacedSource(node.props, "about")
   return {
     block: {
       type: "about",
