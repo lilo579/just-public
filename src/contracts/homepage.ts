@@ -140,9 +140,27 @@ export type HomepageBlock =
   | InfoCardBlock
   | CtaBlock
 
+export type SerializableHomepageRenderPlanNode = {
+  id: string
+  variant?: string
+  order?: number
+  componentKey?: string
+  runtime?: string
+  capabilities?: Record<string, unknown>
+  props?: Record<string, unknown>
+}
+
+export type SerializableHomepageRenderPlan = {
+  contractVersion?: string
+  recipe?: string
+  instances?: Record<string, unknown>
+  nodes?: SerializableHomepageRenderPlanNode[]
+}
+
 export type ResolvedHomepage = {
   tenantId: string
   status: HomepageStatus
   blocks: HomepageBlock[]
   footer: HomepageFooter
+  serializablePlan?: SerializableHomepageRenderPlan
 }
