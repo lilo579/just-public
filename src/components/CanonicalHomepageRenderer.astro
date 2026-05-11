@@ -166,6 +166,38 @@ function adaptHero(node: SerializableHomepageRenderNode): {
   warnings: string[]
 } {
   const source = readNamespacedSource(node.props, "hero")
+  const contact = isRecord(node.props.contact) ? node.props.contact : {}
+  const existingPrimaryCTA = isRecord(node.props.primaryCTA)
+    ? node.props.primaryCTA
+    : isRecord(source.primaryCTA)
+      ? source.primaryCTA
+      : null
+  const whatsappNumber = sanitizeWhatsappNumber(contact.whatsappNumber)
+  const whatsappVisible = contact.whatsappVisible === true
+  const fallbackHref =
+    whatsappVisible && whatsappNumber ? `https://wa.me/${whatsappNumber}` : undefined
+  const fallbackLabel =
+    asOptionalString(source.primaryCtaLabel) ?? "Falar pelo WhatsApp"
+  const existingHref = existingPrimaryCTA ? asOptionalString(existingPrimaryCTA.href) : undefined
+  const existingLabel = existingPrimaryCTA ? asOptionalString(existingPrimaryCTA.label) : undefined
+  const existingVisible = existingPrimaryCTA?.visible
+  const primaryCTA =
+    existingPrimaryCTA && (existingHref || existingLabel)
+      ? {
+          type: asOptionalString(existingPrimaryCTA.type) ?? "whatsapp",
+          href: existingHref,
+          label: existingLabel ?? fallbackLabel,
+          visible: typeof existingVisible === "boolean" ? existingVisible : true,
+        }
+      : fallbackHref
+        ? {
+            type: "whatsapp",
+            href: fallbackHref,
+            label: fallbackLabel,
+            visible: true,
+          }
+        : null
+
   const block = {
     type: "hero" as const,
     content: {
@@ -173,6 +205,7 @@ function adaptHero(node: SerializableHomepageRenderNode): {
       subtitle: asOptionalString(source.subtitle),
       eyebrow: asOptionalString(source.eyebrow),
     },
+    primaryCTA,
   }
 
   return {
