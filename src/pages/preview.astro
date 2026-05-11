@@ -36,7 +36,15 @@ Body: ${text}`
 }
 
 const homepage = (await res.json()) as ResolvedHomepage
-const footer = homepage.footer
+const footer = homepage.footer ?? {
+  companyName: "Site",
+  logoUrl: "",
+  tagline: "",
+  whatsapp: "",
+  email: "",
+  phone: "",
+  address: "",
+}
 const wantsCanonicalRenderer = renderer === "canonical"
 const shouldUseCanonicalRenderer =
   wantsCanonicalRenderer && Boolean(homepage.serializablePlan)
