@@ -32,6 +32,7 @@ const { plan } = Astro.props as {
 type SupportedComponentKey =
   | "hero"
   | "trust"
+  | "problem"
   | "services"
   | "rich_text"
   | "about"
@@ -59,6 +60,12 @@ type RenderableNode =
       kind: "services"
       node: SerializableHomepageRenderNode
       block: ServicesBlockType
+      warnings: string[]
+    }
+  | {
+      kind: "problem"
+      node: SerializableHomepageRenderNode
+      block: RichTextBlockType
       warnings: string[]
     }
   | {
@@ -293,6 +300,23 @@ function adaptRichText(node: SerializableHomepageRenderNode): {
   }
 }
 
+function adaptProblem(node: SerializableHomepageRenderNode): {
+  block: RichTextBlockType
+  warnings: string[]
+} {
+  const source = readNamespacedSource(node.props, "problem")
+  return {
+    block: {
+      type: "rich_text",
+      content: {
+        title: asOptionalString(source.title),
+        paragraphs: asStringArray(source.paragraphs),
+      },
+    },
+    warnings: [],
+  }
+}
+
 function adaptAbout(node: SerializableHomepageRenderNode): {
   block: AboutBlockType
   warnings: string[]
@@ -486,6 +510,7 @@ function normalizeComponentKey(componentKey: string): SupportedComponentKey | nu
   switch (baseKey) {
     case "hero":
     case "trust":
+    case "problem":
     case "services":
     case "rich_text":
     case "about":
@@ -516,6 +541,10 @@ function adaptNode(node: SerializableHomepageRenderNode): RenderableNode {
     case "services": {
       const { block, warnings } = adaptServices(node)
       return { kind: "services", node, block, warnings }
+    }
+    case "problem": {
+      const { block, warnings } = adaptProblem(node)
+      return { kind: "problem", node, block, warnings }
     }
     case "rich_text": {
       const { block, warnings } = adaptRichText(node)
@@ -572,6 +601,7 @@ function hasUsefulContent(entry: Exclude<RenderableNode, { kind: "unsupported" }
       return entry.block.content.items.some(
         (item) => hasTextContent(item.title) && hasTextContent(item.description)
       )
+    case "problem":
     case "rich_text":
       return Boolean(
         hasTextContent(entry.block.content.title) ||
@@ -697,6 +727,9 @@ const renderedCount = renderableNodes.filter(
 
       case "services":
         return <ServicesBlock block={entry.block} />
+
+      case "problem":
+        return <RichTextBlock block={entry.block} />
 
       case "rich_text":
         return <RichTextBlock block={entry.block} />
