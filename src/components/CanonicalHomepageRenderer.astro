@@ -26,8 +26,9 @@ import type {
   TrustBlock as TrustBlockType,
 } from "../contracts/homepage"
 
-const { plan } = Astro.props as {
+const { plan, showDiagnostics = false } = Astro.props as {
   plan: SerializableHomepageRenderPlan
+  showDiagnostics?: boolean
 }
 
 type SupportedComponentKey =
@@ -644,59 +645,63 @@ const renderedCount = renderableNodes.filter(
 ).length
 ---
 
-<section class="canonical-diagnostics" aria-label="Canonical renderer diagnostics">
-  <div class="canonical-diagnostics__header">
-    <strong>Canonical SSR Diagnostics</strong>
-    <span>{plan.contractVersion || "unknown contract"}</span>
-  </div>
+{
+  showDiagnostics && (
+    <section class="canonical-diagnostics" aria-label="Canonical renderer diagnostics">
+      <div class="canonical-diagnostics__header">
+        <strong>Canonical SSR Diagnostics</strong>
+        <span>{plan.contractVersion || "unknown contract"}</span>
+      </div>
 
-  <dl class="canonical-diagnostics__stats">
-    <div>
-      <dt>Total nodes</dt>
-      <dd>{plan.nodes?.length ?? 0}</dd>
-    </div>
-    <div>
-      <dt>Rendered</dt>
-      <dd>{renderedCount}</dd>
-    </div>
-    <div>
-      <dt>Unsupported</dt>
-      <dd>{unsupportedEntries.length}</dd>
-    </div>
-    <div>
-      <dt>Warnings</dt>
-      <dd>{diagnosticWarnings.length}</dd>
-    </div>
-  </dl>
+      <dl class="canonical-diagnostics__stats">
+        <div>
+          <dt>Total nodes</dt>
+          <dd>{plan.nodes?.length ?? 0}</dd>
+        </div>
+        <div>
+          <dt>Rendered</dt>
+          <dd>{renderedCount}</dd>
+        </div>
+        <div>
+          <dt>Unsupported</dt>
+          <dd>{unsupportedEntries.length}</dd>
+        </div>
+        <div>
+          <dt>Warnings</dt>
+          <dd>{diagnosticWarnings.length}</dd>
+        </div>
+      </dl>
 
-  <div class="canonical-diagnostics__body">
-    <div>
-      <h2>Unsupported componentKeys</h2>
-      {unsupportedComponentKeys.length > 0 ? (
-        <ul>
-          {unsupportedComponentKeys.map((componentKey) => (
-            <li>{componentKey}</li>
-          ))}
-        </ul>
-      ) : (
-        <p>None</p>
-      )}
-    </div>
+      <div class="canonical-diagnostics__body">
+        <div>
+          <h2>Unsupported componentKeys</h2>
+          {unsupportedComponentKeys.length > 0 ? (
+            <ul>
+              {unsupportedComponentKeys.map((componentKey) => (
+                <li>{componentKey}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>None</p>
+          )}
+        </div>
 
-    <div>
-      <h2>Adapter warnings</h2>
-      {diagnosticWarnings.length > 0 ? (
-        <ul>
-          {diagnosticWarnings.map((message) => (
-            <li>{message}</li>
-          ))}
-        </ul>
-      ) : (
-        <p>None</p>
-      )}
-    </div>
-  </div>
-</section>
+        <div>
+          <h2>Adapter warnings</h2>
+          {diagnosticWarnings.length > 0 ? (
+            <ul>
+              {diagnosticWarnings.map((message) => (
+                <li>{message}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>None</p>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
 
 {
   renderableNodes.map((entry) => {
