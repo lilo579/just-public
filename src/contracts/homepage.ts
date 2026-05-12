@@ -105,6 +105,26 @@ export type FeaturesBlock = {
   }
 }
 
+export type BenefitsBlock = {
+  type: "benefits"
+  content: {
+    kicker?: string | null
+    title?: string | null
+    body?: string | null
+    items: {
+      title?: string | null
+      description?: string | null
+      imageUrl?: string | null
+    }[]
+    summary?: string | null
+    metrics: {
+      label?: string | null
+      value?: string | null
+      description?: string | null
+    }[]
+  }
+}
+
 export type ProcessBlock = {
   type: "process"
   content: {
@@ -155,6 +175,7 @@ export type HomepageBlock =
   | ServicesBlock
   | AboutBlock
   | RichTextBlock
+  | BenefitsBlock
   | FeaturesBlock
   | ProcessBlock
   | TestimonialsBlock

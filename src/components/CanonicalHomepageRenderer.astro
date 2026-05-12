@@ -10,9 +10,15 @@ import InfoCardBlock from "./blocks/InfoCardBlock.astro"
 import TestimonialsBlock from "./blocks/TestimonialsBlock.astro"
 import CtaBlock from "./blocks/CtaBlock.astro"
 import { buildCanonicalCtaPrimaryCTA } from "./canonicalHomepageCtaAdapter.js"
+import {
+  adaptCanonicalBenefits,
+  getCanonicalBenefitsFallbackWarnings,
+  projectBenefitsToFeaturesBlock,
+} from "./canonicalHomepageBenefitsAdapter.js"
 
 import type {
   AboutBlock as AboutBlockType,
+  BenefitsBlock as BenefitsBlockType,
   CtaBlock as CtaBlockType,
   FeaturesBlock as FeaturesBlockType,
   HeroBlock as HeroBlockType,
@@ -80,6 +86,12 @@ type RenderableNode =
       kind: "about"
       node: SerializableHomepageRenderNode
       block: AboutBlockType
+      warnings: string[]
+    }
+  | {
+      kind: "benefits"
+      node: SerializableHomepageRenderNode
+      block: BenefitsBlockType
       warnings: string[]
     }
   | {
@@ -337,15 +349,27 @@ function adaptAbout(node: SerializableHomepageRenderNode): {
   }
 }
 
+function adaptBenefits(node: SerializableHomepageRenderNode): {
+  block: BenefitsBlockType
+  warnings: string[]
+} {
+  const source = readNamespacedSource(node.props, "benefits")
+  const block = adaptCanonicalBenefits(source)
+  const warnings = getCanonicalBenefitsFallbackWarnings(block).map((message) =>
+    warn(node, message)
+  )
+
+  return {
+    block,
+    warnings,
+  }
+}
+
 function adaptFeatures(node: SerializableHomepageRenderNode): {
   block: FeaturesBlockType
   warnings: string[]
 } {
-  const isBenefits = normalizeComponentKey(node.componentKey) === "benefits"
-  const source =
-    isBenefits
-      ? readNamespacedSource(node.props, "benefits")
-      : readContentSource(node.props)
+  const source = readContentSource(node.props)
   const warnings: string[] = []
   const items = Array.isArray(source.items)
     ? source.items
@@ -356,25 +380,6 @@ function adaptFeatures(node: SerializableHomepageRenderNode): {
         }))
         .filter((item) => item.title)
     : []
-
-  if (isBenefits) {
-    const metricsCount = Array.isArray(source.metrics) ? source.metrics.filter(isRecord).length : 0
-    const droppedFields = [
-      hasTextContent(source.kicker) ? "kicker" : null,
-      hasTextContent(source.body) ? "body" : null,
-      hasTextContent(source.summary) ? "summary" : null,
-      metricsCount > 0 ? `metrics(${metricsCount})` : null,
-    ].filter((value): value is string => value !== null)
-
-    if (droppedFields.length > 0) {
-      warnings.push(
-        warn(
-          node,
-          `benefits content not rendered by FeaturesBlock: ${droppedFields.join(", ")}`
-        )
-      )
-    }
-  }
 
   return {
     block: {
@@ -537,7 +542,10 @@ function adaptNode(node: SerializableHomepageRenderNode): RenderableNode {
       const { block, warnings } = adaptAbout(node)
       return { kind: "about", node, block, warnings }
     }
-    case "benefits":
+    case "benefits": {
+      const { block, warnings } = adaptBenefits(node)
+      return { kind: "benefits", node, block, warnings }
+    }
     case "features": {
       const { block, warnings } = adaptFeatures(node)
       return { kind: "features", node, block, warnings }
@@ -596,6 +604,7 @@ function hasUsefulContent(entry: Exclude<RenderableNode, { kind: "unsupported" }
           hasTextContent(entry.block.content.body) ||
           hasTextContent(entry.block.content.photoUrl)
       )
+    case "benefits":
     case "features":
       return entry.block.content.items.some((item) => hasTextContent(item.title))
     case "process":
@@ -723,6 +732,9 @@ const renderedCount = renderableNodes.filter(
 
       case "about":
         return <AboutBlock block={entry.block} />
+
+      case "benefits":
+        return <FeaturesBlock block={projectBenefitsToFeaturesBlock(entry.block)} />
 
       case "features":
         return <FeaturesBlock block={entry.block} />
