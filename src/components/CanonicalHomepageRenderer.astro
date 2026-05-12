@@ -9,6 +9,7 @@ import ProcessBlock from "./blocks/ProcessBlock.astro"
 import InfoCardBlock from "./blocks/InfoCardBlock.astro"
 import TestimonialsBlock from "./blocks/TestimonialsBlock.astro"
 import CtaBlock from "./blocks/CtaBlock.astro"
+import { buildCanonicalCtaPrimaryCTA } from "./canonicalHomepageCtaAdapter.js"
 
 import type {
   AboutBlock as AboutBlockType,
@@ -465,23 +466,11 @@ function adaptCta(node: SerializableHomepageRenderNode): {
 } {
   const source = readNamespacedSource(node.props, "ctaFinal")
   const contact = isRecord(node.props.contact) ? node.props.contact : {}
-  const whatsappNumber = sanitizeWhatsappNumber(contact.whatsappNumber)
-  const whatsappVisible = contact.whatsappVisible === true
-  const email = asOptionalString(contact.email)
-  const emailVisible = contact.emailVisible === true
-  const href =
-    whatsappVisible && whatsappNumber ? `https://wa.me/${whatsappNumber}` : undefined
-  const label =
-    asOptionalString(source.buttonLabel) ?? "Falar pelo WhatsApp"
   const warnings: string[] = []
+  const primaryCTA = buildCanonicalCtaPrimaryCTA(source, contact)
 
-  if (emailVisible && hasTextContent(email) && !href) {
-    warnings.push(
-      warn(
-        node,
-        "email fallback exists but adapter does not generate primaryCTA without WhatsApp"
-      )
-    )
+  if (!primaryCTA) {
+    warnings.push(warn(node, "cta_final has no actionable WhatsApp or email channel"))
   }
 
   return {
@@ -491,14 +480,7 @@ function adaptCta(node: SerializableHomepageRenderNode): {
         title: asOptionalString(source.title),
         body: asOptionalString(source.body),
         buttonLabel: asOptionalString(source.buttonLabel),
-        primaryCTA: href
-          ? {
-              type: "whatsapp",
-              label,
-              href,
-              visible: true,
-            }
-          : null,
+        primaryCTA,
       },
     },
     warnings,
