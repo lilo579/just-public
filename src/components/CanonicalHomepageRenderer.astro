@@ -4,17 +4,14 @@ import TrustBlock from "./blocks/TrustBlock.astro"
 import ServicesBlock from "./blocks/ServicesBlock.astro"
 import RichTextBlock from "./blocks/RichTextBlock.astro"
 import AboutBlock from "./blocks/AboutBlock.astro"
+import BenefitsBlock from "./blocks/BenefitsBlock.astro"
 import FeaturesBlock from "./blocks/FeaturesBlock.astro"
 import ProcessBlock from "./blocks/ProcessBlock.astro"
 import InfoCardBlock from "./blocks/InfoCardBlock.astro"
 import TestimonialsBlock from "./blocks/TestimonialsBlock.astro"
 import CtaBlock from "./blocks/CtaBlock.astro"
 import { buildCanonicalCtaPrimaryCTA } from "./canonicalHomepageCtaAdapter.js"
-import {
-  adaptCanonicalBenefits,
-  getCanonicalBenefitsFallbackWarnings,
-  projectBenefitsToFeaturesBlock,
-} from "./canonicalHomepageBenefitsAdapter.js"
+import { adaptCanonicalBenefits } from "./canonicalHomepageBenefitsAdapter.js"
 
 import type {
   AboutBlock as AboutBlockType,
@@ -354,14 +351,9 @@ function adaptBenefits(node: SerializableHomepageRenderNode): {
   warnings: string[]
 } {
   const source = readNamespacedSource(node.props, "benefits")
-  const block = adaptCanonicalBenefits(source)
-  const warnings = getCanonicalBenefitsFallbackWarnings(block).map((message) =>
-    warn(node, message)
-  )
-
   return {
-    block,
-    warnings,
+    block: adaptCanonicalBenefits(source),
+    warnings: [],
   }
 }
 
@@ -605,6 +597,24 @@ function hasUsefulContent(entry: Exclude<RenderableNode, { kind: "unsupported" }
           hasTextContent(entry.block.content.photoUrl)
       )
     case "benefits":
+      return Boolean(
+        hasTextContent(entry.block.content.kicker) ||
+          hasTextContent(entry.block.content.title) ||
+          hasTextContent(entry.block.content.body) ||
+          hasTextContent(entry.block.content.summary) ||
+          entry.block.content.items.some(
+            (item) =>
+              hasTextContent(item.title) ||
+              hasTextContent(item.description) ||
+              hasTextContent(item.imageUrl)
+          ) ||
+          entry.block.content.metrics.some(
+            (metric) =>
+              hasTextContent(metric.label) ||
+              hasTextContent(metric.value) ||
+              hasTextContent(metric.description)
+          )
+      )
     case "features":
       return entry.block.content.items.some((item) => hasTextContent(item.title))
     case "process":
@@ -734,7 +744,7 @@ const renderedCount = renderableNodes.filter(
         return <AboutBlock block={entry.block} />
 
       case "benefits":
-        return <FeaturesBlock block={projectBenefitsToFeaturesBlock(entry.block)} />
+        return <BenefitsBlock block={entry.block} />
 
       case "features":
         return <FeaturesBlock block={entry.block} />

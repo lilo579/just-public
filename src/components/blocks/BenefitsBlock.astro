@@ -1,0 +1,264 @@
+---
+type BenefitItem = {
+  title?: string | null
+  description?: string | null
+  imageUrl?: string | null
+}
+
+type BenefitMetric = {
+  label?: string | null
+  value?: string | null
+  description?: string | null
+}
+
+const { block } = Astro.props as {
+  block: {
+    type: "benefits"
+    content: {
+      kicker?: string | null
+      title?: string | null
+      body?: string | null
+      items?: BenefitItem[]
+      summary?: string | null
+      metrics?: BenefitMetric[]
+    }
+  }
+}
+
+const kicker = block.content?.kicker
+const title = block.content?.title
+const body = block.content?.body
+const summary = block.content?.summary
+const items = (block.content?.items ?? []).filter(
+  (item) => item?.title || item?.description || item?.imageUrl
+)
+const metrics = (block.content?.metrics ?? []).filter(
+  (metric) => metric?.label || metric?.value || metric?.description
+)
+const hasHeader = kicker || title || body
+const hasAside = summary || metrics.length > 0
+---
+
+{(hasHeader || items.length > 0 || hasAside) && (
+  <section class="benefits">
+    <div class="benefits__inner">
+      {hasHeader && (
+        <header class="benefits__header">
+          {kicker && <p class="benefits__kicker">{kicker}</p>}
+          {title && <h2>{title}</h2>}
+          {body && <p class="benefits__body">{body}</p>}
+        </header>
+      )}
+
+      <div class:list={["benefits__content", !hasAside && "benefits__content--single"]}>
+        {items.length > 0 && (
+          <div class="benefits__items">
+            {items.map((item) => (
+              <article class="benefits__item">
+                {item.imageUrl && (
+                  <img
+                    class="benefits__image"
+                    src={item.imageUrl}
+                    alt={item.title || "Beneficio"}
+                    loading="lazy"
+                  />
+                )}
+                <div class="benefits__copy">
+                  {item.title && <h3>{item.title}</h3>}
+                  {item.description && <p>{item.description}</p>}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+
+        {hasAside && (
+          <aside class="benefits__aside">
+            {metrics.map((metric) => (
+              <article class="benefits__metric">
+                {metric.label && <p class="benefits__metric-label">{metric.label}</p>}
+                {metric.value && <p class="benefits__metric-value">{metric.value}</p>}
+                {metric.description && (
+                  <p class="benefits__metric-description">{metric.description}</p>
+                )}
+              </article>
+            ))}
+
+            {summary && <p class="benefits__summary">{summary}</p>}
+          </aside>
+        )}
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .benefits {
+    padding: 40px 0 56px;
+  }
+
+  .benefits__inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .benefits__header {
+    max-width: 760px;
+    margin-bottom: 28px;
+  }
+
+  .benefits__kicker {
+    margin: 0 0 10px;
+    color: hsl(145 45% 32%);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .benefits h2 {
+    margin: 0;
+    color: hsl(220 15% 15%);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: clamp(1.85rem, 3vw, 2.5rem);
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+  }
+
+  .benefits__body {
+    margin: 14px 0 0;
+    color: hsl(220 15% 15% / 0.72);
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  .benefits__content {
+    display: grid;
+    gap: 20px;
+  }
+
+  .benefits__content--single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .benefits__items {
+    display: grid;
+    gap: 16px;
+  }
+
+  .benefits__item {
+    display: grid;
+    gap: 16px;
+    padding: 18px;
+    border: 1px solid hsl(35 18% 84%);
+    border-radius: 22px;
+    background: linear-gradient(180deg, hsl(0 0% 100%), hsl(45 40% 98%));
+    box-shadow: 0 10px 30px hsl(220 15% 15% / 0.04);
+  }
+
+  .benefits__image {
+    display: block;
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 16px;
+  }
+
+  .benefits__copy h3 {
+    margin: 0;
+    color: hsl(220 15% 15%);
+    font-size: 1.1rem;
+    line-height: 1.35;
+    font-weight: 600;
+  }
+
+  .benefits__copy p {
+    margin: 10px 0 0;
+    color: hsl(220 15% 15% / 0.72);
+    font-size: 0.98rem;
+    line-height: 1.7;
+  }
+
+  .benefits__aside {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+  }
+
+  .benefits__metric,
+  .benefits__summary {
+    margin: 0;
+    padding: 18px;
+    border: 1px solid hsl(145 18% 82%);
+    border-radius: 22px;
+    background: hsl(145 38% 97%);
+  }
+
+  .benefits__metric-label {
+    margin: 0;
+    color: hsl(145 32% 28%);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .benefits__metric-value {
+    margin: 8px 0 0;
+    color: hsl(220 15% 15%);
+    font-size: 1.8rem;
+    line-height: 1.1;
+    font-weight: 700;
+  }
+
+  .benefits__metric-description,
+  .benefits__summary {
+    color: hsl(220 15% 15% / 0.72);
+    font-size: 0.96rem;
+    line-height: 1.7;
+  }
+
+  .benefits__metric-description {
+    margin: 8px 0 0;
+  }
+
+  @media (min-width: 900px) {
+    .benefits__content {
+      grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
+      align-items: start;
+    }
+
+    .benefits__item {
+      grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+      align-items: center;
+    }
+
+    .benefits__image {
+      height: 100%;
+      min-height: 180px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .benefits {
+      padding: 28px 0 36px;
+    }
+
+    .benefits__header {
+      margin-bottom: 22px;
+    }
+
+    .benefits__item,
+    .benefits__metric,
+    .benefits__summary {
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .benefits__image {
+      height: 200px;
+      border-radius: 14px;
+    }
+  }
+</style>

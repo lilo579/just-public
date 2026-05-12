@@ -50,34 +50,3 @@ export function adaptCanonicalBenefits(source) {
     },
   }
 }
-
-export function getCanonicalBenefitsFallbackWarnings(block) {
-  const droppedFields = [
-    hasTextContent(block.content.kicker) ? "kicker" : null,
-    hasTextContent(block.content.body) ? "body" : null,
-    hasTextContent(block.content.summary) ? "summary" : null,
-    block.content.metrics.length > 0 ? `metrics(${block.content.metrics.length})` : null,
-    block.content.items.some((item) => hasTextContent(item.imageUrl))
-      ? `item.imageUrl(${block.content.items.filter((item) => hasTextContent(item.imageUrl)).length})`
-      : null,
-  ].filter((value) => value !== null)
-
-  if (droppedFields.length === 0) return []
-
-  return [
-    `benefits fallback via FeaturesBlock omits visual rendering for: ${droppedFields.join(", ")}`,
-  ]
-}
-
-export function projectBenefitsToFeaturesBlock(block) {
-  return {
-    type: "features",
-    content: {
-      title: block.content.title,
-      items: block.content.items.map((item) => ({
-        title: item.title ?? "",
-        description: item.description,
-      })),
-    },
-  }
-}
