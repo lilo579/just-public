@@ -39,7 +39,7 @@ type SupportedComponentKey =
   | "benefits"
   | "features"
   | "process"
-  | "info_card"
+  | "attendance"
   | "testimonials"
   | "cta_final"
 
@@ -93,7 +93,7 @@ type RenderableNode =
       warnings: string[]
     }
   | {
-      kind: "info_card"
+      kind: "attendance"
       node: SerializableHomepageRenderNode
       block: InfoCardBlockType
       warnings: string[]
@@ -418,7 +418,7 @@ function adaptInfoCard(node: SerializableHomepageRenderNode): {
   block: InfoCardBlockType
   warnings: string[]
 } {
-  const source = readContentSource(node.props)
+  const source = readNamespacedSource(node.props, "attendance")
   return {
     block: {
       type: "info_card",
@@ -517,7 +517,7 @@ function normalizeComponentKey(componentKey: string): SupportedComponentKey | nu
     case "benefits":
     case "features":
     case "process":
-    case "info_card":
+    case "attendance":
     case "testimonials":
     case "cta_final":
       return baseKey
@@ -563,9 +563,9 @@ function adaptNode(node: SerializableHomepageRenderNode): RenderableNode {
       const { block, warnings } = adaptProcess(node)
       return { kind: "process", node, block, warnings }
     }
-    case "info_card": {
+    case "attendance": {
       const { block, warnings } = adaptInfoCard(node)
-      return { kind: "info_card", node, block, warnings }
+      return { kind: "attendance", node, block, warnings }
     }
     case "testimonials": {
       const { block, warnings } = adaptTestimonials(node)
@@ -617,7 +617,7 @@ function hasUsefulContent(entry: Exclude<RenderableNode, { kind: "unsupported" }
       return entry.block.content.items.some((item) => hasTextContent(item.title))
     case "process":
       return entry.block.content.steps.some((step) => hasTextContent(step.title))
-    case "info_card":
+    case "attendance":
       return Boolean(
         hasTextContent(entry.block.content.title) ||
           hasTextContent(entry.block.content.body) ||
@@ -743,7 +743,7 @@ const renderedCount = renderableNodes.filter(
       case "process":
         return <ProcessBlock block={entry.block} />
 
-      case "info_card":
+      case "attendance":
         return <InfoCardBlock block={entry.block} />
 
       case "testimonials":
