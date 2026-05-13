@@ -19,7 +19,12 @@ export function adaptCanonicalBenefits(source) {
           description: asOptionalString(item.description),
           imageUrl: asOptionalString(item.imageUrl),
         }))
-        .filter((item) => hasTextContent(item.title))
+        .filter(
+          (item) =>
+            hasTextContent(item.title) ||
+            hasTextContent(item.description) ||
+            hasTextContent(item.imageUrl)
+        )
     : []
 
   const metrics = Array.isArray(source?.metrics)
