@@ -8,7 +8,11 @@ import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
 
 // --- Host forwarding (public homepage) ---
-const host = Astro.request.headers.get("host")?.trim()
+const requestUrl = new URL(Astro.request.url)
+const hostOverride = requestUrl.searchParams.get("host")?.trim()
+const headerHost = Astro.request.headers.get("host")?.trim()
+
+const host = hostOverride || headerHost
 
 if (!host) {
   throw new Error("Missing Host header")
@@ -16,7 +20,7 @@ if (!host) {
 
 const MODE = "public"
 
-const url = `${PUBLIC_SITE_PAYLOAD_URL}?host=${host}&mode=${MODE}`
+const url = `${PUBLIC_SITE_PAYLOAD_URL}?host=${encodeURIComponent(host)}&mode=${MODE}`
 
 const res = await fetch(url, {
   headers: {
@@ -35,8 +39,37 @@ Body: ${text}`
   )
 }
 
-const homepage = (await res.json()) as ResolvedHomepage
-const footer = homepage.footer
+const homepage = (await res.json()) as ResolvedHomepage & {
+  source?: {
+    contact?: {
+      companyName?: string | null
+      whatsappNumber?: string | null
+      whatsappVisible?: boolean | null
+      email?: string | null
+      address?: string | null
+    }
+    meta?: {
+      branding?: {
+        logoUrl?: string | null
+        logoHorizontalUrl?: string | null
+      }
+    }
+  }
+}
+
+const footer = homepage.footer ?? {
+  logoUrl:
+    homepage.source?.meta?.branding?.logoHorizontalUrl ??
+    homepage.source?.meta?.branding?.logoUrl ??
+    null,
+  tagline: null,
+  whatsappNumber: homepage.source?.contact?.whatsappNumber ?? null,
+  whatsappVisible: homepage.source?.contact?.whatsappVisible === true,
+  email: homepage.source?.contact?.email ?? null,
+  address: homepage.source?.contact?.address ?? null,
+  companyName: homepage.source?.contact?.companyName ?? "Site",
+  socialLinks: [],
+}
 ---
 
 <html lang="pt-BR">

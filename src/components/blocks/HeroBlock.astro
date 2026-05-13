@@ -22,7 +22,12 @@ const showPrimaryCTA =
       {subtitle && <p>{subtitle}</p>}
 
       {showPrimaryCTA && (
-        <a href={primaryCTA!.href} class="hero__cta">
+        <a
+          href={primaryCTA!.href}
+          class="hero__cta"
+          data-track-whatsapp-cta={primaryCTA?.type === "whatsapp" ? "true" : undefined}
+          data-cta-id="hero-primary-cta"
+        >
           {primaryCTA!.label}
         </a>
       )}

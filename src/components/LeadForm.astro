@@ -1,0 +1,195 @@
+---
+import { PUBLIC_LEADS_INTAKE_URL, SUPABASE_ANON_KEY } from "../config/publicSite";
+
+const {
+  sourceType = "public_site_form",
+  ctaId = "cta-final-form",
+} = Astro.props as {
+  sourceType?: string;
+  ctaId?: string;
+};
+---
+
+<form
+  class="lead-form"
+  data-lead-form
+  data-leads-url={PUBLIC_LEADS_INTAKE_URL}
+  data-anon-key={SUPABASE_ANON_KEY}
+  data-source-type={sourceType}
+  data-cta-id={ctaId}
+>
+  <div class="lead-form__grid">
+    <label>
+      <span>Nome</span>
+      <input name="full_name" type="text" autocomplete="name" required />
+    </label>
+
+    <label>
+      <span>E-mail</span>
+      <input name="email" type="email" autocomplete="email" />
+    </label>
+
+    <label>
+      <span>WhatsApp</span>
+      <input name="phone" type="tel" autocomplete="tel" />
+    </label>
+  </div>
+
+  <button type="submit">Enviar contato</button>
+  <p class="lead-form__status" data-lead-form-status aria-live="polite"></p>
+</form>
+
+<script>
+  document.querySelectorAll("[data-lead-form]").forEach((form) => {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const formEl = event.currentTarget;
+      if (!(formEl instanceof HTMLFormElement)) return;
+
+      const status = formEl.querySelector("[data-lead-form-status]");
+      const submitButton = formEl.querySelector('button[type="submit"]');
+
+      const leadsUrl = formEl.dataset.leadsUrl || "";
+      const anonKey = formEl.dataset.anonKey || "";
+      const sourceType = formEl.dataset.sourceType || "public_site_form";
+      const ctaId = formEl.dataset.ctaId || "cta-final-form";
+
+      if (!leadsUrl || !anonKey) {
+        if (status) status.textContent = "Envio indisponível no momento.";
+        return;
+      }
+
+      const formData = new FormData(formEl);
+      const fullName = String(formData.get("full_name") || "").trim();
+      const email = String(formData.get("email") || "").trim();
+      const phone = String(formData.get("phone") || "").trim();
+
+      if (!fullName) {
+        if (status) status.textContent = "Informe seu nome para continuar.";
+        return;
+      }
+
+      if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Enviando...";
+      }
+
+      if (status) status.textContent = "";
+
+      try {
+        const currentUrl = new URL(window.location.href);
+        const resolvedHost = currentUrl.searchParams.get("host")?.trim() || window.location.host;
+
+        const response = await fetch(leadsUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${anonKey}`,
+            apikey: anonKey,
+          },
+          body: JSON.stringify({
+            host: resolvedHost,
+            full_name: fullName,
+            email: email || null,
+            phone: phone || null,
+            source_type: sourceType,
+            path: window.location.pathname,
+            metadata: {
+              source: "just-public",
+              href: window.location.href,
+              cta_id: ctaId,
+            },
+          }),
+        });
+
+        if (!response.ok) throw new Error("lead_submit_failed");
+
+        formEl.reset();
+        if (status) status.textContent = "Contato enviado com sucesso.";
+      } catch {
+        if (status) status.textContent = "Não foi possível enviar agora. Tente novamente.";
+      } finally {
+        if (submitButton instanceof HTMLButtonElement) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Enviar contato";
+        }
+      }
+    });
+  });
+</script>
+
+<style>
+  .lead-form {
+    margin: 28px auto 0;
+    display: grid;
+    gap: 14px;
+    max-width: 560px;
+    text-align: left;
+  }
+
+  .lead-form__grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .lead-form label {
+    display: grid;
+    gap: 6px;
+    color: hsl(220 15% 15%);
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+
+  .lead-form input {
+    min-height: 48px;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid hsl(220 13% 85%);
+    border-radius: 14px;
+    padding: 0 14px;
+    background: #fff;
+    color: hsl(220 15% 15%);
+    font: inherit;
+    outline: none;
+  }
+
+  .lead-form input:focus {
+    border-color: hsl(145 63% 42%);
+    box-shadow: 0 0 0 3px hsl(145 63% 42% / 0.14);
+  }
+
+  .lead-form button {
+    min-height: 52px;
+    border: 0;
+    border-radius: 999px;
+    background: hsl(145 63% 42%);
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+  }
+
+  .lead-form button:disabled {
+    cursor: not-allowed;
+    opacity: 0.72;
+  }
+
+  .lead-form__status {
+    min-height: 20px;
+    margin: 0;
+    text-align: center;
+    color: #4b5563;
+    font-size: 0.9rem;
+  }
+
+  @media (min-width: 720px) {
+    .lead-form__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .lead-form label:first-child {
+      grid-column: 1 / -1;
+    }
+  }
+</style>
