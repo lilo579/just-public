@@ -1,6 +1,6 @@
 ---
 import LeadForm from "../LeadForm.astro";
-import WhatsappCtaTracker from "../WhatsappCtaTracker.astro";
+import TrackedCTA from "../TrackedCTA.astro";
 
 const { block } = Astro.props as {
   block: {
@@ -29,21 +29,22 @@ const showButton = primaryCTA?.visible !== false && primaryCTA?.href && finalLab
       {title && <h2>{title}</h2>}
       {body && <p>{body}</p>}
 
-      {showButton && (
-        <a
-          href={primaryCTA!.href}
+      {showButton && primaryCTA?.type === "whatsapp" ? (
+        <TrackedCTA
+          href={primaryCTA!.href!}
+          label={finalLabel!}
           class="cta__button"
-          data-track-whatsapp-cta={primaryCTA?.type === "whatsapp" ? "true" : undefined}
-          data-cta-id="cta-final-primary-cta"
-        >
+          ctaId="cta-final-primary-cta"
+        />
+      ) : showButton ? (
+        <a href={primaryCTA!.href} class="cta__button">
           {finalLabel}
         </a>
-      )}
+      ) : null}
 
       <LeadForm sourceType="public_site_form" ctaId="cta-final-form" />
     </div>
   </section>
-  <WhatsappCtaTracker sourceType="whatsapp_cta" />
 )}
 
 <style>

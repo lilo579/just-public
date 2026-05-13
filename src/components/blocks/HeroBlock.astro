@@ -1,5 +1,6 @@
 ---
 import type { HeroBlock as HeroBlockType } from "../../contracts/homepage";
+import TrackedCTA from "../TrackedCTA.astro";
 
 const { block } = Astro.props as { block: HeroBlockType };
 const { title, subtitle, eyebrow } = block.content as {
@@ -21,16 +22,18 @@ const showPrimaryCTA =
 
       {subtitle && <p>{subtitle}</p>}
 
-      {showPrimaryCTA && (
-        <a
-          href={primaryCTA!.href}
+      {showPrimaryCTA && primaryCTA?.type === "whatsapp" ? (
+        <TrackedCTA
+          href={primaryCTA!.href!}
+          label={primaryCTA!.label}
           class="hero__cta"
-          data-track-whatsapp-cta={primaryCTA?.type === "whatsapp" ? "true" : undefined}
-          data-cta-id="hero-primary-cta"
-        >
+          ctaId="hero-primary-cta"
+        />
+      ) : showPrimaryCTA ? (
+        <a href={primaryCTA!.href} class="hero__cta">
           {primaryCTA!.label}
         </a>
-      )}
+      ) : null}
     </div>
   </div>
 </section>

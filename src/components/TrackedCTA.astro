@@ -1,0 +1,93 @@
+---
+import { PUBLIC_LEADS_INTAKE_URL, SUPABASE_ANON_KEY } from "../config/publicSite";
+
+const {
+  href,
+  label,
+  class: className = "",
+  ctaId,
+  sourceType = "whatsapp_cta",
+  target,
+  rel,
+} = Astro.props as {
+  href: string;
+  label: string;
+  class?: string;
+  ctaId: string;
+  sourceType?: "whatsapp_cta";
+  target?: string;
+  rel?: string;
+};
+
+const isWhatsapp = href.includes("wa.me/") || href.includes("api.whatsapp.com/");
+---
+
+<a
+  href={href}
+  class={className}
+  target={target}
+  rel={rel}
+  data-tracked-cta={isWhatsapp ? "true" : undefined}
+  data-cta-id={ctaId}
+  data-cta-label={label}
+  data-source-type={sourceType}
+>
+  <slot>{label}</slot>
+</a>
+
+<script
+  define:vars={{
+    leadsUrl: PUBLIC_LEADS_INTAKE_URL,
+    anonKey: SUPABASE_ANON_KEY,
+  }}
+>
+  if (!window.__JUST_TRACKED_CTA_BOUND__) {
+    window.__JUST_TRACKED_CTA_BOUND__ = true;
+
+    document.addEventListener("click", (event) => {
+      const link = event.target?.closest?.("[data-tracked-cta='true']");
+      if (!link || !(link instanceof HTMLAnchorElement)) return;
+      if (!leadsUrl || !anonKey) return;
+
+      const currentUrl = new URL(window.location.href);
+      const resolvedHost = currentUrl.searchParams.get("host")?.trim() || window.location.host;
+
+      const ctaId = link.dataset.ctaId || "whatsapp-cta";
+      const ctaLabel = link.dataset.ctaLabel || (link.textContent || "").trim();
+      const sourceType = link.dataset.sourceType || "whatsapp_cta";
+
+      try {
+        fetch(leadsUrl, {
+          method: "POST",
+          keepalive: true,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${anonKey}`,
+            apikey: anonKey,
+          },
+          body: JSON.stringify({
+            host: resolvedHost,
+            full_name: "WhatsApp CTA Click",
+            email: null,
+            phone: null,
+            source_type: sourceType,
+            path: window.location.pathname,
+            metadata: {
+              host: resolvedHost,
+              path: window.location.pathname,
+              href: window.location.href,
+              source: "just-public",
+              source_type: sourceType,
+              cta_id: ctaId,
+              cta_label: ctaLabel,
+              target_href: link.href,
+              user_agent: navigator.userAgent,
+            },
+          }),
+        });
+      } catch {
+        // Non-blocking by design: CTA navigation must keep working.
+      }
+    });
+  }
+</script>
