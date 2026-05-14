@@ -81,6 +81,19 @@ const {
         const currentUrl = new URL(window.location.href);
         const resolvedHost = currentUrl.searchParams.get("host")?.trim() || window.location.host;
 
+      const buildAttributionMetadata = (currentUrl) => {
+        const getParam = (key) => currentUrl.searchParams.get(key)?.trim() || null;
+
+        return {
+          utm_source: getParam("utm_source"),
+          utm_medium: getParam("utm_medium"),
+          utm_campaign: getParam("utm_campaign"),
+          utm_term: getParam("utm_term"),
+          utm_content: getParam("utm_content"),
+          referrer: document.referrer || null,
+        };
+      };
+
         const response = await fetch(leadsUrl, {
           method: "POST",
           headers: {
@@ -99,6 +112,7 @@ const {
               source: "just-public",
               href: window.location.href,
               cta_id: ctaId,
+              ...buildAttributionMetadata(currentUrl),
             },
           }),
         });

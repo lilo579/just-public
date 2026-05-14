@@ -56,6 +56,19 @@ const isWhatsapp = href.includes("wa.me/") || href.includes("api.whatsapp.com/")
       const ctaLabel = link.dataset.ctaLabel || (link.textContent || "").trim();
       const sourceType = link.dataset.sourceType || "whatsapp_cta";
 
+      const buildAttributionMetadata = (currentUrl) => {
+        const getParam = (key) => currentUrl.searchParams.get(key)?.trim() || null;
+
+        return {
+          utm_source: getParam("utm_source"),
+          utm_medium: getParam("utm_medium"),
+          utm_campaign: getParam("utm_campaign"),
+          utm_term: getParam("utm_term"),
+          utm_content: getParam("utm_content"),
+          referrer: document.referrer || null,
+        };
+      };
+
       try {
         fetch(leadsUrl, {
           method: "POST",
@@ -82,6 +95,7 @@ const isWhatsapp = href.includes("wa.me/") || href.includes("api.whatsapp.com/")
               cta_label: ctaLabel,
               target_href: link.href,
               user_agent: navigator.userAgent,
+              ...buildAttributionMetadata(currentUrl),
             },
           }),
         });
