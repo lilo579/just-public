@@ -1,7 +1,12 @@
-# Wrangler local secrets / vars for workerd (Slice 2+).
-# Copy to .dev.vars for local Wrangler only — never commit real values.
-# Application runtime env model is NOT validated in POC-001 Slice 1.
+# Wrangler local runtime (copy to .dev.vars — never commit .dev.vars).
+# POC-001 Slice 2 environment contract for workerd.
 #
-# SUPABASE_ANON_KEY=
-# PUBLIC_SITE_PAYLOAD_URL=
+# Canonical deploy flag (Workers):
+DEPLOY_ENV=staging
+#
+# Payload config for later slices — use a local mock, never production:
+PUBLIC_SITE_PAYLOAD_URL=http://127.0.0.1:9/mock-public-site-payload
+SUPABASE_ANON_KEY=poc-local-anon-placeholder-not-a-real-key
+#
+# Optional Node contingency alias (not the Worker canonical name):
 # PUBLIC_DEPLOY_ENV=staging

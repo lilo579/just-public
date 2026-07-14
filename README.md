@@ -16,28 +16,36 @@ Official Public Layer hosting/runtime decision lives in the Hub ADR:
 - ADR folder index: [docs/architecture/adr/](https://github.com/lilo579/just-auth-nexus/tree/main/docs/architecture/adr)
 - POC charter: [POC-001](https://github.com/lilo579/just-auth-nexus/blob/main/docs/architecture/poc/POC-001-CLOUDFLARE-RUNTIME-VALIDATION.md)
 
-## POC-001 Slice 1 (adapter + Wrangler scaffold)
+## POC-001 status
+
+### Slice 1 — adapter + Wrangler scaffold
 
 Active adapter: **`@astrojs/cloudflare`** (SSR → Cloudflare Workers + Workers Static Assets).  
-Scaffold: `wrangler.jsonc` (`just-public-poc`). **No deploy performed** in this slice.
+Scaffold: `wrangler.jsonc` (`just-public-poc`).
 
-Not validated yet (Slice 2+):
+### Slice 2 — workerd health + environment bindings
 
-- `/health` on workerd
-- runtime env / Wrangler bindings vs `process.env`
-- host / renderer / multi-tenancy under Workers
-- remote assets / preview URL
+Validated locally on Wrangler/workerd (**no remote deploy**):
 
-Node/Docker files (`Dockerfile`, `.dockerignore`, `scripts/run-standalone.mjs`, `npm run start`) remain as **contingency**; they are not dual-active deploy targets. After the adapter switch, the Node standalone path may not match the new build output until revisited.
+- `GET /health` → `200` + `{"status":"ok","service":"just-public"}` with no Hub/payload/tenant I/O
+- Worker runtime env via `locals.runtime.env` (wrangler `--var` / `.dev.vars` / `.env`)
+- Canonical flag: **`DEPLOY_ENV=staging`** → `X-Robots-Tag: noindex, nofollow`
+- Unset / `production` / other → no automatic `X-Robots-Tag`
+- Node contingency alias only: `PUBLIC_DEPLOY_ENV` (not the Worker canonical name)
 
-`.dev.vars.example` is for Wrangler local vars only; runtime env model is Slice 2.
+Not validated yet (Slice 3+): payload, Host multi-tenant, renderer/theme, remote assets/preview, DNS.
+
+Helper: `src/lib/runtimeEnv.js` (server-only; no production defaults).  
+Copy `.dev.vars.example` → `.dev.vars` for local secrets (gitignored).
 
 ```sh
 npm run cf:build
+npm run cf:dev              # build + wrangler dev (local workerd)
+curl -i http://127.0.0.1:8787/health
 npm run cf:deploy:dry-run   # analyzes artifact; does not publish
-# npm run cf:dev            # local workerd prep for Slice 2 (build + wrangler dev)
 ```
 
+Node/Docker files remain **contingency**, not dual-active deploy targets.
 ## Runtime (active: Cloudflare adapter)
 
 - Astro 5 SSR
@@ -61,11 +69,23 @@ HOST=0.0.0.0 PORT=4321 npm run start
 - **`GET /health`**
 - Body: `{"status":"ok","service":"just-public"}`
 - No Supabase / Edge / tenant dependency
+- Proven on workerd (Slice 2); do not open `/` during smoke without a local payload mock — `publicSite.ts` still has build-time payload defaults until Slice 3
 
 ```sh
-curl -i http://127.0.0.1:4321/health
+# after npm run cf:dev (default wrangler port often 8787)
+curl -i http://127.0.0.1:8787/health
 ```
 
+### Environment (Workers / Slice 2)
+
+| Variable | Source | Notes |
+|----------|--------|-------|
+| `DEPLOY_ENV` | runtime binding | `staging` → noindex; canonical |
+| `PUBLIC_DEPLOY_ENV` | Node contingency only | fallback if `DEPLOY_ENV` absent |
+| `PUBLIC_SITE_PAYLOAD_URL` | runtime binding (future fetch) | use local mock in POC; do not commit real `.dev.vars` |
+| `SUPABASE_ANON_KEY` | runtime binding (future fetch) | placeholder locally; never service role |
+
+`import.meta.env` remains **build-time** (Vite). Do not rely on it for Worker runtime bindings.
 ## Request flow
 
 ```
@@ -126,20 +146,22 @@ A future host must supply:
 - rollback to previous image
 - an internal hostname (e.g. future `public-staging.justwebsites.com.br` — **DNS not created here**)
 
-Optional: `PUBLIC_DEPLOY_ENV=staging` → `X-Robots-Tag: noindex, nofollow`.
+Optional (Node contingency): `PUBLIC_DEPLOY_ENV=staging` → `X-Robots-Tag` via process.env fallback.  
+Workers canonical: `DEPLOY_ENV=staging` (see Slice 2).
 
 ## Environment
 
-See `.env.example`. Summary:
+See `.env.example` and `.dev.vars.example`. Summary:
 
 | Variable | Scope | Notes |
 |----------|-------|-------|
-| `HOST`, `PORT` | process | Bind |
-| `SUPABASE_ANON_KEY` | SSR | Anon key for payload (not service role) |
-| `PUBLIC_SITE_PAYLOAD_URL` | public default/override | Edge URL |
+| `HOST`, `PORT` | Node process | Bind (contingency) |
+| `DEPLOY_ENV` | Worker runtime | `staging` → noindex (canonical) |
+| `PUBLIC_DEPLOY_ENV` | Node contingency | Fallback if `DEPLOY_ENV` absent |
+| `SUPABASE_ANON_KEY` | SSR / Worker binding | Anon only — never service role |
+| `PUBLIC_SITE_PAYLOAD_URL` | build-time + future runtime | Prefer local mock in POC |
 | `PUBLIC_LEADS_INTAKE_URL` | public | Leads |
 | `PUBLIC_ALLOW_LEGACY_RENDERER` | SSR | Explicit legacy gate |
-| `PUBLIC_DEPLOY_ENV` | SSR middleware | `staging` → noindex |
 | `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` | catalog client | Naming débit vs `SUPABASE_ANON_KEY` |
 
 ## Local development
@@ -154,9 +176,10 @@ Simulate tenants with `/?host=...` (see runbook).
 ## Commands
 
 ```sh
-npm test                 # node:test
+npm test                 # node:test (includes local workerd health/env)
 npm run build            # Astro production build (Cloudflare Worker artifact)
 npm run cf:build         # alias of build
+npm run cf:dev           # build + wrangler dev (local)
 npm run cf:deploy:dry-run
 npm run start            # Node contingency (may not match CF dist layout)
 npm run docker:build     # Docker contingency (kept; not dual-target for CF)
@@ -165,8 +188,8 @@ npm run docker:run
 
 ## Current limitations
 
-- POC-001 Slice 1 only: Worker artifact + Wrangler scaffold; **no Cloudflare deploy/DNS**.
-- Runtime env and `/health` on workerd not validated (Slice 2).
+- POC-001 Slice 2: health + env on workerd; **no Cloudflare deploy/DNS**.
+- Payload / Host / renderer not yet validated on Workers (Slice 3).
 - Hub Edge Function commit `7266049` may not yet be deployed (tracked in Hub).
 - Content model remains flat (`site_content` / branding / contact).
 

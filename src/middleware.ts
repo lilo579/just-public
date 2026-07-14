@@ -1,19 +1,18 @@
 import { defineMiddleware } from "astro:middleware"
+import { resolveDeployEnv } from "./lib/runtimeEnv.js"
 
 /**
- * Staging-only indexing guard. Production (unset / other values) is unchanged.
- * Future proxy/Worker must preserve the visitor Host header (or set Host
- * explicitly). This app does not trust X-Forwarded-Host from the public internet.
+ * Staging-only indexing guard. Production / unset / other values: no automatic X-Robots-Tag.
+ * Future proxy/Worker must preserve the visitor Host header (or set Host explicitly).
+ * This app does not trust X-Forwarded-Host from the public internet.
  *
- * Read process.env at runtime so container -e PUBLIC_DEPLOY_ENV=staging works
- * without rebuilding (import.meta.env.PUBLIC_* is build-time inlined).
+ * Canonical Worker env: DEPLOY_ENV (locals.runtime.env / .dev.vars / wrangler --var).
+ * Node contingency: PUBLIC_DEPLOY_ENV via process.env remains readable as fallback only.
+ * import.meta.env is build-time and is not the Worker runtime source of truth.
  */
-export const onRequest = defineMiddleware(async (_context, next) => {
+export const onRequest = defineMiddleware(async (context, next) => {
   const response = await next()
-  const deployEnv =
-    (typeof process !== "undefined" && process.env?.PUBLIC_DEPLOY_ENV) ||
-    import.meta.env.PUBLIC_DEPLOY_ENV
-  if (deployEnv === "staging") {
+  if (resolveDeployEnv(context.locals) === "staging") {
     response.headers.set("X-Robots-Tag", "noindex, nofollow")
   }
   return response
