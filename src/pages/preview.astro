@@ -1,12 +1,14 @@
 ---
 export const prerender = false
 
-import { PUBLIC_SITE_PAYLOAD_URL, SUPABASE_ANON_KEY } from "../config/publicSite"
 import type { ResolvedHomepage } from "../contracts/homepage"
 import HomepageRenderer from "../components/HomepageRenderer.astro"
 import CanonicalHomepageRenderer from "../components/CanonicalHomepageRenderer.astro"
 import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
+import SiteTheme from "../components/SiteTheme.astro"
+import { chooseHomepageRenderer, fetchPublicSitePayload } from "../lib/publicHomepage"
+import { themeTokensFromBranding } from "../lib/themeFromBranding"
 
 const slug = Astro.url.searchParams.get("slug")?.trim()
 const renderer = Astro.url.searchParams.get("renderer")?.trim()
@@ -14,92 +16,88 @@ const debug = Astro.url.searchParams.get("debug")
 const MODE = "preview"
 
 if (!slug) {
-  throw new Error("Missing slug. Use /preview?slug=YOUR_SLUG")
+  return new Response("Missing slug. Use /preview?slug=YOUR_SLUG", {
+    status: 400,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  })
 }
 
-const url = `${PUBLIC_SITE_PAYLOAD_URL}?slug=${encodeURIComponent(slug)}&mode=${MODE}`
+const allowLegacy =
+  renderer === "legacy" || import.meta.env.PUBLIC_ALLOW_LEGACY_RENDERER === "1"
+const forceLegacy = renderer === "legacy"
 
-const res = await fetch(url, {
-  headers: {
-    apikey: SUPABASE_ANON_KEY,
-    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-  },
-})
-
-if (!res.ok) {
-  const text = await res.text()
-  throw new Error(
-    `Failed to fetch homepage payload
-Slug: ${slug}
-Status: ${res.status}
-Body: ${text}`
-  )
+const fetched = await fetchPublicSitePayload({ kind: "slug", slug }, MODE)
+if (!fetched.ok) {
+  return new Response(`Failed to fetch homepage payload (${fetched.status})`, {
+    status: fetched.status === 404 ? 404 : 502,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  })
 }
 
-const homepage = (await res.json()) as ResolvedHomepage
+const homepage = fetched.homepage
+const choice = chooseHomepageRenderer(homepage, { allowLegacy, forceLegacy })
+if (choice.mode === "error") {
+  return new Response(`Homepage unavailable (${choice.reason})`, {
+    status: 502,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  })
+}
+
 const footer = homepage.footer ?? {
+  logoUrl: null,
+  tagline: null,
+  whatsappNumber: null,
+  whatsappVisible: false,
+  email: null,
+  address: null,
   companyName: "Site",
-  logoUrl: "",
-  tagline: "",
-  whatsapp: "",
-  email: "",
-  phone: "",
-  address: "",
+  socialLinks: [],
 }
-const wantsCanonicalRenderer = renderer === "canonical"
 const sourceBranding = homepage.source?.meta?.branding
 const brandingName = homepage.source?.contact?.companyName ?? footer.companyName ?? "Site"
 const brandingLogo =
   sourceBranding?.logoHorizontalUrl ?? sourceBranding?.logoUrl ?? footer.logoUrl ?? ""
-const shellFooter = wantsCanonicalRenderer
-  ? {
-      ...footer,
-      companyName: brandingName,
-      logoUrl: brandingLogo,
-    }
-  : footer
-const shouldUseCanonicalRenderer =
-  wantsCanonicalRenderer && Boolean(homepage.serializablePlan)
-const showCanonicalDiagnostics = debug === "canonical"
+const tokens = themeTokensFromBranding(sourceBranding ?? null)
+const showCanonicalDiagnostics = debug === "canonical" && choice.mode === "canonical"
 ---
 
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Preview</title>
+    <title>Preview — {brandingName}</title>
   </head>
   <body>
-    <Header
-      siteTitle={wantsCanonicalRenderer ? brandingName : footer.companyName || "Site"}
-      logoUrl={wantsCanonicalRenderer ? brandingLogo : footer.logoUrl || ""}
-      logoAlt={wantsCanonicalRenderer ? brandingName : footer.companyName || "Logo"}
-    />
+    <SiteTheme tokens={tokens}>
+      <Header siteTitle={brandingName} logoUrl={brandingLogo} logoAlt={brandingName} />
 
-    <main>
-      {/* canonical preview is opt-in while adapters are being aligned with producer props */}
-      {shouldUseCanonicalRenderer ? (
-        <CanonicalHomepageRenderer
-          plan={homepage.serializablePlan}
-          showDiagnostics={showCanonicalDiagnostics}
-        />
-      ) : (
-        <>
-          {wantsCanonicalRenderer && !homepage.serializablePlan && (
+      <main data-renderer={choice.mode}>
+        {choice.mode === "canonical" ? (
+          <CanonicalHomepageRenderer
+            plan={choice.plan}
+            showDiagnostics={showCanonicalDiagnostics}
+          />
+        ) : (
+          <>
             <section
-              aria-label="Canonical preview fallback warning"
-              style="margin: 1.5rem auto 0; max-width: 1100px; padding: 1rem 1.25rem; border: 1px solid hsl(12 75% 78%); border-radius: 0.75rem; background: hsl(12 100% 97%); color: hsl(12 45% 22%); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 0.95rem; line-height: 1.5;"
+              aria-label="Legacy renderer fallback"
+              data-legacy-fallback={choice.reason}
+              style="margin: 1.5rem auto 0; max-width: 1100px; padding: 1rem 1.25rem; border: 1px solid hsl(12 75% 78%); border-radius: 0.75rem; background: hsl(12 100% 97%); color: hsl(12 45% 22%); font-size: 0.95rem;"
             >
-              Canonical renderer requested, but serializablePlan was not present in the
-              payload. Falling back to legacy HomepageRenderer.
+              Explicit legacy fallback ({choice.reason}).
             </section>
-          )}
+            <HomepageRenderer homepage={homepage} />
+          </>
+        )}
+      </main>
 
-          <HomepageRenderer homepage={homepage} />
-        </>
-      )}
-    </main>
-
-    <Footer footer={shellFooter} />
+      <Footer
+        footer={{
+          ...footer,
+          companyName: brandingName,
+          logoUrl: brandingLogo,
+        }}
+      />
+    </SiteTheme>
   </body>
 </html>

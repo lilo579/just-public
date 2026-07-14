@@ -1,6 +1,6 @@
 ---
 const {
-  siteTitle = "Marcelo Borer",
+  siteTitle = "Site",
   logoUrl = "",
   logoAlt = siteTitle,
 } = Astro.props as {
@@ -89,9 +89,9 @@ const {
     min-height: 2.2rem;
     padding: 0.48rem 1.2rem;
     border-radius: 999px;
-    border: 1.5px solid #95a394;
+    border: 1.5px solid var(--site-color-primary, #95a394);
     background: transparent;
-    color: #748776;
+    color: var(--site-color-primary, #748776);
     text-decoration: none;
     font-weight: 500;
     font-size: 0.95rem;
@@ -106,7 +106,7 @@ const {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #748776;
+    color: var(--site-color-primary, #748776);
     flex: 0 0 auto;
   }
 

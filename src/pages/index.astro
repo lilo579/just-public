@@ -1,45 +1,36 @@
 ---
 export const prerender = false
 
-import { PUBLIC_SITE_PAYLOAD_URL, SUPABASE_ANON_KEY } from "../config/publicSite"
 import type { ResolvedHomepage } from "../contracts/homepage"
 import HomepageRenderer from "../components/HomepageRenderer.astro"
+import CanonicalHomepageRenderer from "../components/CanonicalHomepageRenderer.astro"
 import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
+import SiteTheme from "../components/SiteTheme.astro"
+import {
+  chooseHomepageRenderer,
+  fetchPublicSitePayload,
+  resolveRequestHost,
+} from "../lib/publicHomepage"
+import { themeTokensFromBranding } from "../lib/themeFromBranding"
 
-// --- Host forwarding (public homepage) ---
 const requestUrl = new URL(Astro.request.url)
-const hostOverride = requestUrl.searchParams.get("host")?.trim()
-const headerHost = Astro.request.headers.get("host")?.trim()
+const allowLegacy =
+  requestUrl.searchParams.get("renderer") === "legacy" ||
+  import.meta.env.PUBLIC_ALLOW_LEGACY_RENDERER === "1"
+const forceLegacy = requestUrl.searchParams.get("renderer") === "legacy"
 
-const host = hostOverride || headerHost
+const host = resolveRequestHost(Astro.request, requestUrl.searchParams)
 
-if (!host) {
-  throw new Error("Missing Host header")
-}
-
-const MODE = "public"
-
-const url = `${PUBLIC_SITE_PAYLOAD_URL}?host=${encodeURIComponent(host)}&mode=${MODE}`
-
-const res = await fetch(url, {
-  headers: {
-    apikey: SUPABASE_ANON_KEY,
-    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-  },
-})
-
-if (!res.ok) {
-  const text = await res.text()
-  throw new Error(
-    `Failed to fetch homepage payload
-Host: ${host}
-Status: ${res.status}
-Body: ${text}`
+const fetched = await fetchPublicSitePayload({ kind: "host", host }, "public")
+if (!fetched.ok) {
+  return new Response(
+    `Site unavailable\nHost: ${host}\nStatus: ${fetched.status}`,
+    { status: fetched.status === 404 ? 404 : 502, headers: { "Content-Type": "text/plain; charset=utf-8" } },
   )
 }
 
-const homepage = (await res.json()) as ResolvedHomepage & {
+const homepage = fetched.homepage as ResolvedHomepage & {
   source?: {
     contact?: {
       companyName?: string | null
@@ -50,11 +41,23 @@ const homepage = (await res.json()) as ResolvedHomepage & {
     }
     meta?: {
       branding?: {
+        primaryColor?: string | null
+        secondaryColor?: string | null
+        accentColor?: string | null
+        typography?: string | null
         logoUrl?: string | null
         logoHorizontalUrl?: string | null
       }
     }
   }
+}
+
+const choice = chooseHomepageRenderer(homepage, { allowLegacy, forceLegacy })
+if (choice.mode === "error") {
+  return new Response(`Homepage unavailable (${choice.reason})`, {
+    status: 502,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  })
 }
 
 const footer = homepage.footer ?? {
@@ -70,26 +73,51 @@ const footer = homepage.footer ?? {
   companyName: homepage.source?.contact?.companyName ?? "Site",
   socialLinks: [],
 }
+
+const brandingName = homepage.source?.contact?.companyName ?? footer.companyName ?? "Site"
+const brandingLogo =
+  homepage.source?.meta?.branding?.logoHorizontalUrl ??
+  homepage.source?.meta?.branding?.logoUrl ??
+  footer.logoUrl ??
+  ""
+const tokens = themeTokensFromBranding(homepage.source?.meta?.branding ?? null)
 ---
 
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{footer.companyName || "Site"}</title>
+    <title>{brandingName}</title>
   </head>
   <body>
-    <Header
-      siteTitle={footer.companyName || "Site"}
-      logoUrl={footer.logoUrl || ""}
-      logoAlt={footer.companyName || "Logo"}
-    />
+    <SiteTheme tokens={tokens}>
+      <Header siteTitle={brandingName} logoUrl={brandingLogo} logoAlt={brandingName} />
 
-    <main class="page-shell">
-      <HomepageRenderer homepage={homepage} />
-    </main>
+      <main class="page-shell" data-renderer={choice.mode}>
+        {choice.mode === "canonical" ? (
+          <CanonicalHomepageRenderer plan={choice.plan} />
+        ) : (
+          <>
+            <section
+              aria-label="Legacy renderer fallback"
+              data-legacy-fallback={choice.reason}
+              style="margin: 1rem 0; padding: 0.75rem 1rem; border: 1px solid #f59e0b; border-radius: 0.5rem; background: #fffbeb; color: #92400e; font-size: 0.875rem;"
+            >
+              Using explicit legacy homepage renderer ({choice.reason}).
+            </section>
+            <HomepageRenderer homepage={homepage} />
+          </>
+        )}
+      </main>
 
-    <Footer footer={footer} />
+      <Footer
+        footer={{
+          ...footer,
+          companyName: brandingName,
+          logoUrl: brandingLogo,
+        }}
+      />
+    </SiteTheme>
   </body>
 </html>
 

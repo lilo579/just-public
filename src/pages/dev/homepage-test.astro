@@ -1,83 +1,59 @@
 ---
 /**
- * ⚠️ TECHNICAL VALIDATION ROUTE (B → D bridge)
- *
- * This page MUST run in SSR mode.
- * Do NOT prerender.
- *
- * ⚠️ TEMP: technical validation only.
- * Do NOT treat hardcoded tenantId as final routing strategy.
+ * Dev-only bridge route. Requires explicit ?tenantId= — no hardcoded tenant.
+ * Disabled when import.meta.env.PROD is true.
  */
 export const prerender = false
 
-import { PUBLIC_SITE_PAYLOAD_URL } from "../../config/publicSite"
 import type { ResolvedHomepage } from "../../contracts/homepage"
+import { fetchPublicSitePayload } from "../../lib/publicHomepage"
+import { chooseHomepageRenderer } from "../../lib/publicHomepage"
+import CanonicalHomepageRenderer from "../../components/CanonicalHomepageRenderer.astro"
+import HomepageRenderer from "../../components/HomepageRenderer.astro"
+import SiteTheme from "../../components/SiteTheme.astro"
+import { themeTokensFromBranding } from "../../lib/themeFromBranding"
 
-import HeroBlock from "../../components/blocks/HeroBlock.astro"
-import TrustBlock from "../../components/blocks/TrustBlock.astro"
-import ServicesBlock from "../../components/blocks/ServicesBlock.astro"
-import AboutBlock from "../../components/blocks/AboutBlock.astro"
-import CtaBlock from "../../components/blocks/CtaBlock.astro"
+if (import.meta.env.PROD) {
+  return new Response("Not found", { status: 404 })
+}
 
-// ⚠️ TEMP: technical validation only. Do not treat hardcoded tenantId as final routing strategy.
-const TENANT_ID = "76a96afa-80f9-4782-a08d-e869e79d7d84"
-const MODE = "preview"
-
-const url = `${PUBLIC_SITE_PAYLOAD_URL}?tenantId=${TENANT_ID}&mode=${MODE}`
-
-const res = await fetch(url)
-
-if (!res.ok) {
-  const text = await res.text()
-
-  throw new Error(
-    `Failed to fetch homepage payload\nStatus: ${res.status}\nBody: ${text}`
+const tenantId = Astro.url.searchParams.get("tenantId")?.trim()
+if (!tenantId) {
+  return new Response(
+    "Dev route requires ?tenantId=<uuid>. Hardcoded tenant IDs are not allowed.",
+    { status: 400, headers: { "Content-Type": "text/plain; charset=utf-8" } },
   )
 }
 
-const homepage = (await res.json()) as ResolvedHomepage
+const fetched = await fetchPublicSitePayload({ kind: "tenantId", tenantId }, "preview")
+if (!fetched.ok) {
+  return new Response(`Payload error ${fetched.status}`, { status: 502 })
+}
+
+const homepage = fetched.homepage as ResolvedHomepage
+const choice = chooseHomepageRenderer(homepage, {
+  allowLegacy: Astro.url.searchParams.get("renderer") === "legacy",
+  forceLegacy: Astro.url.searchParams.get("renderer") === "legacy",
+})
+const tokens = themeTokensFromBranding(homepage.source?.meta?.branding ?? null)
 ---
 
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <title>Homepage Renderer Test</title>
+    <title>Dev homepage test</title>
   </head>
   <body>
-    <main>
-      <h1>Homepage Renderer Test</h1>
-
-      <p>Status: {homepage.status}</p>
-
-      <pre style="white-space: pre-wrap; margin-top: 24px;">
-        {JSON.stringify(homepage, null, 2)}
-      </pre>
-
-      <section>
-        {
-          homepage.blocks.map((block) => {
-            switch (block.type) {
-              case "hero":
-                return <HeroBlock block={block} />
-
-              case "trust":
-                return <TrustBlock block={block} />
-
-              case "services":
-                return <ServicesBlock block={block} />
-
-              case "about":
-                return <AboutBlock block={block} />
-
-              case "cta":
-                return <CtaBlock block={block} />
-
-              default:
-                return null
-            }
-          })
-        }
-      </section>
-    </main>
+    <SiteTheme tokens={tokens}>
+      <main data-renderer={choice.mode === "error" ? "error" : choice.mode}>
+        {choice.mode === "canonical" ? (
+          <CanonicalHomepageRenderer plan={choice.plan} />
+        ) : choice.mode === "legacy" ? (
+          <HomepageRenderer homepage={homepage} />
+        ) : (
+          <p>Unable to render: {choice.reason}</p>
+        )}
+      </main>
+    </SiteTheme>
   </body>
 </html>

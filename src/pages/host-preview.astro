@@ -1,47 +1,66 @@
 ---
-export const prerender = false;
+export const prerender = false
 
-import { PUBLIC_SITE_PAYLOAD_URL, SUPABASE_ANON_KEY } from "../config/publicSite";
-import type { ResolvedHomepage } from "../contracts/homepage";
-import HomepageRenderer from "../components/HomepageRenderer.astro";
+import type { ResolvedHomepage } from "../contracts/homepage"
+import HomepageRenderer from "../components/HomepageRenderer.astro"
+import CanonicalHomepageRenderer from "../components/CanonicalHomepageRenderer.astro"
+import SiteTheme from "../components/SiteTheme.astro"
+import {
+  chooseHomepageRenderer,
+  fetchPublicSitePayload,
+  resolveRequestHost,
+} from "../lib/publicHomepage"
+import { themeTokensFromBranding } from "../lib/themeFromBranding"
 
-const rawHost = Astro.request.headers.get("host")?.trim();
+const requestUrl = new URL(Astro.request.url)
+const allowLegacy =
+  requestUrl.searchParams.get("renderer") === "legacy" ||
+  import.meta.env.PUBLIC_ALLOW_LEGACY_RENDERER === "1"
+const forceLegacy = requestUrl.searchParams.get("renderer") === "legacy"
+const host = resolveRequestHost(Astro.request, requestUrl.searchParams)
 
-if (!rawHost) {
-  throw new Error("Missing Host header");
+const fetched = await fetchPublicSitePayload({ kind: "host", host }, "public")
+if (!fetched.ok) {
+  return new Response(`Site unavailable (${fetched.status})`, {
+    status: fetched.status === 404 ? 404 : 502,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  })
 }
 
-const url = `${PUBLIC_SITE_PAYLOAD_URL}?host=${encodeURIComponent(rawHost)}&mode=public`;
-
-const res = await fetch(url, {
-  headers: {
-    apikey: SUPABASE_ANON_KEY,
-    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-  },
-});
-
-if (!res.ok) {
-  const text = await res.text();
-  throw new Error(
-    `Failed to fetch homepage payload
-Status: ${res.status}
-Body: ${text}`
-  );
+const homepage = fetched.homepage as ResolvedHomepage
+const choice = chooseHomepageRenderer(homepage, { allowLegacy, forceLegacy })
+if (choice.mode === "error") {
+  return new Response(`Homepage unavailable (${choice.reason})`, {
+    status: 502,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  })
 }
 
-const homepage = (await res.json()) as ResolvedHomepage;
+const tokens = themeTokensFromBranding(homepage.source?.meta?.branding ?? null)
+const title = homepage.source?.contact?.companyName ?? "Site"
 ---
 
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Host Preview</title>
+    <title>{title}</title>
   </head>
   <body>
-    <main class="page-shell">
-      <HomepageRenderer homepage={homepage} />
-    </main>
+    <SiteTheme tokens={tokens}>
+      <main class="page-shell" data-renderer={choice.mode}>
+        {choice.mode === "canonical" ? (
+          <CanonicalHomepageRenderer plan={choice.plan} />
+        ) : (
+          <>
+            <section data-legacy-fallback={choice.reason} aria-label="Legacy renderer fallback">
+              Explicit legacy fallback: {choice.reason}
+            </section>
+            <HomepageRenderer homepage={homepage} />
+          </>
+        )}
+      </main>
+    </SiteTheme>
   </body>
 </html>
 
@@ -50,11 +69,5 @@ const homepage = (await res.json()) as ResolvedHomepage;
     margin: 0 auto;
     max-width: 1100px;
     padding: 0 20px;
-  }
-
-  @media (max-width: 720px) {
-    .page-shell {
-      padding: 0 18px;
-    }
   }
 </style>

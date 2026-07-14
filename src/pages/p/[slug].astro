@@ -11,10 +11,16 @@ const baseOverride = url.searchParams.get('base')?.trim() ?? ''
 
 const hostHeader = Astro.request.headers.get('host') ?? ''
 const hostFromHeader = hostHeader.split(':')[0].toLowerCase()
+const isLocalHost = hostFromHeader === 'localhost' || hostFromHeader === '127.0.0.1'
 
-const host =
-  hostOverride ||
-  (hostFromHeader === 'localhost' ? 'www.3djewish.com.br' : hostFromHeader)
+if (isLocalHost && !hostOverride) {
+  return new Response(
+    'Local product page requires ?host=<tenant-domain>. No default tenant host is applied.',
+    { status: 400, headers: { 'Content-Type': 'text/plain; charset=utf-8' } },
+  )
+}
+
+const host = hostOverride || hostFromHeader
 
 const { data: rows, error } = await supabase.rpc('public_get_product_by_host_and_slug', {
   p_host: host,

@@ -7,13 +7,9 @@ export default defineConfig({
 
   vite: {
     server: {
-      allowedHosts: [
-        "localhost",
-        "127.0.0.1",
-        "www.3djewish.com.br",
-        "www.marceloborer.com.br", // 👈 adicionar aqui
-        "nao-existe.com.br",
-      ],
+      // Allow Host-header simulation for any tenant domain in local SSR.
+      // Prefer `/?host=<domain>` when possible — no per-tenant allowlist.
+      allowedHosts: true,
     },
   },
 });

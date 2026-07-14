@@ -1,0 +1,34 @@
+---
+import type { SiteThemeTokens } from "../lib/themeFromBranding"
+import { themeTokensToInlineStyle } from "../lib/themeFromBranding"
+
+const { tokens } = Astro.props as { tokens: SiteThemeTokens }
+const inlineStyle = themeTokensToInlineStyle(tokens)
+---
+
+{/* Apply allowlisted custom properties on a root wrapper — no raw CSS from DB */}
+<div
+  class="site-theme-root"
+  data-site-theme
+  style={inlineStyle}
+  data-primary={tokens["--site-color-primary"]}
+  data-secondary={tokens["--site-color-secondary"]}
+>
+  <slot />
+</div>
+
+<style>
+  .site-theme-root {
+    min-height: 100vh;
+    background: var(--site-color-background, #fff);
+    color: var(--site-color-text, #0f172a);
+    font-family: var(--site-font-body, system-ui, sans-serif);
+  }
+
+  .site-theme-root :global(h1),
+  .site-theme-root :global(h2),
+  .site-theme-root :global(h3),
+  .site-theme-root :global(h4) {
+    font-family: var(--site-font-heading, system-ui, sans-serif);
+  }
+</style>
