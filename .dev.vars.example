@@ -1,0 +1,7 @@
+# Wrangler local secrets / vars for workerd (Slice 2+).
+# Copy to .dev.vars for local Wrangler only — never commit real values.
+# Application runtime env model is NOT validated in POC-001 Slice 1.
+#
+# SUPABASE_ANON_KEY=
+# PUBLIC_SITE_PAYLOAD_URL=
+# PUBLIC_DEPLOY_ENV=staging

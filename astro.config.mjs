@@ -1,9 +1,10 @@
 import { defineConfig } from "astro/config";
-import node from "@astrojs/node";
+import cloudflare from "@astrojs/cloudflare";
 
 export default defineConfig({
   output: "server",
-  adapter: node({ mode: "standalone" }),
+  // passthrough: avoid bundling sharp into the Worker (nodejs_compat not enabled in Slice 1).
+  adapter: cloudflare({ imageService: "passthrough" }),
 
   vite: {
     server: {

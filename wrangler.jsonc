@@ -1,0 +1,14 @@
+// POC-001 Slice 1 — experimental Cloudflare Workers scaffold (not production).
+// Runtime env validation is Slice 2; no routes/DNS/KV/Hub bindings here.
+{
+  "name": "just-public-poc",
+  // Compatibility date documented for this POC slice (Wrangler / Workers).
+  "compatibility_date": "2026-07-14",
+  // Entrypoint produced by @astrojs/cloudflare (astro build → dist/_worker.js/).
+  "main": "./dist/_worker.js/index.js",
+  // Workers Static Assets — client build output + fallback to Worker SSR.
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  }
+}

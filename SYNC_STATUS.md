@@ -1,42 +1,46 @@
 # SYNC_STATUS — just-public
 
-Updated: 2026-07-14 (runtime / container foundation — local only)
+Updated: 2026-07-14 (POC-001 Slice 1 — adapter Cloudflare + Wrangler scaffold)
 
 ## Source of truth
 
 - Local git working tree in this repository.
-- HEAD of multi-tenant renderer slice: **267dd34** (prior commit on main when this foundation began).
+- Baseline before this slice: **e70d9fb** (ADR-004 docs reference).
 - Hub authority for tenants / domains / payload: **just-auth-nexus**.
+- POC charter: Hub `docs/architecture/poc/POC-001-CLOUDFLARE-RUNTIME-VALIDATION.md`.
 
-## Current state
+## Current state (POC-001 Slice 1)
 
-- Astro SSR + `@astrojs/node` standalone, `output: server`.
-- Canonical renderer + theme remain as in 267dd34.
-- **Container foundation added:** Dockerfile (multi-stage), `.dockerignore`, `npm run start`, `GET /health`.
-- Runtime bind via `HOST` / `PORT` (adapter-native).
-- Runbook: `docs/public-runtime-runbook.md`.
-- `.env.example` documents env contract (no secrets).
+- Active adapter: **`@astrojs/cloudflare`** (`output: server`, `imageService: "passthrough"`) — not `@astrojs/node`.
+- Wrangler scaffold: `wrangler.jsonc` (`name: just-public-poc`, Workers Static Assets).
+- Scripts: `cf:build`, `cf:dev`, `cf:deploy:dry-run` (dry-run only; **no deploy**).
+- Artifact validated: `astro build` + `wrangler deploy --dry-run` (no publish).
+- `.dev.vars.example` + `.dev.vars` gitignored; runtime env model **not** validated (Slice 2).
+- Canonical renderer + theme / Hub contracts unchanged in this slice.
+- Dockerfile / `.dockerignore` / `scripts/run-standalone.mjs` **preserved** as Node/Docker contingency (may not match CF build output).
 
 ## Warnings
 
-- **No deploy performed** in this slice.
-- Hosting provider not selected or provisioned.
+- **No deploy performed**; Cloudflare remote / DNS not touched.
+- `/health` on workerd not validated yet.
+- Runtime env bindings vs `process.env` not validated yet.
+- Default adapter image path pulled `sharp` into Wrangler resolve → fixed via official `imageService: "passthrough"` (**not** `nodejs_compat`).
+- Adapter logs optional SESSION KV; Slice 1 did **not** add KV bindings.
+- `npm test`: green (secret scan checks values/JWT/injection, not SDK JSDoc names); Node contingency `/health` skipped when Cloudflare build is active.
 - Edge Function Git `7266049` (**just-auth-nexus**) still may be undeployed in Supabase.
-- Worker and DNS (including `public-staging.justwebsites.com.br` and wildcard preview) still absent.
-- Build must run inside Docker (Astro path metadata); do not ship a host-built `dist/` alone into foreign paths.
+- Do not treat Node/Docker runbook as permanently discontinued — contingency only until POC decision.
 
 ## Architecture decision
 
-- Hub **ADR-004** (Cloudflare Workers as official Public Layer runtime) is the strategic target.
-- Link: `just-auth-nexus` → `docs/architecture/adr/ADR-004-CLOUDFLARE-RUNTIME-PUBLIC-LAYER.md`
-- This repo keeps `@astrojs/node` + Docker as contingency until the Cloudflare POC; no adapter migration in this sync note alone.
+- Hub **ADR-004**: Cloudflare Workers + Static Assets + `@astrojs/cloudflare` is the strategic target.
+- This slice answers: does `just-public` produce a valid Workers artifact?
 
 ## Next steps
 
-1. Cloudflare POC on `just-public` (`@astrojs/cloudflare` + Wrangler) per ADR-004 — no production DNS/domains.
-2. Deploy Hub Edge `public-site-payload` at 7266049 (Hub repo).
-3. Staging Worker Custom Domain / preview wildcard after POC.
-4. Keep Node/Docker foundation until POC success criteria pass.
+1. **POC-001 Slice 2** — `/health` + runtime env on workerd (local).
+2. Later slices — host, payload, renderer, multi-tenancy, assets remote, preview (per POC-001).
+3. Deploy Hub Edge `public-site-payload` at 7266049 (Hub repo) when ready.
+4. Keep Node/Docker contingency until POC success criteria pass.
 
 ## Do not overwrite
 

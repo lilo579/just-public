@@ -10,33 +10,51 @@ Shared multi-tenant Astro SSR renderer for public websites.
 
 ## Architecture decision (Hub)
 
-Official Public Layer hosting/runtime decision lives in the Hub ADR (documentation only — this repo still runs Node until the Cloudflare POC):
+Official Public Layer hosting/runtime decision lives in the Hub ADR:
 
 - [ADR-004 — Cloudflare Workers as Public Layer Runtime](https://github.com/lilo579/just-auth-nexus/blob/main/docs/architecture/adr/ADR-004-CLOUDFLARE-RUNTIME-PUBLIC-LAYER.md)
 - ADR folder index: [docs/architecture/adr/](https://github.com/lilo579/just-auth-nexus/tree/main/docs/architecture/adr)
+- POC charter: [POC-001](https://github.com/lilo579/just-auth-nexus/blob/main/docs/architecture/poc/POC-001-CLOUDFLARE-RUNTIME-VALIDATION.md)
 
-Target: Cloudflare Workers + Workers Static Assets + `@astrojs/cloudflare`.  
-Current Node/Docker foundation remains the validated local/container contingency until that POC lands.
+## POC-001 Slice 1 (adapter + Wrangler scaffold)
 
-## Runtime
+Active adapter: **`@astrojs/cloudflare`** (SSR → Cloudflare Workers + Workers Static Assets).  
+Scaffold: `wrangler.jsonc` (`just-public-poc`). **No deploy performed** in this slice.
+
+Not validated yet (Slice 2+):
+
+- `/health` on workerd
+- runtime env / Wrangler bindings vs `process.env`
+- host / renderer / multi-tenancy under Workers
+- remote assets / preview URL
+
+Node/Docker files (`Dockerfile`, `.dockerignore`, `scripts/run-standalone.mjs`, `npm run start`) remain as **contingency**; they are not dual-active deploy targets. After the adapter switch, the Node standalone path may not match the new build output until revisited.
+
+`.dev.vars.example` is for Wrangler local vars only; runtime env model is Slice 2.
+
+```sh
+npm run cf:build
+npm run cf:deploy:dry-run   # analyzes artifact; does not publish
+# npm run cf:dev            # local workerd prep for Slice 2 (build + wrangler dev)
+```
+
+## Runtime (active: Cloudflare adapter)
 
 - Astro 5 SSR
-- `@astrojs/node` adapter — `output: "server"`, `mode: "standalone"`
-- Entrypoint after build: `dist/server/entry.mjs`
-- Canonical process: `npm run start` → `scripts/run-standalone.mjs` (loads `dist/server/entry.mjs`; handles SIGTERM for containers)
+- `@astrojs/cloudflare` — `output: "server"`
+- Worker entrypoint after build: `dist/_worker.js/index.js`
+- Static assets directory: `dist/` (Wrangler `assets.directory`)
 
-### HOST / PORT
+### Node / Docker contingency
 
-| Variable | Role |
-|----------|------|
-| `HOST` | Bind address. Use `0.0.0.0` in containers. |
-| `PORT` | Listen port (default **4321** if unset and build default applies). |
+Preserved locally; not the active POC build path:
+
+- `npm run start` → `scripts/run-standalone.mjs` (historically `dist/server/entry.mjs` under `@astrojs/node`)
+- `HOST` / `PORT` for container bind when that path is restored or dual-target is explicitly authorized
 
 ```sh
 HOST=0.0.0.0 PORT=4321 npm run start
 ```
-
-The Node adapter reads these env vars directly (see Astro Node docs).
 
 ### Health
 
@@ -136,17 +154,19 @@ Simulate tenants with `/?host=...` (see runbook).
 ## Commands
 
 ```sh
-npm test           # node:test
-npm run build      # Astro production build
-npm run start      # standalone Node server
-npm run docker:build
+npm test                 # node:test
+npm run build            # Astro production build (Cloudflare Worker artifact)
+npm run cf:build         # alias of build
+npm run cf:deploy:dry-run
+npm run start            # Node contingency (may not match CF dist layout)
+npm run docker:build     # Docker contingency (kept; not dual-target for CF)
 npm run docker:run
 ```
 
 ## Current limitations
 
-- No hosting provider chosen; no live deploy.
-- No staging DNS; no Worker; no wildcard preview DNS.
+- POC-001 Slice 1 only: Worker artifact + Wrangler scaffold; **no Cloudflare deploy/DNS**.
+- Runtime env and `/health` on workerd not validated (Slice 2).
 - Hub Edge Function commit `7266049` may not yet be deployed (tracked in Hub).
 - Content model remains flat (`site_content` / branding / contact).
 
