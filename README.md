@@ -8,13 +8,35 @@ Shared multi-tenant Astro SSR renderer for public websites.
 - **just-auth-nexus** (Hub) owns tenants, domains, Site CMS, Site Engine, recipes, and the `public-site-payload` Edge Function.
 - No per-tenant builds, repos, or Lovable forks belong here.
 
-## Runtime (this slice)
+## Runtime
 
-- Astro SSR
-- `@astrojs/node` adapter
-- `output: "server"`
+- Astro 5 SSR
+- `@astrojs/node` adapter — `output: "server"`, `mode: "standalone"`
+- Entrypoint after build: `dist/server/entry.mjs`
+- Canonical process: `npm run start` → `scripts/run-standalone.mjs` (loads `dist/server/entry.mjs`; handles SIGTERM for containers)
 
-Cloudflare Worker is a **future** edge layer — **not** implemented in this slice.
+### HOST / PORT
+
+| Variable | Role |
+|----------|------|
+| `HOST` | Bind address. Use `0.0.0.0` in containers. |
+| `PORT` | Listen port (default **4321** if unset and build default applies). |
+
+```sh
+HOST=0.0.0.0 PORT=4321 npm run start
+```
+
+The Node adapter reads these env vars directly (see Astro Node docs).
+
+### Health
+
+- **`GET /health`**
+- Body: `{"status":"ok","service":"just-public"}`
+- No Supabase / Edge / tenant dependency
+
+```sh
+curl -i http://127.0.0.1:4321/health
+```
 
 ## Request flow
 
@@ -31,87 +53,91 @@ Host HTTP
 
 ### How Host is read
 
-1. Prefer query `?host=` (local simulation).
+1. Prefer query `?host=` (local / staging simulation).
 2. Else use the HTTP `Host` header (port stripped).
-3. Pass that host to `public-site-payload` — never invent a default tenant domain.
+3. Do **not** trust arbitrary `X-Forwarded-Host` from the public internet.
+4. Pass that host to `public-site-payload` — never invent a default tenant domain.
 
-### Payload contract
+### Proxy / Worker contract (future)
 
-`GET public-site-payload` with **exactly one** of:
+The future proxy or Worker must:
 
-| Param | Use |
-|-------|-----|
-| `host` | Public / host-preview sites |
-| `slug` | Admin preview (`/preview?slug=`) |
-| `tenantId` | Dev-only bridge (`/dev/homepage-test?tenantId=`) |
+- preserve the visitor Host, **or**
+- set `Host` explicitly to the tenant hostname the Astro app should resolve;
+- not forward untrusted `X-Forwarded-Host` without an explicit trust boundary;
+- (later) propagate a request ID.
 
-Plus `mode=public|preview`.
+## Docker
 
-Canonical host authority on the Hub is `public.tenant_id_from_host`.
+Build happens **inside** the image (Astro embeds path metadata).
 
-## Renderer
+```sh
+npm run docker:build
+docker run --rm \
+  -e HOST=0.0.0.0 \
+  -e PORT=4321 \
+  -p 4321:4321 \
+  just-public:local
+```
 
-- **Default:** `CanonicalHomepageRenderer` via `serializablePlan`.
-- **Legacy:** only when explicitly enabled (`?renderer=legacy` or `PUBLIC_ALLOW_LEGACY_RENDERER=1`) and the same payload still has blocks. Missing plan returns an error — no silent hardcoded homepage and no cross-tenant fallback.
+Provide runtime env with `-e` / `--env-file` pointing at a host file. **Never** copy `.env` into the image.
 
-## Theme
+See [docs/public-runtime-runbook.md](docs/public-runtime-runbook.md).
 
-`site_branding` → validated tokens → CSS variables on a shared root (`SiteTheme`):
+## Deploy contract (provider-agnostic)
 
-- `--site-color-primary`
-- `--site-color-secondary`
-- `--site-color-background`
-- `--site-color-text`
-- `--site-radius`
-- `--site-font-heading`
-- `--site-font-body`
+A future host must supply:
 
-Colors must be `#rgb` / `#rrggbb`. Fonts are allowlisted (`modern` | `classic`). Invalid values fall back to safe defaults.
+- Node container (this Dockerfile or equivalent)
+- `PORT` (and typically `HOST=0.0.0.0`)
+- TLS termination or Cloudflare in front
+- automatic restart
+- log capture
+- health check against `/health`
+- deploy by image digest / git commit
+- rollback to previous image
+- an internal hostname (e.g. future `public-staging.justwebsites.com.br` — **DNS not created here**)
+
+Optional: `PUBLIC_DEPLOY_ENV=staging` → `X-Robots-Tag: noindex, nofollow`.
+
+## Environment
+
+See `.env.example`. Summary:
+
+| Variable | Scope | Notes |
+|----------|-------|-------|
+| `HOST`, `PORT` | process | Bind |
+| `SUPABASE_ANON_KEY` | SSR | Anon key for payload (not service role) |
+| `PUBLIC_SITE_PAYLOAD_URL` | public default/override | Edge URL |
+| `PUBLIC_LEADS_INTAKE_URL` | public | Leads |
+| `PUBLIC_ALLOW_LEGACY_RENDERER` | SSR | Explicit legacy gate |
+| `PUBLIC_DEPLOY_ENV` | SSR middleware | `staging` → noindex |
+| `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` | catalog client | Naming débit vs `SUPABASE_ANON_KEY` |
 
 ## Local development
 
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 
-Simulate tenants:
-
-```text
-http://localhost:4321/?host=alpha.example.com
-http://localhost:4321/?host=beta.example.com
-http://localhost:4321/host-preview?host=alpha.justwebsites.com.br
-http://localhost:4321/preview?slug=<tenant-slug>
-```
-
-Catalog routes (`/c`, `/p/[slug]`) on localhost require an explicit `?host=` — there is no default client domain.
-
-## Environment
-
-| Variable | Purpose |
-|----------|---------|
-| `PUBLIC_SITE_PAYLOAD_URL` | Edge Function URL (optional; has project default) |
-| `PUBLIC_LEADS_INTAKE_URL` | Leads intake (optional) |
-| `SUPABASE_ANON_KEY` | Anon key for Edge calls (server-side) |
-| `PUBLIC_ALLOW_LEGACY_RENDERER` | Set `1` to allow explicit legacy fallback |
-
-Do not put service-role keys in this app.
+Simulate tenants with `/?host=...` (see runbook).
 
 ## Commands
 
 ```sh
-npm test          # node:test contractual / isolation tests
-npm run build     # Astro production build
-npm run preview   # serve build (Node standalone)
-npx astro check   # typecheck when @astrojs/check is available
+npm test           # node:test
+npm run build      # Astro production build
+npm run start      # standalone Node server
+npm run docker:build
+npm run docker:run
 ```
 
 ## Current limitations
 
-- No Cloudflare Worker / wildcard DNS in this slice.
-- Content model remains flat (`site_content`, branding, contact) — no `site_pages` / `site_blocks`.
-- Theme is minimal (validated hex + typography allowlist).
-- Shop catalog is host-resolved but outside the Homepage canonical plan path.
-- Production readiness depends on Hub `public-site-payload` deployment with the host-authority changes.
+- No hosting provider chosen; no live deploy.
+- No staging DNS; no Worker; no wildcard preview DNS.
+- Hub Edge Function commit `7266049` may not yet be deployed (tracked in Hub).
+- Content model remains flat (`site_content` / branding / contact).
 
-See `SYNC_STATUS.md` for sync state with the Hub.
+See `SYNC_STATUS.md`.

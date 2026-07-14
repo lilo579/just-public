@@ -1,43 +1,39 @@
 # SYNC_STATUS — just-public
 
-Updated: 2026-07-14 (Public Layer vertical slice v1 — local only)
+Updated: 2026-07-14 (runtime / container foundation — local only)
 
 ## Source of truth
 
 - Local git working tree in this repository.
+- HEAD of multi-tenant renderer slice: **267dd34** (prior commit on main when this foundation began).
 - Hub authority for tenants / domains / payload: **just-auth-nexus**.
-- Do not treat Lovable per-tenant sites or legacy hub clones as canonical.
 
 ## Current state
 
-- Astro SSR + `@astrojs/node`, `output: server`.
-- Public `/` and `/host-preview` default to `CanonicalHomepageRenderer` + `serializablePlan`.
-- Host forwarded to `public-site-payload`; Hub resolves via `tenant_id_from_host`.
-- Minimal tenant theme via `SiteTheme` + validated CSS custom properties.
-- Legacy renderer only with explicit opt-in.
-- Dev route `/dev/homepage-test` requires `?tenantId=` and is 404 in production builds.
-
-## Changes in this slice
-
-- Canonical renderer as the public default path.
-- Shared `publicHomepage` / theme helpers + alpha/beta isolation tests.
-- Removed localhost default to a hard-coded client catalog domain.
-- README rewritten to match the multi-tenant public layer.
+- Astro SSR + `@astrojs/node` standalone, `output: server`.
+- Canonical renderer + theme remain as in 267dd34.
+- **Container foundation added:** Dockerfile (multi-stage), `.dockerignore`, `npm run start`, `GET /health`.
+- Runtime bind via `HOST` / `PORT` (adapter-native).
+- Runbook: `docs/public-runtime-runbook.md`.
+- `.env.example` documents env contract (no secrets).
 
 ## Warnings
 
-- Payload Edge deploy is **not** claimed here — only local Hub source + `build:edge` output when regenerated in just-auth-nexus.
-- `allowedHosts: true` in vite is for local Host-header simulation; prefer `?host=`.
-- Do not overwrite Hub-owned Site Engine contracts from this repo.
+- **No deploy performed** in this slice.
+- Hosting provider not selected or provisioned.
+- Edge Function Git `7266049` (**just-auth-nexus**) still may be undeployed in Supabase.
+- Worker and DNS (including `public-staging.justwebsites.com.br` and wildcard preview) still absent.
+- Build must run inside Docker (Astro path metadata); do not ship a host-built `dist/` alone into foreign paths.
 
 ## Next steps
 
-- Cloudflare Worker / edge host routing (out of scope for this slice).
-- Richer theme tokens if branding model expands.
-- Retire legacy renderer after confirmed zero consumers.
+1. Choose / provision a Node container host (provider-agnostic contract in README).
+2. Deploy Hub Edge `public-site-payload` at 7266049 (Hub repo).
+3. Wire internal staging hostname + Cloudflare later.
+4. Worker Router after origin + Edge + health are stable.
 
 ## Do not overwrite
 
-- `src/contracts/homepage.ts` semantics owned by Hub payload contract (update only with Hub coordination).
-- Customer DNS / tenant domains (Hub / infra).
-- Unrelated finance or catalog product catalogs unless build-blocking.
+- Homepage / payload contracts owned with Hub coordination.
+- Customer DNS / Cloudflare without an explicit ops task.
+- Unrelated Hub finance/scripts (other repo).
