@@ -1,44 +1,44 @@
 # SYNC_STATUS — just-public
 
-Updated: 2026-07-14 (POC-001 Slice 2 — workerd health + environment bindings)
+Updated: 2026-07-14 (POC-001 Slice 3 — Host resolution on Workers Runtime)
 
 ## Source of truth
 
 - Local git working tree in this repository.
-- Baseline before Slice 2: **f03c46f** (Slice 1 Cloudflare scaffold on `main`).
+- Baseline before Slice 3: **3fa85b5** (Slice 2 health + runtime env on `main`).
 - Hub authority for tenants / domains / payload: **just-auth-nexus**.
 - POC charter: Hub `docs/architecture/poc/POC-001-CLOUDFLARE-RUNTIME-VALIDATION.md`.
 
-## Current state (POC-001 Slice 2)
+## Current state (POC-001 Slice 3)
 
 - Active adapter: **`@astrojs/cloudflare`** (`imageService: "passthrough"`).
-- Worker runs locally via `wrangler dev` / workerd.
-- **`GET /health`** validated on workerd: `200`, JSON contract, no Hub/payload I/O.
-- Runtime env helper: `src/lib/runtimeEnv.js` → `locals.runtime.env`.
-- Staging contract: **`DEPLOY_ENV=staging`** → `X-Robots-Tag: noindex, nofollow`.
-- Non-staging / unset: no automatic robots header.
-- `.dev.vars.example` documents POC vars; `.dev.vars` gitignored (never commit).
-- No KV / SESSION binding added; no `nodejs_compat`.
-- `wrangler.jsonc` `compatibility_date`: **2026-01-14** (validated against wrangler@4.59.2 / local workerd ceiling; earlier `2026-07-14` was unsupported).
+- Host resolution on workerd (mock payload only):
+  - Prefer `?host=` (simulation) → `URL.hostname` → `Host` fallback
+  - Normalize: lowercase, strip port / trailing dot; reject URL/path/empty/whitespace
+  - Ignore `X-Forwarded-Host`
+- Homepage fetch uses runtime bindings `PUBLIC_SITE_PAYLOAD_URL` / `SUPABASE_ANON_KEY` (no production default on this path).
+- `/health` + `DEPLOY_ENV` staging robots remain as Slice 2.
+- `wrangler.jsonc` `compatibility_date`: **2026-01-14** (validated).
+- No KV / `nodejs_compat` / remote deploy / DNS.
+- `npm test` uses `--test-concurrency=1` because workerd suites spawn local Wrangler + HTTP mock servers on ephemeral ports; parallel files contended for those processes/ports (not used to hide flaky assertions).
 - Dockerfile / Node scripts preserved as contingency.
-- **No remote deploy / DNS.**
 
 ## Warnings
 
-- Homepage / payload / Host multi-tenancy **not** validated on workerd (Slice 3).
-- `src/config/publicSite.ts` still has build-time production URL defaults — do not hit `/` in POC smoke without overriding to a local mock.
-- Adapter may still log SESSION KV suggestion; unused; do not create KV for this POC.
+- Real `public-site-payload` / renderer / theme **not** validated (Slice 4+).
+- `src/config/publicSite.ts` still has build-time production defaults for non-homepage paths (leads/catalog) — homepage SSR path does not use them.
+- Adapter may still log SESSION KV suggestion; unused.
 - Edge Function Git `7266049` (**just-auth-nexus**) may still be undeployed in Supabase.
 
 ## Architecture decision
 
 - Hub **ADR-004**: Cloudflare Workers + Static Assets + `@astrojs/cloudflare`.
-- Slice 1: valid Worker artifact. Slice 2: artifact executes + env/health proven locally.
+- POC Issue #001 (Host header vs URL.hostname): **resolvida** for Workers — URL.hostname is canonical; on workerd local probes with `Host:`, URL and header align; Host remains defensive fallback for local listen addresses.
 
 ## Next steps
 
-1. **POC-001 Slice 3** — Host / payload / renderer path on workerd (with safe mock).
-2. Later slices — multi-tenancy, assets, preview (per POC-001).
+1. **POC-001 Slice 4** — payload path / contract against mock or safe staging Edge (per POC-001).
+2. Later slices — renderer, multi-tenant content isolation, assets, preview.
 3. Deploy Hub Edge `public-site-payload` at 7266049 when ready.
 4. Keep Node/Docker contingency until POC success criteria pass.
 

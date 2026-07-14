@@ -8,8 +8,13 @@ import SiteTheme from "../components/SiteTheme.astro"
 import {
   chooseHomepageRenderer,
   fetchPublicSitePayload,
+  HostResolutionError,
   resolveRequestHost,
 } from "../lib/publicHomepage"
+import {
+  resolveSitePayloadUrl,
+  resolveSupabaseAnonKey,
+} from "../lib/runtimeEnv.js"
 import { themeTokensFromBranding } from "../lib/themeFromBranding"
 
 const requestUrl = new URL(Astro.request.url)
@@ -17,9 +22,35 @@ const allowLegacy =
   requestUrl.searchParams.get("renderer") === "legacy" ||
   import.meta.env.PUBLIC_ALLOW_LEGACY_RENDERER === "1"
 const forceLegacy = requestUrl.searchParams.get("renderer") === "legacy"
-const host = resolveRequestHost(Astro.request, requestUrl.searchParams)
 
-const fetched = await fetchPublicSitePayload({ kind: "host", host }, "public")
+let host: string
+try {
+  host = resolveRequestHost(Astro.request, requestUrl.searchParams)
+} catch (err) {
+  const reason =
+    err instanceof HostResolutionError ||
+    (err && typeof err === "object" && "reason" in err)
+      ? String((err as { reason: string }).reason)
+      : "invalid_host"
+  return new Response(`Invalid host (${reason})`, {
+    status: 400,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  })
+}
+
+const payloadUrl = resolveSitePayloadUrl(Astro.locals)
+const anonKey = resolveSupabaseAnonKey(Astro.locals) ?? ""
+if (!payloadUrl) {
+  return new Response("PUBLIC_SITE_PAYLOAD_URL missing", {
+    status: 503,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  })
+}
+
+const fetched = await fetchPublicSitePayload({ kind: "host", host }, "public", {
+  payloadUrl,
+  anonKey,
+})
 if (!fetched.ok) {
   return new Response(`Site unavailable (${fetched.status})`, {
     status: fetched.status === 404 ? 404 : 502,

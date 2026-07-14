@@ -1,9 +1,10 @@
 import type { ResolvedHomepage, SerializableHomepageRenderPlan } from "../contracts/homepage"
-import { PUBLIC_SITE_PAYLOAD_URL, SUPABASE_ANON_KEY } from "../config/publicSite"
 import {
   buildPublicSitePayloadUrl as buildUrl,
   chooseHomepageRenderer as chooseRenderer,
   resolveRequestHost as resolveHost,
+  HostResolutionError,
+  normalizeRequestHostname,
 } from "./publicHomepageHelpers.js"
 
 export type PublicPayloadIdentity =
@@ -16,6 +17,14 @@ export type RendererChoice =
   | { mode: "legacy"; reason: string }
   | { mode: "error"; reason: string }
 
+export type FetchPublicSitePayloadOptions = {
+  /** Runtime binding — required on Workers POC (no production default). */
+  payloadUrl?: string
+  anonKey?: string
+}
+
+export { HostResolutionError, normalizeRequestHostname }
+
 export function chooseHomepageRenderer(
   homepage: ResolvedHomepage,
   options?: { allowLegacy?: boolean; forceLegacy?: boolean },
@@ -26,19 +35,31 @@ export function chooseHomepageRenderer(
 export function buildPublicSitePayloadUrl(
   identity: PublicPayloadIdentity,
   mode: "public" | "preview",
+  baseUrl: string,
 ): string {
-  return buildUrl(identity, mode, PUBLIC_SITE_PAYLOAD_URL)
+  return buildUrl(identity, mode, baseUrl)
 }
 
 export async function fetchPublicSitePayload(
   identity: PublicPayloadIdentity,
   mode: "public" | "preview",
+  options?: FetchPublicSitePayloadOptions,
 ): Promise<{ ok: true; homepage: ResolvedHomepage } | { ok: false; status: number; body: string }> {
-  const url = buildPublicSitePayloadUrl(identity, mode)
+  const baseUrl = options?.payloadUrl
+  if (typeof baseUrl !== "string" || baseUrl.trim() === "") {
+    return {
+      ok: false,
+      status: 503,
+      body: "PUBLIC_SITE_PAYLOAD_URL missing",
+    }
+  }
+
+  const anonKey = typeof options?.anonKey === "string" ? options.anonKey : ""
+  const url = buildPublicSitePayloadUrl(identity, mode, baseUrl)
   const res = await fetch(url, {
     headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      apikey: anonKey,
+      Authorization: `Bearer ${anonKey}`,
     },
   })
 

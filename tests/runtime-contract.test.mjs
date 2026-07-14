@@ -151,10 +151,10 @@ test("Host A and Host B stay distinct for payload URLs", () => {
   assert.doesNotMatch(b, /alpha/)
 })
 
-test("resolveRequestHost prefers Host header over unrelated X-Forwarded-Host", () => {
-  const req = new Request("https://ignored.example/", {
+test("resolveRequestHost prefers URL.hostname and ignores X-Forwarded-Host", () => {
+  const req = new Request("https://tenant-a.example.com/", {
     headers: {
-      host: "tenant-a.example.com",
+      host: "other.example.com",
       "x-forwarded-host": "evil.example.com",
     },
   })

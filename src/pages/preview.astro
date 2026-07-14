@@ -8,6 +8,10 @@ import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
 import SiteTheme from "../components/SiteTheme.astro"
 import { chooseHomepageRenderer, fetchPublicSitePayload } from "../lib/publicHomepage"
+import {
+  resolveSitePayloadUrl,
+  resolveSupabaseAnonKey,
+} from "../lib/runtimeEnv.js"
 import { themeTokensFromBranding } from "../lib/themeFromBranding"
 
 const slug = Astro.url.searchParams.get("slug")?.trim()
@@ -26,7 +30,19 @@ const allowLegacy =
   renderer === "legacy" || import.meta.env.PUBLIC_ALLOW_LEGACY_RENDERER === "1"
 const forceLegacy = renderer === "legacy"
 
-const fetched = await fetchPublicSitePayload({ kind: "slug", slug }, MODE)
+const payloadUrl = resolveSitePayloadUrl(Astro.locals)
+const anonKey = resolveSupabaseAnonKey(Astro.locals) ?? ""
+if (!payloadUrl) {
+  return new Response("PUBLIC_SITE_PAYLOAD_URL missing", {
+    status: 503,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  })
+}
+
+const fetched = await fetchPublicSitePayload({ kind: "slug", slug }, MODE, {
+  payloadUrl,
+  anonKey,
+})
 if (!fetched.ok) {
   return new Response(`Failed to fetch homepage payload (${fetched.status})`, {
     status: fetched.status === 404 ? 404 : 502,

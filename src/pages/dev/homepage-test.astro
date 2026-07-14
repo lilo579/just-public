@@ -8,6 +8,10 @@ export const prerender = false
 import type { ResolvedHomepage } from "../../contracts/homepage"
 import { fetchPublicSitePayload } from "../../lib/publicHomepage"
 import { chooseHomepageRenderer } from "../../lib/publicHomepage"
+import {
+  resolveSitePayloadUrl,
+  resolveSupabaseAnonKey,
+} from "../../lib/runtimeEnv.js"
 import CanonicalHomepageRenderer from "../../components/CanonicalHomepageRenderer.astro"
 import HomepageRenderer from "../../components/HomepageRenderer.astro"
 import SiteTheme from "../../components/SiteTheme.astro"
@@ -25,7 +29,16 @@ if (!tenantId) {
   )
 }
 
-const fetched = await fetchPublicSitePayload({ kind: "tenantId", tenantId }, "preview")
+const payloadUrl = resolveSitePayloadUrl(Astro.locals)
+const anonKey = resolveSupabaseAnonKey(Astro.locals) ?? ""
+if (!payloadUrl) {
+  return new Response("PUBLIC_SITE_PAYLOAD_URL missing", { status: 503 })
+}
+
+const fetched = await fetchPublicSitePayload({ kind: "tenantId", tenantId }, "preview", {
+  payloadUrl,
+  anonKey,
+})
 if (!fetched.ok) {
   return new Response(`Payload error ${fetched.status}`, { status: 502 })
 }

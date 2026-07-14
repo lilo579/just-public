@@ -33,7 +33,18 @@ Validated locally on Wrangler/workerd (**no remote deploy**):
 - Unset / `production` / other → no automatic `X-Robots-Tag`
 - Node contingency alias only: `PUBLIC_DEPLOY_ENV` (not the Worker canonical name)
 
-Not validated yet (Slice 3+): payload, Host multi-tenant, renderer/theme, remote assets/preview, DNS.
+### Slice 3 — Host resolution on workerd
+
+Validated locally against a **mock** payload (**no** real Supabase/Edge):
+
+- Canonical Workers host: `new URL(request.url).hostname`
+- Defensive fallback: HTTP `Host` when URL hostname is missing/invalid/local listen address
+- Explicit simulation: `?host=` (highest precedence; normalized)
+- Never trust `X-Forwarded-Host` / `Forwarded`
+- Normalization: lowercase, strip port / trailing dot, reject URL/path/whitespace
+- Homepage fetch uses runtime bindings `PUBLIC_SITE_PAYLOAD_URL` + `SUPABASE_ANON_KEY` (no production default on this path)
+
+Not validated yet (Slice 4+): real payload contract, renderer/theme, full alpha/beta content isolation, remote assets/DNS.
 
 Helper: `src/lib/runtimeEnv.js` (server-only; no production defaults).  
 Copy `.dev.vars.example` → `.dev.vars` for local secrets (gitignored).
@@ -42,6 +53,8 @@ Copy `.dev.vars.example` → `.dev.vars` for local secrets (gitignored).
 npm run cf:build
 npm run cf:dev              # build + wrangler dev (local workerd)
 curl -i http://127.0.0.1:8787/health
+# Host smoke (requires mock PUBLIC_SITE_PAYLOAD_URL — never production):
+# curl -i -H 'Host: alpha.justwebsites.com.br' http://127.0.0.1:8787/
 npm run cf:deploy:dry-run   # analyzes artifact; does not publish
 ```
 
@@ -69,7 +82,7 @@ HOST=0.0.0.0 PORT=4321 npm run start
 - **`GET /health`**
 - Body: `{"status":"ok","service":"just-public"}`
 - No Supabase / Edge / tenant dependency
-- Proven on workerd (Slice 2); do not open `/` during smoke without a local payload mock — `publicSite.ts` still has build-time payload defaults until Slice 3
+- Proven on workerd (Slice 2); homepage Host path (Slice 3) uses runtime payload bindings against a **local mock** only
 
 ```sh
 # after npm run cf:dev (default wrangler port often 8787)
@@ -99,12 +112,15 @@ Host HTTP
   → HTML response
 ```
 
-### How Host is read
+### How Host is read (POC-001 Slice 3)
 
-1. Prefer query `?host=` (local / staging simulation).
-2. Else use the HTTP `Host` header (port stripped).
-3. Do **not** trust arbitrary `X-Forwarded-Host` from the public internet.
-4. Pass that host to `public-site-payload` — never invent a default tenant domain.
+Precedence:
+
+1. `?host=` — explicit local/preview simulation only (normalized; invalid → `400` before fetch).
+2. `new URL(request.url).hostname` — **canonical on Workers** (wrangler rewrites URL from `Host` in local probes).
+3. HTTP `Host` header — defensive fallback when URL hostname is missing, invalid, or a local listen address (`127.0.0.1` / `localhost`).
+
+Never trust `X-Forwarded-Host` / `Forwarded`. Never invent a default tenant domain.
 
 ### Proxy / Worker contract (future)
 
@@ -188,8 +204,8 @@ npm run docker:run
 
 ## Current limitations
 
-- POC-001 Slice 2: health + env on workerd; **no Cloudflare deploy/DNS**.
-- Payload / Host / renderer not yet validated on Workers (Slice 3).
+- POC-001 Slice 3: Host resolution + mock payload on workerd; **no Cloudflare deploy/DNS**.
+- Real Edge payload / renderer / theme not yet validated (Slice 4+).
 - Hub Edge Function commit `7266049` may not yet be deployed (tracked in Hub).
 - Content model remains flat (`site_content` / branding / contact).
 

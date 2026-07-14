@@ -106,17 +106,22 @@ test("preview hosts are passed through distinctly", () => {
   assert.match(urlA, /mode=preview/)
 })
 
-test("resolveRequestHost prefers ?host= override then Request Host", () => {
-  const req = new Request("https://ignored.example/", {
+test("resolveRequestHost prefers ?host= then URL.hostname then Host fallback", () => {
+  const reqIgnored = new Request("https://ignored.example/", {
     headers: { host: "beta.example.com" },
   })
   assert.equal(
-    resolveRequestHost(req, new URLSearchParams("host=alpha.example.com")),
+    resolveRequestHost(reqIgnored, new URLSearchParams("host=alpha.example.com")),
     "alpha.example.com",
   )
-  assert.equal(resolveRequestHost(req, new URLSearchParams()), "beta.example.com")
-})
+  // URL.hostname wins over conflicting Host header when authoritative.
+  assert.equal(resolveRequestHost(reqIgnored, new URLSearchParams()), "ignored.example")
 
+  const loopback = new Request("http://127.0.0.1:8793/", {
+    headers: { host: "beta.example.com" },
+  })
+  assert.equal(resolveRequestHost(loopback, new URLSearchParams()), "beta.example.com")
+})
 test("canonical renderer is the default when serializablePlan exists", () => {
   const homepage = fixtureHomepage(TENANT_ALPHA)
   const choice = chooseHomepageRenderer(homepage)
