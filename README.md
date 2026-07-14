@@ -8,6 +8,16 @@ Shared multi-tenant Astro SSR renderer for public websites.
 - **just-auth-nexus** (Hub) owns tenants, domains, Site CMS, Site Engine, recipes, and the `public-site-payload` Edge Function.
 - No per-tenant builds, repos, or Lovable forks belong here.
 
+## Architecture decision (Hub)
+
+Official Public Layer hosting/runtime decision lives in the Hub ADR (documentation only — this repo still runs Node until the Cloudflare POC):
+
+- [ADR-004 — Cloudflare Workers as Public Layer Runtime](https://github.com/lilo579/just-auth-nexus/blob/main/docs/architecture/adr/ADR-004-CLOUDFLARE-RUNTIME-PUBLIC-LAYER.md)
+- ADR folder index: [docs/architecture/adr/](https://github.com/lilo579/just-auth-nexus/tree/main/docs/architecture/adr)
+
+Target: Cloudflare Workers + Workers Static Assets + `@astrojs/cloudflare`.  
+Current Node/Docker foundation remains the validated local/container contingency until that POC lands.
+
 ## Runtime
 
 - Astro 5 SSR
