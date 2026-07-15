@@ -70,6 +70,8 @@ test("wrangler.jsonc has no nodejs_compat and no SESSION KV binding", async () =
   const text = await fs.readFile(path.join(root, "wrangler.jsonc"), "utf8")
   assert.doesNotMatch(text, /nodejs_compat/)
   assert.doesNotMatch(text, /kv_namespaces|SESSION/)
+  assert.match(text, /"name":\s*"just-public-poc"/)
+  assert.match(text, /"name":\s*"just-public-production"/)
 })
 
 test(".dev.vars is gitignored and must not be committed if present", async () => {

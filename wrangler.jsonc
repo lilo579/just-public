@@ -1,5 +1,8 @@
-// CF-004 — just-public-poc Astro Preview candidate with POC fixtures (no production traffic).
-// workers_dev stays false; preview_urls true; fixture mode gated to DEPLOY_ENV=preview only.
+// CF-008 — dual-target Wrangler config.
+// Top-level = just-public-poc (CF-006 preview pipeline / fixtures).
+// env.production = just-public-production (internal staging hostname pilot).
+// NOTE: name set inside env.production is used as-is (Wrangler does not append -production).
+// Custom Domain is managed remotely (API/Dashboard); not declared in this file.
 {
   "name": "just-public-poc",
   "compatibility_date": "2026-01-14",
@@ -13,5 +16,20 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS"
+  },
+  "env": {
+    "production": {
+      "name": "just-public-production",
+      "workers_dev": false,
+      "preview_urls": true,
+      "vars": {
+        "DEPLOY_ENV": "staging",
+        "POC_FIXTURE_MODE": "false"
+      },
+      "assets": {
+        "directory": "./dist",
+        "binding": "ASSETS"
+      }
+    }
   }
 }

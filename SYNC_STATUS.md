@@ -1,61 +1,49 @@
 # SYNC_STATUS — just-public
 
-Updated: 2026-07-15 (CF-006 — fix CI build→test order; second remote run pending)
+Updated: 2026-07-15 (CF-008 COMPLETE — local commit pending push)
 
 ## Source of truth
 
-- Local pending commit: build-before-test workflow fix.
-- Canonical published commit before this fix: **1b5bfb1** (`origin/main`).
-- Hub: CF-006A COMPLETE (`just-auth-nexus` @ `b7009e7`); CF-006 slice not yet COMPLETE.
+- Local commit after this update: dual-target `wrangler.jsonc` + CF-008 tests/docs.
+- Parent published: **bae975d**.
+- Hub: CF-007 COMPLETE (`just-auth-nexus` @ `dc12870`); Hub CF-008 evidence report still pending separate authorization.
 
-## Current state
+## CF-008 — COMPLETE
 
-### Remote Worker
+### Production Worker (`just-public-production`)
 
 | Field | Value |
 |-------|--------|
-| Worker | `just-public-poc` |
-| Active Deployment | Bootstrap `3047d28b-…ef4f` @ **100%** (`a0368c3e-…`) |
-| First CI Version | `f3d2721d-30ef-4a12-9fca-1a463d260951` (**0%** traffic) |
-| Preview (1º run) | `https://f3d2721d-just-public-poc.lilo579.workers.dev` |
-| `workers_dev` | false |
-| Routes / Domains / DNS | 0 / 0 / unchanged |
+| Status | **COMPLETE** |
+| Active Deployment | `cecb8f6c-444b-4699-9933-377844cad4b6` |
+| Active Version | Astro `761650a3-05f4-494f-9be7-e79ecf168af5` @ **100%** |
+| Bootstrap Version (retained) | `65297578-6813-42fd-a227-349f72ba70c1` |
+| `DEPLOY_ENV` | `staging` |
+| `POC_FIXTURE_MODE` | `false` (fixtures disabled) |
+| LeadForm | safe (staging) |
+| `workers_dev` | false (hostname 1042) |
+| `previews_enabled` | true |
+| Hostname | `public-staging.justwebsites.com.br` |
+| Routing | **Custom Domain** (not Worker Route) |
+| DNS / TLS | managed by Cloudflare |
+| Worker Routes | **0** |
+| Real `/health` | **200** · `noindex, nofollow` |
+| Real `/` | **503** controlled (`PUBLIC_SITE_PAYLOAD_URL missing`) |
+| Existing hosts (apex/www/hub/customers) | **intact** |
+| Issue urllib/403 | accepted, non-blocking |
 
-### CF-006 — Controlled CI/CD
+### POC Worker (`just-public-poc`) — unchanged
 
-| Item | Value |
-|------|--------|
-| Workflow | `.github/workflows/cloudflare-preview-version.yml` |
-| Trigger | `workflow_dispatch` only |
-| First remote run | **PASS** — [29440565313](https://github.com/lilo579/just-public/actions/runs/29440565313) |
-| Workerd coverage (1º run) | **incomplete** — tests skipped (`dist/_worker.js` missing; test ran before build) |
-| Fix | order **build → test** (policy + tests enforce) |
-| Second remote run | **pending** after this push |
-
-Pipeline (corrected):
-
-```
-checkout → Node 22 → npm ci → policy → npm run build → npm test
-→ wrangler deploy --dry-run → wrangler versions upload
-→ parse → smoke → assert Deployment unchanged → summary + artifact
-```
-
-## Warnings
-
-### Robots
-
-workerd: `noindex, nofollow` · Preview URL: `noindex` (non-blocking).
-
-### Intentional skip remaining
-
-`Node contingency standalone /health` skips when `@astrojs/cloudflare` does not emit `dist/server/entry.mjs` — expected, unrelated to build order.
+| Field | Value |
+|-------|--------|
+| Active Deployment | `a0368c3e-…` → Bootstrap `3047d28b-…` @ **100%** |
+| CF-006 workflow | still targets POC only |
 
 ## Next steps
 
-1. Push fix · second `workflow_dispatch`.
-2. Confirm workerd tests execute (no build-missing skips).
-3. Hub CF-006 evidence report → CF-006 COMPLETE / CF-007 READY.
+1. Hub CF-008 evidence report (when authorized).
+2. **CF-009** Production Readiness Review (no commercial rollout).
 
 ## Do not overwrite
 
-- Hub contracts · customer DNS · Hub finance scripts.
+- Hub contracts · customer DNS · Lovable sites · Hub finance scripts.

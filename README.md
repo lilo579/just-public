@@ -169,7 +169,37 @@ npm ci → policy gate → npm run build → npm test → wrangler deploy --dry-
 | Fix | workflow order **build → test** (this change) |
 | Second remote run | **pending** after push |
 
-Next: second `workflow_dispatch` to certify full workerd coverage · then CF-007.
+### CF-008 — Internal hostname (DNS Pilot) — **COMPLETE**
+
+`wrangler.jsonc` has two targets (Custom Domain is remote-managed, **not** declared in config):
+
+| Target | Worker | `DEPLOY_ENV` | Fixtures | Ingress |
+|--------|--------|--------------|----------|---------|
+| Top-level (default / CF-006) | `just-public-poc` | `preview` | `POC_FIXTURE_MODE=true` | Preview URLs only |
+| `--env production` | `just-public-production` | `staging` | `false` | Custom Domain **only** (remote) |
+
+| Field | Value |
+|-------|--------|
+| Status | **COMPLETE** |
+| Worker | `just-public-production` |
+| Hostname | `public-staging.justwebsites.com.br` |
+| Routing | **Custom Domain** (not Worker Route); Cloudflare managed DNS + TLS |
+| Astro Version | `761650a3-05f4-494f-9be7-e79ecf168af5` @ **100%** |
+| Deployment | `cecb8f6c-444b-4699-9933-377844cad4b6` |
+| Real `/health` | `200` + `noindex, nofollow` |
+| Homepage `/` | **503** controlled (`PUBLIC_SITE_PAYLOAD_URL missing`) |
+| Fixtures | **disabled** (`POC_FIXTURE_MODE=false`) |
+| LeadForm | **safe** (`DEPLOY_ENV=staging`) |
+| Real Supabase / leads | **none** |
+| Existing customer/apex/www/hub hosts | **unchanged** |
+| Issue urllib/403 | accepted, non-blocking (curl/browser OK) |
+| Next | **CF-009** Production Readiness Review |
+
+```sh
+npx wrangler deploy --dry-run                 # POC top-level
+npx wrangler deploy --dry-run --env production
+curl -i https://public-staging.justwebsites.com.br/health
+```
 
 Helper: `src/lib/runtimeEnv.js` (server-only; no production defaults).  
 Copy `.dev.vars.example` → `.dev.vars` for local secrets (gitignored).
