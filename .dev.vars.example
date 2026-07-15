@@ -2,6 +2,8 @@
 # POC-001 Slice 2 environment contract for workerd.
 #
 # Canonical deploy flag (Workers):
+# staging|preview → LeadForm/TrackedCTA intake safe mode (no production leads URL)
+# production → prior intake behavior (build-time PUBLIC_LEADS_INTAKE_URL)
 DEPLOY_ENV=staging
 #
 # Payload config for later slices — use a local mock, never production:

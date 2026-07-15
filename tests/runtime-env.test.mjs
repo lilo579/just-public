@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url"
 
 import {
   getServerRuntimeString,
+  isLeadIntakeSafeMode,
   resolveDeployEnv,
   resolveSitePayloadUrl,
   resolveSupabaseAnonKey,
@@ -52,6 +53,17 @@ test("resolveSitePayloadUrl / anon key have no production defaults", () => {
     }),
     "http://127.0.0.1:9/mock",
   )
+})
+
+test("isLeadIntakeSafeMode: preview/staging only (case-insensitive)", () => {
+  assert.equal(isLeadIntakeSafeMode("preview"), true)
+  assert.equal(isLeadIntakeSafeMode("PREVIEW"), true)
+  assert.equal(isLeadIntakeSafeMode("staging"), true)
+  assert.equal(isLeadIntakeSafeMode(" Staging "), true)
+  assert.equal(isLeadIntakeSafeMode("production"), false)
+  assert.equal(isLeadIntakeSafeMode("prod"), false)
+  assert.equal(isLeadIntakeSafeMode(""), false)
+  assert.equal(isLeadIntakeSafeMode(undefined), false)
 })
 
 test("wrangler.jsonc has no nodejs_compat and no SESSION KV binding", async () => {

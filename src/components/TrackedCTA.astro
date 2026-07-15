@@ -1,5 +1,6 @@
 ---
 import { PUBLIC_LEADS_INTAKE_URL, SUPABASE_ANON_KEY } from "../config/publicSite";
+import { isLeadIntakeSafeMode, resolveDeployEnv } from "../lib/runtimeEnv.js";
 
 const {
   href,
@@ -20,6 +21,10 @@ const {
 };
 
 const isWhatsapp = href.includes("wa.me/") || href.includes("api.whatsapp.com/");
+// Slice 6.5 — preview/staging must not embed production leads intake (link UX unchanged).
+const safeMode = isLeadIntakeSafeMode(resolveDeployEnv(Astro.locals));
+const leadsUrl = safeMode ? "" : PUBLIC_LEADS_INTAKE_URL;
+const anonKey = safeMode ? "" : SUPABASE_ANON_KEY;
 ---
 
 <a
@@ -37,8 +42,8 @@ const isWhatsapp = href.includes("wa.me/") || href.includes("api.whatsapp.com/")
 
 <script
   define:vars={{
-    leadsUrl: PUBLIC_LEADS_INTAKE_URL,
-    anonKey: SUPABASE_ANON_KEY,
+    leadsUrl,
+    anonKey,
   }}
 >
   if (!window.__JUST_TRACKED_CTA_BOUND__) {

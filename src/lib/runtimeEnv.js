@@ -70,3 +70,19 @@ export function resolveSitePayloadUrl(locals) {
 export function resolveSupabaseAnonKey(locals) {
   return getServerRuntimeString(locals, "SUPABASE_ANON_KEY")
 }
+
+/**
+ * POC-001 Slice 6.5 — Preview Safety for lead intake.
+ * Non-production deploy envs must not expose/call production leads endpoints.
+ *
+ * Safe when DEPLOY_ENV (or PUBLIC_DEPLOY_ENV contingency) is preview|staging
+ * (case-insensitive). production / unset → not safe mode (preserve prior behavior).
+ *
+ * @param {string | undefined} deployEnv
+ * @returns {boolean}
+ */
+export function isLeadIntakeSafeMode(deployEnv) {
+  if (typeof deployEnv !== "string") return false
+  const normalized = deployEnv.trim().toLowerCase()
+  return normalized === "preview" || normalized === "staging"
+}

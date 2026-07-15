@@ -79,6 +79,17 @@ Validated on workerd with fictitious **Alpha / Beta / Gamma** mock fixtures (**n
 - Source audit: no mutable module-level tenant state on homepage/theme path
 - Immutable theme `DEFAULTS` / font allowlists are shared constants (not tenant state)
 
+### Slice 6.5 — Preview Safety (LeadForm runtime isolation)
+
+Preview ≠ production for lead intake on workerd (**no** remote deploy):
+
+- `DEPLOY_ENV=preview|staging` → LeadForm **safe mode** (disabled + notice; no production leads URL / anon key in HTML)
+- `DEPLOY_ENV=production` → prior LeadForm intake behavior preserved (build-time `PUBLIC_LEADS_INTAKE_URL`)
+- Unknown/unset `DEPLOY_ENV` → **not** safe mode (not silent preview; set `preview`/`staging` for POC)
+- TrackedCTA WhatsApp tracking uses the same runtime intake gate (link UX unchanged; no production POST in preview/staging)
+- Helper: `isLeadIntakeSafeMode` in `src/lib/runtimeEnv.js` (runtime only; no permanent feature flag)
+- Component stays rendered; no service_role; no real Supabase calls in POC
+
 Next: **Slice 7** (per POC-001). Not yet: real Edge, DNS, preview remote.
 
 Helper: `src/lib/runtimeEnv.js` (server-only; no production defaults).  
@@ -240,9 +251,9 @@ npm run docker:run
 
 ## Current limitations
 
-- POC-001 Slice 6: multi-tenant isolation validated on local workerd; **no Cloudflare deploy/DNS**.
+- POC-001 Slice 6.5: Preview Safety — lead intake disabled under `preview`/`staging`; **no Cloudflare deploy/DNS**.
 - Real Edge / `tenant_id_from_host` / preview remote → Slice 7+.
-- LeadForm still embeds build-time `PUBLIC_LEADS_INTAKE_URL` (fix before remote preview; not a Slice 6 blocker).
+- Production build-time leads defaults remain for `DEPLOY_ENV=production` only (not used in POC preview).
 - Hub Edge Function commit `7266049` may not yet be deployed (tracked in Hub).
 - Content model remains flat (`site_content` / branding / contact).
 

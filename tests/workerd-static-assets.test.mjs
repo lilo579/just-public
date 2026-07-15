@@ -341,15 +341,12 @@ test("workerd Static Assets: MIME, isolation, 404, traversal, no payload/leads I
   assert.match(alphaHtml.body, /style="[^"]*--site-color-primary:#112233/)
   assert.match(betaHtml.body, /style="[^"]*--site-color-primary:#aa5500/)
 
-  // LeadForm client config may embed public leads URL + anon JWT (preexisting).
-  // Must not auto-submit; service_role must be absent; assets fetch must not call leads.
+  // Slice 6.5: DEPLOY_ENV=staging → LeadForm/TrackedCTA intake safe mode (no prod leads URL).
   assert.doesNotMatch(alphaHtml.body, /service_role|SUPABASE_SERVICE_ROLE/i)
   assert.doesNotMatch(betaHtml.body, /service_role|SUPABASE_SERVICE_ROLE/i)
-  if (alphaHtml.body.includes("data-leads-url")) {
-    assert.match(alphaHtml.body, /data-leads-url=/)
-    // Placeholder runtime anon ≠ build-time client anon; ensure no service role JWT markers.
-    assert.doesNotMatch(alphaHtml.body, /eyJ[a-zA-Z0-9_-]+\.eyJ[^"]*role\\?":\\?"service_role/)
-  }
+  assert.doesNotMatch(alphaHtml.body, new RegExp(`${LEADS_HOST}/functions/v1/leads`))
+  assert.match(alphaHtml.body, /data-lead-form-safe="true"|data-lead-form/)
+  assert.doesNotMatch(alphaHtml.body, /eyJ[a-zA-Z0-9_-]+\.eyJ[^"]*role\\?":\\?"service_role/)
 
   assert.ok(inventory.length >= 3)
   assert.ok(jsUrls.length === 0 || jsUrls.every((u) => u.startsWith("/_astro/")))

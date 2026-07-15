@@ -1,5 +1,6 @@
 ---
 import { PUBLIC_LEADS_INTAKE_URL, SUPABASE_ANON_KEY } from "../config/publicSite";
+import { isLeadIntakeSafeMode, resolveDeployEnv } from "../lib/runtimeEnv.js";
 
 const {
   sourceType = "public_site_form",
@@ -8,34 +9,46 @@ const {
   sourceType?: string;
   ctaId?: string;
 };
+
+// Runtime only — Preview/Staging must not ship production intake credentials.
+const safeMode = isLeadIntakeSafeMode(resolveDeployEnv(Astro.locals));
+const leadsUrl = safeMode ? "" : PUBLIC_LEADS_INTAKE_URL;
+const anonKey = safeMode ? "" : SUPABASE_ANON_KEY;
 ---
 
 <form
-  class="lead-form"
+  class:list={["lead-form", { "lead-form--safe": safeMode }]}
   data-lead-form
-  data-leads-url={PUBLIC_LEADS_INTAKE_URL}
-  data-anon-key={SUPABASE_ANON_KEY}
+  data-lead-form-safe={safeMode ? "true" : undefined}
+  data-leads-url={leadsUrl}
+  data-anon-key={anonKey}
   data-source-type={sourceType}
   data-cta-id={ctaId}
 >
+  {safeMode && (
+    <p class="lead-form__safe-notice" role="status">
+      Envio desativado neste preview.
+    </p>
+  )}
+
   <div class="lead-form__grid">
     <label>
       <span>Nome</span>
-      <input name="full_name" type="text" autocomplete="name" required />
+      <input name="full_name" type="text" autocomplete="name" required disabled={safeMode} />
     </label>
 
     <label>
       <span>E-mail</span>
-      <input name="email" type="email" autocomplete="email" />
+      <input name="email" type="email" autocomplete="email" disabled={safeMode} />
     </label>
 
     <label>
       <span>WhatsApp</span>
-      <input name="phone" type="tel" autocomplete="tel" />
+      <input name="phone" type="tel" autocomplete="tel" disabled={safeMode} />
     </label>
   </div>
 
-  <button type="submit">Enviar contato</button>
+  <button type="submit" disabled={safeMode}>Enviar contato</button>
   <p class="lead-form__status" data-lead-form-status aria-live="polite"></p>
 </form>
 
@@ -49,6 +62,11 @@ const {
 
       const status = formEl.querySelector("[data-lead-form-status]");
       const submitButton = formEl.querySelector('button[type="submit"]');
+
+      if (formEl.dataset.leadFormSafe === "true") {
+        if (status) status.textContent = "Envio desativado neste preview.";
+        return;
+      }
 
       const leadsUrl = formEl.dataset.leadsUrl || "";
       const anonKey = formEl.dataset.anonKey || "";
@@ -142,6 +160,16 @@ const {
     text-align: left;
   }
 
+  .lead-form__safe-notice {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: hsl(220 14% 96%);
+    color: hsl(220 10% 35%);
+    font-size: 0.88rem;
+    text-align: center;
+  }
+
   .lead-form__grid {
     display: grid;
     gap: 12px;
@@ -171,6 +199,12 @@ const {
   .lead-form input:focus {
     border-color: hsl(145 63% 42%);
     box-shadow: 0 0 0 3px hsl(145 63% 42% / 0.14);
+  }
+
+  .lead-form input:disabled {
+    background: hsl(220 14% 97%);
+    color: hsl(220 10% 45%);
+    cursor: not-allowed;
   }
 
   .lead-form button {
