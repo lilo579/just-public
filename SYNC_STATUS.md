@@ -1,74 +1,87 @@
 # SYNC_STATUS — just-public
 
-Updated: 2026-07-15 (IMPLEMENTATION-001 **CF-003** — Astro Version + Preview URL smoke)
+Updated: 2026-07-15 (IMPLEMENTATION-001 **CF-004** — remote canonical renderer + POC fixtures)
 
 ## Source of truth
 
-- Local git working tree in this repository (uncommitted CF-003 docs + `wrangler.jsonc`).
-- Canonical commit baseline: **5629bb6** (`origin/main`).
-- Hub charters: IMPLEMENTATION-001, POC-002, CF-001/CF-002 reports (`just-auth-nexus` @ `d86e3db`).
+- Local git working tree (uncommitted CF-004 changes).
+- Canonical commit before this slice: **7962e2f** (`origin/main`).
+- Hub charters: IMPLEMENTATION-001; CF-003 report (`just-auth-nexus` @ `4aceb1a`).
 
-## Pre-existing local dirt (before CF-003)
+## Current state (CF-004 COMPLETE — awaiting Hub report / commit auth)
 
-Uncommitted `README.md` / `SYNC_STATUS.md` from **POC-001 Slice 7** (2026-07-14) recorded auth blocker. Those notes are superseded below; content consolidated into CF-003 outcome. No `git reset`/`stash` was used.
+### Fixture mode
 
-## Current state (CF-003 COMPLETE locally uncommitted)
+Dual gate (both required):
+
+- `DEPLOY_ENV=preview`
+- `POC_FIXTURE_MODE=true` (exact string after trim)
+
+Default / staging / production / ambiguous flags → fixtures **off** → normal payload fetch (503 without URL).
+
+Runtime module: `src/poc/publicSiteFixtures.js` (Alpha/Beta/Gamma only). Temporary retain until formal CF-004 closeout decision.
 
 ### Remote Worker
 
 | Field | Value |
 |-------|--------|
 | Worker | `just-public-poc` |
-| Account | `Lilo579@gmail.com's Account` |
-| Bootstrap Version | `3047d28b-9830-4a10-8104-6d783f57ef4f` (**still 100% active deployment**) |
+| Bootstrap Version (100% deploy) | `3047d28b-9830-4a10-8104-6d783f57ef4f` |
 | Bootstrap Deployment | `acd84566-094b-4a29-8215-5de883c51b19` |
-| Astro candidate (with Preview) | `ac18d718-f7a5-402e-9123-19614b278449` |
-| Earlier Astro upload (pre-enable) | `fa410a36-0a55-47af-b4b5-d57cf7df6b0c` (no Preview route until enable+reupload) |
-| Preview URL | `https://ac18d718-just-public-poc.lilo579.workers.dev` |
-| `workers_dev` (Worker hostname) | **false** (`just-public-poc.lilo579.workers.dev` → HTTP 1042) |
-| `previews_enabled` | **true** (enabled after first upload; see procedure note) |
-| Routes / Custom Domains / DNS | **0 / 0 / unchanged** |
-| Astro traffic on normal deploy | **0%** (not promoted) |
+| CF-004 Astro Version | `166faa56-eb39-4f6d-9458-f8232e927546` (**0%** normal traffic) |
+| Preview URL | `https://166faa56-just-public-poc.lilo579.workers.dev` |
+| Prior CF-003 Preview Version | `ac18d718-f7a5-402e-9123-19614b278449` |
+| `workers_dev` | false (normal hostname 1042) |
+| `previews_enabled` | true |
+| Routes / Domains / DNS | 0 / 0 / unchanged |
 
-### Local config (CF-003)
+### Remote matrix
 
-`wrangler.jsonc`: `name=just-public-poc`, `workers_dev=false`, `preview_urls=true`, `vars.DEPLOY_ENV=preview`, ASSETS binding, compatibility_date `2026-01-14`, no routes/domains/KV/D1/R2/Queues/DO/`nodejs_compat`.
+| Host | Status | Renderer | Branding |
+|------|--------|----------|----------|
+| alpha.justwebsites.com.br | 200 | canonical | Alpha / `#112233` |
+| beta.justwebsites.com.br | 200 | canonical | Beta / `#aa5500` |
+| gamma.justwebsites.com.br | 200 | canonical | Gamma / `#008866` |
 
-### Remote smoke (Preview URL)
+Sequence A→B→G→A→G→B and concurrency A\|\|B\|\|G: PASS isolation.  
+unknown → 404 · invalid `?host=https://…` → 400.  
+LeadForm `data-lead-form-safe="true"`; TrackedCTA `leadsUrl=""`; no Supabase/prod payload fetch.
 
-- `/health` → 200 JSON `{status,service}` + `cache-control: no-store` + platform `X-Robots-Tag: noindex`
-- `/_astro/*.css`, favicons → 200
-- missing asset → 404
-- `/_worker.js/index.js` → 404 (not public)
-- `/_routes.json` → 404 (not public asset)
-- `/` → 503 `PUBLIC_SITE_PAYLOAD_URL missing` (controlled; no Supabase call)
-- Renderer remote → **NOT TESTED** (Strategy C; no safe remote fixture)
-- `wrangler tail` → no Preview URL events observed (platform limitation confirmed)
+### Local gate
 
-### Procedure discovery (document)
-
-`wrangler versions upload` does **not** apply subdomain/`preview_urls` settings. Enabling Preview required official subdomain API `POST` with `{enabled:false, previews_enabled:true}` (keeps normal `workers.dev` off). A Version uploaded **before** that enable did not get a usable Preview URL; re-upload after enable produced Version Preview URL.
+`npm test` / `build` / `wrangler deploy --dry-run` green. Upload size ~1164 KiB / gzip ~241 KiB; bindings ASSETS + `DEPLOY_ENV=preview` + `POC_FIXTURE_MODE=true`.
 
 ## Warnings
 
-- Middleware app tag: `DEPLOY_ENV=preview|staging` → `X-Robots-Tag: noindex, nofollow`; production/unset/unknown → no app header (Preview may still show Cloudflare platform `noindex`).
-- `src/config/publicSite.ts` still has build-time production URL **names** for leads; gated empty under safe mode; homepage payload uses runtime binding only (no production default fetch).
-- Adapter may log SESSION KV suggestion; unused.
+### Robots
+
+| Surface | Observed |
+|---------|----------|
+| workerd (app middleware) | `noindex, nofollow` |
+| Cloudflare Preview URL | `noindex` (platform) |
+
+Classification: **non-blocking**. No additional robots workaround in CF-004.
+
+### Fixture lifecycle
+
+POC fixtures **kept temporarily** under the dual gate for remote regression, Versions validation, future CI, and provable isolation. Default gate is false; production cannot activate them. Removal / formal harness promotion deferred.
+
+- Preview URL logs still unavailable via `wrangler tail`.
+- Local `.env` may contain payload URL keys for Node contingency — Worker runtime SoT remains wrangler vars; fixture/gates tests blank payload vars.
 
 ## Architecture decision
 
-- Hub ADR-004 + POC-002: Versions ≠ Deployments; bootstrap deploy exception already done in CF-002.
-- CF-003: Astro via `versions upload` only; no `versions deploy`.
+- CF-004 Strategy C succeeded with **dual-gated in-Worker POC fixtures** (not production Edge).
+- No `versions deploy`; bootstrap Deployment intact.
 
 ## Next steps
 
-1. Hub: register CF-003 evidence report when authorized.
-2. **CF-004** — remote validation matrix on Preview URL (renderer still needs safe fixture strategy).
-3. Do **not** `versions deploy` / DNS / Routes / Custom Domains without later authorization.
+1. Hub: CF-004 evidence report (separate repo).
+2. **CF-005** — rollback proof (POC/staging surface).
+3. Fixture lifecycle remains **keep temporarily** until a later removal/harness decision.
 
 ## Do not overwrite
 
-- Homepage / payload contracts owned with Hub coordination.
-- Customer DNS / Cloudflare without an explicit ops task.
-- Unrelated Hub finance/scripts (other repo).
-- Uncommitted work must **not** be committed/pushed until explicitly authorized.
+- Homepage / payload Hub contracts.
+- Customer DNS / Cloudflare without explicit ops task.
+- Unrelated Hub finance scripts.

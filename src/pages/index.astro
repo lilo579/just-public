@@ -14,9 +14,11 @@ import {
   resolveRequestHost,
 } from "../lib/publicHomepage"
 import {
+  isPocFixtureMode,
   resolveSitePayloadUrl,
   resolveSupabaseAnonKey,
 } from "../lib/runtimeEnv.js"
+import { resolvePocFixturePayload } from "../poc/publicSiteFixtures.js"
 import { themeTokensFromBranding } from "../lib/themeFromBranding"
 
 const requestUrl = new URL(Astro.request.url)
@@ -40,35 +42,53 @@ try {
   })
 }
 
-const payloadUrl = resolveSitePayloadUrl(Astro.locals)
-const anonKey = resolveSupabaseAnonKey(Astro.locals) ?? ""
-if (!payloadUrl) {
-  return new Response("PUBLIC_SITE_PAYLOAD_URL missing", {
-    status: 503,
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
-  })
-}
+/** @type {ResolvedHomepage} */
+let homepage: ResolvedHomepage
 
-console.log(
-  JSON.stringify({
-    msg: "public_host_resolved",
-    host,
-    status: "fetching_payload",
-  }),
-)
+if (isPocFixtureMode(Astro.locals)) {
+  const fixture = resolvePocFixturePayload(host)
+  if (!fixture) {
+    return new Response(`Site unavailable\nHost: ${host}\nStatus: 404`, {
+      status: 404,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    })
+  }
+  homepage = fixture as ResolvedHomepage
+} else {
+  const payloadUrl = resolveSitePayloadUrl(Astro.locals)
+  const anonKey = resolveSupabaseAnonKey(Astro.locals) ?? ""
+  if (!payloadUrl) {
+    return new Response("PUBLIC_SITE_PAYLOAD_URL missing", {
+      status: 503,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    })
+  }
 
-const fetched = await fetchPublicSitePayload({ kind: "host", host }, "public", {
-  payloadUrl,
-  anonKey,
-})
-if (!fetched.ok) {
-  return new Response(
-    `Site unavailable\nHost: ${host}\nStatus: ${fetched.status}`,
-    { status: fetched.status === 404 ? 404 : 502, headers: { "Content-Type": "text/plain; charset=utf-8" } },
+  console.log(
+    JSON.stringify({
+      msg: "public_host_resolved",
+      host,
+      status: "fetching_payload",
+    }),
   )
+
+  const fetched = await fetchPublicSitePayload({ kind: "host", host }, "public", {
+    payloadUrl,
+    anonKey,
+  })
+  if (!fetched.ok) {
+    return new Response(
+      `Site unavailable\nHost: ${host}\nStatus: ${fetched.status}`,
+      {
+        status: fetched.status === 404 ? 404 : 502,
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      },
+    )
+  }
+  homepage = fetched.homepage as ResolvedHomepage
 }
 
-const homepage = fetched.homepage as ResolvedHomepage & {
+const homepageWithSource = homepage as ResolvedHomepage & {
   source?: {
     contact?: {
       companyName?: string | null
@@ -90,7 +110,7 @@ const homepage = fetched.homepage as ResolvedHomepage & {
   }
 }
 
-const choice = chooseHomepageRenderer(homepage, { allowLegacy, forceLegacy })
+const choice = chooseHomepageRenderer(homepageWithSource, { allowLegacy, forceLegacy })
 if (choice.mode === "error") {
   return new Response(`Homepage unavailable (${choice.reason})`, {
     status: 502,
@@ -98,27 +118,28 @@ if (choice.mode === "error") {
   })
 }
 
-const footer = homepage.footer ?? {
+const footer = homepageWithSource.footer ?? {
   logoUrl:
-    homepage.source?.meta?.branding?.logoHorizontalUrl ??
-    homepage.source?.meta?.branding?.logoUrl ??
+    homepageWithSource.source?.meta?.branding?.logoHorizontalUrl ??
+    homepageWithSource.source?.meta?.branding?.logoUrl ??
     null,
   tagline: null,
-  whatsappNumber: homepage.source?.contact?.whatsappNumber ?? null,
-  whatsappVisible: homepage.source?.contact?.whatsappVisible === true,
-  email: homepage.source?.contact?.email ?? null,
-  address: homepage.source?.contact?.address ?? null,
-  companyName: homepage.source?.contact?.companyName ?? "Site",
+  whatsappNumber: homepageWithSource.source?.contact?.whatsappNumber ?? null,
+  whatsappVisible: homepageWithSource.source?.contact?.whatsappVisible === true,
+  email: homepageWithSource.source?.contact?.email ?? null,
+  address: homepageWithSource.source?.contact?.address ?? null,
+  companyName: homepageWithSource.source?.contact?.companyName ?? "Site",
   socialLinks: [],
 }
 
-const brandingName = homepage.source?.contact?.companyName ?? footer.companyName ?? "Site"
+const brandingName =
+  homepageWithSource.source?.contact?.companyName ?? footer.companyName ?? "Site"
 const brandingLogo =
-  homepage.source?.meta?.branding?.logoHorizontalUrl ??
-  homepage.source?.meta?.branding?.logoUrl ??
+  homepageWithSource.source?.meta?.branding?.logoHorizontalUrl ??
+  homepageWithSource.source?.meta?.branding?.logoUrl ??
   footer.logoUrl ??
   ""
-const tokens = themeTokensFromBranding(homepage.source?.meta?.branding ?? null)
+const tokens = themeTokensFromBranding(homepageWithSource.source?.meta?.branding ?? null)
 ---
 
 <html lang="pt-BR">
@@ -143,7 +164,7 @@ const tokens = themeTokensFromBranding(homepage.source?.meta?.branding ?? null)
             >
               Using explicit legacy homepage renderer ({choice.reason}).
             </section>
-            <HomepageRenderer homepage={homepage} />
+            <HomepageRenderer homepage={homepageWithSource} />
           </>
         )}
       </main>

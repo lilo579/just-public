@@ -86,3 +86,26 @@ export function isLeadIntakeSafeMode(deployEnv) {
   const normalized = deployEnv.trim().toLowerCase()
   return normalized === "preview" || normalized === "staging"
 }
+
+/**
+ * CF-004 — POC fixture mode (Preview-only dual gate).
+ *
+ * Active only when BOTH:
+ * - DEPLOY_ENV resolves to exactly `preview` (case-insensitive after trim)
+ * - POC_FIXTURE_MODE runtime var is the exact string `true` (after trim)
+ *
+ * Staging / production / unset / ambiguous flags → false.
+ * Default when unset: false (production must never use fixtures).
+ *
+ * @param {{ runtime?: { env?: Record<string, unknown> } } | undefined} [locals]
+ * @returns {boolean}
+ */
+export function isPocFixtureMode(locals) {
+  const deployEnv = resolveDeployEnv(locals)
+  if (typeof deployEnv !== "string") return false
+  if (deployEnv.trim().toLowerCase() !== "preview") return false
+
+  const flag = getServerRuntimeString(locals, "POC_FIXTURE_MODE")
+  if (typeof flag !== "string") return false
+  return flag.trim() === "true"
+}

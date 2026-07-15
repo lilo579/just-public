@@ -92,26 +92,55 @@ Preview ≠ production for lead intake on workerd (**no** remote deploy):
 
 ### Slice 7 / CF-003 — Remote Astro Version Preview
 
-Earlier Slice 7 attempt (2026-07-14) was **blocked** on Wrangler auth. Auth restored; Cloudflare Foundation CF-002 bootstrapped `just-public-poc`. **CF-003** (2026-07-15) completed remote Astro Version + Preview smoke on commit baseline `5629bb6` (local uncommitted docs/`wrangler.jsonc`).
+Earlier Slice 7 attempt (2026-07-14) was **blocked** on Wrangler auth. Auth restored; Cloudflare Foundation CF-002 bootstrapped `just-public-poc`. **CF-003** (2026-07-15) completed remote Astro Version + Preview smoke on commit baseline `5629bb6` (published as `7962e2f`).
 
 | Field | Value |
 |-------|--------|
 | Worker | `just-public-poc` |
 | Astro Version (Preview) | `ac18d718-f7a5-402e-9123-19614b278449` |
 | Intermediate Version | `fa410a36-0a55-47af-b4b5-d57cf7df6b0c` (upload before Preview enable) |
-| Preview URL | `https://ac18d718-just-public-poc.lilo579.workers.dev` |
+| Preview URL (CF-003) | `https://ac18d718-just-public-poc.lilo579.workers.dev` |
 | Bootstrap deployment | still 100% → `3047d28b-9830-4a10-8104-6d783f57ef4f` |
 | Astro candidate normal traffic | **0%** |
 | `workers_dev` | false (normal hostname 1042) |
 | `preview_urls` / `previews_enabled` | true |
 | Remote `/health` | 200 |
 | Static Assets | CSS/favicons 200; entrypoint/`_routes.json` not public |
-| Renderer remote | **NOT TESTED** |
+| Renderer remote | advanced in **CF-004** |
 | Preview logs (`wrangler tail`) | not available (platform limitation) |
 | DNS / Route / Custom Domain | none |
 | Promotion | **none** |
 
-Next: **CF-004** remote validation matrix. Not yet: DNS, custom domain, `versions deploy` / traffic.
+### CF-004 — Remote canonical renderer + POC fixtures
+
+Dual gate: `DEPLOY_ENV=preview` **and** `POC_FIXTURE_MODE=true`. Module: `src/poc/publicSiteFixtures.js`.
+
+| Field | Value |
+|-------|--------|
+| Astro Version (CF-004) | `166faa56-eb39-4f6d-9458-f8232e927546` |
+| Preview URL | `https://166faa56-just-public-poc.lilo579.workers.dev` |
+| Bootstrap deployment | **unchanged** 100% → `3047d28b-…ef4f` |
+| Alpha / Beta / Gamma | 200 · `data-renderer="canonical"` · distinct branding |
+| Isolation | sequence + concurrency PASS |
+| unknown / invalid host | 404 / 400 |
+| LeadForm safe | `data-lead-form-safe="true"` |
+| Real Supabase / Edge / leads | **none** |
+| Fixture lifecycle | **keep temporarily** (Preview-only gate) |
+
+Next: **CF-005** rollback. Not yet: DNS, custom domain, `versions deploy` / traffic.
+
+#### Robots (CF-003 / CF-004)
+
+| Surface | `X-Robots-Tag` observada |
+|---------|--------------------------|
+| workerd / app middleware (`DEPLOY_ENV=preview\|staging`) | `noindex, nofollow` |
+| Cloudflare Preview URL (platform) | `noindex` |
+
+Classificação: **não bloqueadora** (não há workaround adicional no CF-004).
+
+#### Fixture lifecycle
+
+POC fixtures in `src/poc/publicSiteFixtures.js` are **kept temporarily** for remote regression, Versions validation, future CI, and provable isolation. Gate default is false; production cannot activate them. Removal or promotion to a formal harness is a later decision.
 
 Helper: `src/lib/runtimeEnv.js` (server-only; no production defaults).  
 Copy `.dev.vars.example` → `.dev.vars` for local secrets (gitignored).
@@ -120,14 +149,12 @@ Copy `.dev.vars.example` → `.dev.vars` for local secrets (gitignored).
 npm run cf:build
 npm run cf:dev              # build + wrangler dev (local workerd)
 curl -i http://127.0.0.1:8787/health
-# Host smoke (requires mock PUBLIC_SITE_PAYLOAD_URL — never production):
-# curl -i -H 'Host: alpha.justwebsites.com.br' http://127.0.0.1:8787/
-# Assets: curl -i http://127.0.0.1:8787/_astro/<file>.css
+# Fixture smoke (requires DEPLOY_ENV=preview + POC_FIXTURE_MODE=true):
+# curl -i 'http://127.0.0.1:8787/?host=alpha.justwebsites.com.br'
 npm run cf:deploy:dry-run   # analyzes artifact; does not publish
-# Remote CF-003 (auth required — never wrangler deploy / versions deploy):
-# npx wrangler whoami
+# Remote CF-004 (auth required — never wrangler deploy / versions deploy):
 # npx wrangler versions upload
-# curl -i https://<8hex>-just-public-poc.lilo579.workers.dev/health
+# curl -i 'https://<8hex>-just-public-poc.lilo579.workers.dev/?host=alpha.justwebsites.com.br'
 ```
 
 Node/Docker files remain **contingency**, not dual-active deploy targets.
@@ -276,12 +303,13 @@ npm run docker:run
 
 ## Current limitations
 
-- CF-003: Astro Preview URL smoke **PASS**; renderer/payload remote **NOT TESTED** (needs safe fixture for CF-004).
-- Bootstrap Deployment still serves the hello Script at 100%; Astro Version is Preview-only (0% normal traffic).
-- App middleware: `DEPLOY_ENV=preview|staging` → `X-Robots-Tag: noindex, nofollow`; production/unset/unknown → no automatic app robots header.
+- CF-004: Alpha/Beta/Gamma remote Preview **PASS** with dual-gated POC fixtures; no real Supabase/Edge.
+- Bootstrap Deployment still serves the CF-002 hello Script at 100%; Astro Versions are Preview-only (0% normal traffic).
+- App middleware: `DEPLOY_ENV=preview|staging` → `X-Robots-Tag: noindex, nofollow` on workerd; Preview URL hosts may surface platform `noindex` only.
 - Production build-time leads defaults remain for `DEPLOY_ENV=production` only (gated empty in preview safe mode).
 - Hub Edge Function commit `7266049` may not yet be deployed (tracked in Hub).
 - Content model remains flat (`site_content` / branding / contact).
 - Preview URL logs not available via `wrangler tail` (Cloudflare platform limitation).
+- POC fixtures kept **temporarily** under dual gate until formal removal decision.
 
 See `SYNC_STATUS.md`.

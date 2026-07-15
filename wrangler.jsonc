@@ -1,6 +1,5 @@
-// CF-003 — just-public-poc Astro candidate (Preview URL only; no production traffic).
-// workers_dev stays false: no normal *.workers.dev hostname for this Worker.
-// preview_urls true: versioned Preview URL only (POC-002 / IMPLEMENTATION-001).
+// CF-004 — just-public-poc Astro Preview candidate with POC fixtures (no production traffic).
+// workers_dev stays false; preview_urls true; fixture mode gated to DEPLOY_ENV=preview only.
 {
   "name": "just-public-poc",
   "compatibility_date": "2026-01-14",
@@ -8,7 +7,8 @@
   "workers_dev": false,
   "preview_urls": true,
   "vars": {
-    "DEPLOY_ENV": "preview"
+    "DEPLOY_ENV": "preview",
+    "POC_FIXTURE_MODE": "true"
   },
   "assets": {
     "directory": "./dist",
