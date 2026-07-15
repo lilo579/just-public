@@ -44,7 +44,18 @@ Validated locally against a **mock** payload (**no** real Supabase/Edge):
 - Normalization: lowercase, strip port / trailing dot, reject URL/path/whitespace
 - Homepage fetch uses runtime bindings `PUBLIC_SITE_PAYLOAD_URL` + `SUPABASE_ANON_KEY` (no production default on this path)
 
-Not validated yet (Slice 4+): real payload contract, renderer/theme, full alpha/beta content isolation, remote assets/DNS.
+### Slice 4 — payload, Canonical Renderer, theme on workerd
+
+Validated locally with **canonical mock fixtures** (Alpha / Beta — **no** real Edge/Supabase):
+
+- Mock respects `ResolvedHomepage` + `serializablePlan` consumed by Astro
+- `CanonicalHomepageRenderer` path (`data-renderer="canonical"`); legacy not used
+- Theme tokens via `themeFromBranding` / `SiteTheme` (`--site-color-primary`, etc.)
+- Alpha/Beta HTML + theme isolation (including consecutive requests)
+- Controlled errors: unknown host, missing plan, malformed JSON; bad branding → safe defaults
+- Basic `/_astro/*.css` asset 200
+
+Not validated yet (Slice 5+): deep Static Assets, real Edge, DNS/preview remote.
 
 Helper: `src/lib/runtimeEnv.js` (server-only; no production defaults).  
 Copy `.dev.vars.example` → `.dev.vars` for local secrets (gitignored).
@@ -204,8 +215,8 @@ npm run docker:run
 
 ## Current limitations
 
-- POC-001 Slice 3: Host resolution + mock payload on workerd; **no Cloudflare deploy/DNS**.
-- Real Edge payload / renderer / theme not yet validated (Slice 4+).
+- POC-001 Slice 4: canonical mock payload + renderer/theme on workerd; **no Cloudflare deploy/DNS**.
+- Real Edge / `tenant_id_from_host` / deep assets not yet validated (Slice 5+).
 - Hub Edge Function commit `7266049` may not yet be deployed (tracked in Hub).
 - Content model remains flat (`site_content` / branding / contact).
 

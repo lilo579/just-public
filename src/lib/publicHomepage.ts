@@ -67,8 +67,13 @@ export async function fetchPublicSitePayload(
     return { ok: false, status: res.status, body: await res.text() }
   }
 
-  const homepage = (await res.json()) as ResolvedHomepage
-  return { ok: true, homepage }
+  try {
+    const homepage = (await res.json()) as ResolvedHomepage
+    return { ok: true, homepage }
+  } catch {
+    // Controlled failure — do not surface stack or raw body to callers.
+    return { ok: false, status: 502, body: "Invalid payload" }
+  }
 }
 
 export function resolveRequestHost(request: Request, searchParams: URLSearchParams): string {
