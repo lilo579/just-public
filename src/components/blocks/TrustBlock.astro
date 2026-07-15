@@ -2,21 +2,41 @@
 import type { TrustBlock as TrustBlockType } from "../../contracts/homepage"
 
 const { block } = Astro.props as { block: TrustBlockType }
-const { items, hasContent } = block.content
+const { title, items, logos, hasContent } = block.content
 const visibleItems = (items ?? []).filter(Boolean)
+const visibleLogos = (logos ?? []).filter((logo) => logo?.imageUrl || logo?.name)
+const showSection = hasContent && (visibleItems.length > 0 || visibleLogos.length > 0 || Boolean(title))
 ---
 
-{hasContent && visibleItems.length > 0 && (
+{showSection && (
   <section class="trust">
     <div class="trust__container">
-      <ul class="trust__list">
-        {visibleItems.map((item, index) => (
-          <li class:list={["trust__item", visibleItems.length === 3 && index === 2 ? "trust__item--full" : ""]}>
-            <span class="trust__icon" aria-hidden="true">✓</span>
-            <span class="trust__text">{item}</span>
-          </li>
-        ))}
-      </ul>
+      {title && <h2 class="trust__title">{title}</h2>}
+
+      {visibleItems.length > 0 && (
+        <ul class="trust__list">
+          {visibleItems.map((item, index) => (
+            <li class:list={["trust__item", visibleItems.length === 3 && index === 2 ? "trust__item--full" : ""]}>
+              <span class="trust__icon" aria-hidden="true">✓</span>
+              <span class="trust__text">{item}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {visibleLogos.length > 0 && (
+        <ul class="trust__logos" aria-label="Logos de confianca">
+          {visibleLogos.map((logo) => (
+            <li class="trust__logo">
+              {logo.imageUrl ? (
+                <img src={logo.imageUrl} alt={logo.alt || logo.name || "Logo"} loading="lazy" />
+              ) : (
+                <span class="trust__logo-name">{logo.name}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   </section>
 )}
@@ -34,6 +54,16 @@ const visibleItems = (items ?? []).filter(Boolean)
     margin: 0 auto;
     padding-left: 1.5rem;
     padding-right: 1.5rem;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .trust__title {
+    margin: 0;
+    text-align: center;
+    color: hsl(220 15% 20%);
+    font-size: 1rem;
+    font-weight: 600;
   }
 
   .trust__list {
@@ -90,6 +120,39 @@ const visibleItems = (items ?? []).filter(Boolean)
     overflow-wrap: anywhere;
   }
 
+  .trust__logos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .trust__logo {
+    min-height: 4.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.85rem 1rem;
+    border: 1px dashed hsl(30 8% 82%);
+    border-radius: 1rem;
+    background: hsl(0 0% 100% / 0.7);
+  }
+
+  .trust__logo img {
+    max-height: 2.5rem;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+
+  .trust__logo-name {
+    color: hsl(220 10% 35%);
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
   @media (min-width: 1024px) {
     .trust {
       margin-top: -2rem;
@@ -123,6 +186,10 @@ const visibleItems = (items ?? []).filter(Boolean)
       line-height: 1.2;
       white-space: nowrap;
       overflow-wrap: normal;
+    }
+
+    .trust__logos {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
 </style>

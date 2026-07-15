@@ -4,32 +4,69 @@ type SocialProofImage = {
   alt?: string | null;
 };
 
+type TestimonialItem = {
+  company?: string | null;
+  tag?: string | null;
+  quote?: string | null;
+  result?: string | null;
+};
+
 const { block } = Astro.props as {
   block: {
     type: "testimonials";
     content: {
       title?: string | null;
+      subtitle?: string | null;
+      items?: TestimonialItem[];
       images?: SocialProofImage[];
     };
   };
 };
 
 const title = block.content?.title;
+const subtitle = block.content?.subtitle;
 const images = (block.content?.images ?? []).filter((img) => img?.url);
+const items = (block.content?.items ?? []).filter(
+  (item) => item?.company || item?.tag || item?.quote || item?.result
+);
+const showSection = items.length > 0 || images.length > 0;
 ---
 
-{images.length > 0 && (
+{showSection && (
   <section class="testimonials">
     <div class="testimonials__inner">
-      {title && <h2>{title}</h2>}
+      {(title || subtitle) && (
+        <header class="testimonials__header">
+          {title && <h2>{title}</h2>}
+          {subtitle && <p class="testimonials__subtitle">{subtitle}</p>}
+        </header>
+      )}
 
-      <div class="testimonials__grid">
-        {images.map((img) => (
-          <figure class="testimonials__item">
-            <img src={img.url} alt={img.alt || "Depoimento"} loading="lazy" />
-          </figure>
-        ))}
-      </div>
+      {items.length > 0 && (
+        <div class="testimonials__quotes">
+          {items.map((item) => (
+            <article class="testimonials__quote">
+              {item.tag && <p class="testimonials__tag">{item.tag}</p>}
+              {item.quote && <p class="testimonials__text">{item.quote}</p>}
+              {(item.company || item.result) && (
+                <footer class="testimonials__meta">
+                  {[item.company, item.result].filter(Boolean).join(" · ")}
+                </footer>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
+
+      {images.length > 0 && (
+        <div class="testimonials__grid">
+          {images.map((img) => (
+            <figure class="testimonials__item">
+              <img src={img.url} alt={img.alt || "Depoimento"} loading="lazy" />
+            </figure>
+          ))}
+        </div>
+      )}
     </div>
   </section>
 )}
@@ -42,17 +79,63 @@ const images = (block.content?.images ?? []).filter((img) => img?.url);
   .testimonials__inner {
     max-width: 980px;
     margin: 0 auto;
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .testimonials__header {
+    text-align: center;
   }
 
   .testimonials h2 {
-    margin: 0 0 24px;
-    text-align: center;
+    margin: 0;
     color: hsl(220 15% 15%);
     font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
     font-size: clamp(1.8rem, 3vw, 2.4rem);
     line-height: 1.12;
     letter-spacing: -0.025em;
     font-weight: 700;
+  }
+
+  .testimonials__subtitle {
+    margin: 0.75rem 0 0;
+    color: hsl(220 10% 35%);
+    font-size: 1.05rem;
+    line-height: 1.5;
+  }
+
+  .testimonials__quotes {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .testimonials__quote {
+    padding: 1.25rem 1.35rem;
+    border-radius: 1.25rem;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  }
+
+  .testimonials__tag {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    color: hsl(220 10% 40%);
+  }
+
+  .testimonials__text {
+    margin: 0.75rem 0 0;
+    font-size: 1.1rem;
+    line-height: 1.55;
+    color: hsl(220 15% 15%);
+  }
+
+  .testimonials__meta {
+    margin-top: 0.85rem;
+    font-size: 0.92rem;
+    color: hsl(220 10% 40%);
   }
 
   .testimonials__grid {
@@ -77,6 +160,10 @@ const images = (block.content?.images ?? []).filter((img) => img?.url);
   }
 
   @media (min-width: 768px) {
+    .testimonials__quotes {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .testimonials__grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -87,9 +174,11 @@ const images = (block.content?.images ?? []).filter((img) => img?.url);
       padding: 3rem 0 4rem;
     }
 
-    .testimonials h2 {
-      margin-bottom: 20px;
+    .testimonials__header {
       text-align: left;
+    }
+
+    .testimonials h2 {
       font-size: 1.6rem;
     }
 

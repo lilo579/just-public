@@ -12,6 +12,9 @@ import TestimonialsBlock from "./blocks/TestimonialsBlock.astro"
 import CtaBlock from "./blocks/CtaBlock.astro"
 import { buildCanonicalCtaPrimaryCTA } from "./canonicalHomepageCtaAdapter.js"
 import { adaptCanonicalBenefits } from "./canonicalHomepageBenefitsAdapter.js"
+import { adaptCanonicalHero } from "./canonicalHomepageHeroAdapter.js"
+import { adaptCanonicalTrust } from "./canonicalHomepageTrustAdapter.js"
+import { adaptCanonicalTestimonials } from "./canonicalHomepageTestimonialsAdapter.js"
 
 import type {
   AboutBlock as AboutBlockType,
@@ -183,51 +186,8 @@ function adaptHero(node: SerializableHomepageRenderNode): {
   block: HeroBlockType
   warnings: string[]
 } {
-  const source = readNamespacedSource(node.props, "hero")
-  const contact = isRecord(node.props.contact) ? node.props.contact : {}
-  const existingPrimaryCTA = isRecord(node.props.primaryCTA)
-    ? node.props.primaryCTA
-    : isRecord(source.primaryCTA)
-      ? source.primaryCTA
-      : null
-  const whatsappNumber = sanitizeWhatsappNumber(contact.whatsappNumber)
-  const whatsappVisible = contact.whatsappVisible === true
-  const fallbackHref =
-    whatsappVisible && whatsappNumber ? `https://wa.me/${whatsappNumber}` : undefined
-  const fallbackLabel =
-    asOptionalString(source.primaryCtaLabel) ?? "Falar pelo WhatsApp"
-  const existingHref = existingPrimaryCTA ? asOptionalString(existingPrimaryCTA.href) : undefined
-  const existingLabel = existingPrimaryCTA ? asOptionalString(existingPrimaryCTA.label) : undefined
-  const existingVisible = existingPrimaryCTA?.visible
-  const primaryCTA =
-    existingPrimaryCTA && (existingHref || existingLabel)
-      ? {
-          type: asOptionalString(existingPrimaryCTA.type) ?? "whatsapp",
-          href: existingHref,
-          label: existingLabel ?? fallbackLabel,
-          visible: typeof existingVisible === "boolean" ? existingVisible : true,
-        }
-      : fallbackHref
-        ? {
-            type: "whatsapp",
-            href: fallbackHref,
-            label: fallbackLabel,
-            visible: true,
-          }
-        : null
-
-  const block = {
-    type: "hero" as const,
-    content: {
-      title: asOptionalString(source.title),
-      subtitle: asOptionalString(source.subtitle),
-      eyebrow: asOptionalString(source.eyebrow),
-    },
-    primaryCTA,
-  }
-
   return {
-    block,
+    block: adaptCanonicalHero(node.props) as HeroBlockType,
     warnings: [],
   }
 }
@@ -236,17 +196,8 @@ function adaptTrust(node: SerializableHomepageRenderNode): {
   block: TrustBlockType
   warnings: string[]
 } {
-  const source = readNamespacedSource(node.props, "trust")
-  const items = asStringArray(source.items)
-
   return {
-    block: {
-      type: "trust",
-      content: {
-        items,
-        hasContent: items.length > 0,
-      },
-    },
+    block: adaptCanonicalTrust(node.props) as TrustBlockType,
     warnings: [],
   }
 }
@@ -286,6 +237,7 @@ function adaptServices(node: SerializableHomepageRenderNode): {
       type: "services",
       content: {
         source: "canonical_preview",
+        kicker: asOptionalString(source.kicker),
         title: asOptionalString(source.title),
         items,
       },
@@ -405,7 +357,9 @@ function adaptProcess(node: SerializableHomepageRenderNode): {
     block: {
       type: "process",
       content: {
+        kicker: asOptionalString(source.kicker),
         title: asOptionalString(source.title),
+        body: asOptionalString(source.body),
         steps,
       },
     },
@@ -435,25 +389,8 @@ function adaptTestimonials(node: SerializableHomepageRenderNode): {
   block: TestimonialsBlockType
   warnings: string[]
 } {
-  const source = readNamespacedSource(node.props, "testimonials")
-  const images = Array.isArray(source.images)
-    ? source.images
-        .filter(isRecord)
-        .map((image) => ({
-          url: asOptionalString(image.url) ?? "",
-          alt: asOptionalString(image.alt),
-        }))
-        .filter((image) => image.url)
-    : []
-
   return {
-    block: {
-      type: "testimonials",
-      content: {
-        title: asOptionalString(source.title),
-        images,
-      },
-    },
+    block: adaptCanonicalTestimonials(node.props) as TestimonialsBlockType,
     warnings: [],
   }
 }
@@ -576,13 +513,30 @@ function hasUsefulContent(entry: Exclude<RenderableNode, { kind: "unsupported" }
       return Boolean(
         hasTextContent(entry.block.content.title) ||
           hasTextContent(entry.block.content.subtitle) ||
-          hasTextContent(entry.block.content.eyebrow)
+          hasTextContent(entry.block.content.eyebrow) ||
+          hasTextContent(entry.block.content.highlight) ||
+          (entry.block.content.metrics ?? []).some(
+            (metric) =>
+              hasTextContent(metric.label) ||
+              hasTextContent(metric.value) ||
+              hasTextContent(metric.description)
+          )
       )
     case "trust":
-      return entry.block.content.hasContent && entry.block.content.items.some(hasTextContent)
+      return (
+        entry.block.content.hasContent &&
+        (Boolean(hasTextContent(entry.block.content.title)) ||
+          entry.block.content.items.some(hasTextContent) ||
+          (entry.block.content.logos ?? []).some(
+            (logo) => hasTextContent(logo.imageUrl) || hasTextContent(logo.name)
+          ))
+      )
     case "services":
-      return entry.block.content.items.some(
-        (item) => hasTextContent(item.title) && hasTextContent(item.description)
+      return (
+        Boolean(hasTextContent(entry.block.content.kicker)) ||
+        entry.block.content.items.some(
+          (item) => hasTextContent(item.title) && hasTextContent(item.description)
+        )
       )
     case "problem":
     case "rich_text":
@@ -618,7 +572,12 @@ function hasUsefulContent(entry: Exclude<RenderableNode, { kind: "unsupported" }
     case "features":
       return entry.block.content.items.some((item) => hasTextContent(item.title))
     case "process":
-      return entry.block.content.steps.some((step) => hasTextContent(step.title))
+      return Boolean(
+        hasTextContent(entry.block.content.kicker) ||
+          hasTextContent(entry.block.content.title) ||
+          hasTextContent(entry.block.content.body) ||
+          entry.block.content.steps.some((step) => hasTextContent(step.title))
+      )
     case "attendance":
       return Boolean(
         hasTextContent(entry.block.content.title) ||
@@ -626,7 +585,16 @@ function hasUsefulContent(entry: Exclude<RenderableNode, { kind: "unsupported" }
           entry.block.content.pills.some(hasTextContent)
       )
     case "testimonials":
-      return entry.block.content.images.some((image) => hasTextContent(image.url))
+      return (
+        entry.block.content.images.some((image) => hasTextContent(image.url)) ||
+        (entry.block.content.items ?? []).some(
+          (item) =>
+            hasTextContent(item.company) ||
+            hasTextContent(item.tag) ||
+            hasTextContent(item.quote) ||
+            hasTextContent(item.result)
+        )
+      )
     case "cta_final": {
       const { title, body, buttonLabel, primaryCTA } = entry.block.content
       const finalLabel = buttonLabel ?? primaryCTA?.label

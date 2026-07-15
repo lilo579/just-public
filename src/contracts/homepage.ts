@@ -53,6 +53,12 @@ export type HeroBlock = {
     title?: string | null
     subtitle?: string | null
     eyebrow?: string | null
+    highlight?: string | null
+    metrics: {
+      label?: string | null
+      value?: string | null
+      description?: string | null
+    }[]
   }
   primaryCTA?: HomepageCTA | null
 }
@@ -60,7 +66,13 @@ export type HeroBlock = {
 export type TrustBlock = {
   type: "trust"
   content: {
+    title?: string | null
     items: string[]
+    logos: {
+      name?: string | null
+      imageUrl?: string | null
+      alt?: string | null
+    }[]
     hasContent: boolean
   }
 }
@@ -69,6 +81,7 @@ export type ServicesBlock = {
   type: "services"
   content: {
     source: string
+    kicker?: string | null
     title?: string | null
     items: {
       title: string
@@ -128,7 +141,9 @@ export type BenefitsBlock = {
 export type ProcessBlock = {
   type: "process"
   content: {
+    kicker?: string | null
     title?: string | null
+    body?: string | null
     steps: {
       number: number
       title: string
@@ -146,6 +161,13 @@ export type TestimonialsBlock = {
   type: "testimonials"
   content: {
     title?: string | null
+    subtitle?: string | null
+    items: {
+      company?: string | null
+      tag?: string | null
+      quote?: string | null
+      result?: string | null
+    }[]
     images: SocialProofImage[]
   }
 }

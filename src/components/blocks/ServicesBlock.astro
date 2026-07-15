@@ -2,7 +2,7 @@
 import type { ServicesBlock as ServicesBlockType } from "../../contracts/homepage";
 
 const { block } = Astro.props as { block: ServicesBlockType };
-const { title, items } = block.content;
+const { kicker, title, items } = block.content;
 
 const visibleItems = (items ?? []).filter(
   (item) => item?.title && item?.description
@@ -15,9 +15,10 @@ const rightItems = visibleItems.slice(2);
 {visibleItems.length > 0 && (
   <section class="services">
     <div class="services__container">
-      {title && (
+      {(kicker || title) && (
         <div class="services__heading">
-          <h2>{title}</h2>
+          {kicker && <p class="services__kicker">{kicker}</p>}
+          {title && <h2>{title}</h2>}
         </div>
       )}
 
@@ -87,6 +88,15 @@ const rightItems = visibleItems.slice(2);
     max-width: 48rem;
     margin: 0 auto 3rem;
     text-align: left;
+  }
+
+  .services__kicker {
+    margin: 0 0 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: hsl(145 40% 35%);
   }
 
   .services h2 {

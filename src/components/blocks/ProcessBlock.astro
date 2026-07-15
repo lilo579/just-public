@@ -9,13 +9,17 @@ const { block } = Astro.props as {
   block: {
     type: "process";
     content: {
+      kicker?: string | null;
       title?: string | null;
+      body?: string | null;
       steps?: Step[];
     };
   };
 };
 
+const kicker = block.content?.kicker;
 const title = block.content?.title;
+const body = block.content?.body;
 const steps = (block.content?.steps ?? []).filter((step) => step?.title);
 
 function iconFor(stepNumber: number) {
@@ -25,15 +29,18 @@ function iconFor(stepNumber: number) {
 }
 ---
 
-{steps.length > 0 && (
+{(steps.length > 0 || kicker || title || body) && (
   <section class="process">
     <div class="process__container">
-      {title && (
+      {(kicker || title || body) && (
         <div class="process__heading">
-          <h2>{title}</h2>
+          {kicker && <p class="process__kicker">{kicker}</p>}
+          {title && <h2>{title}</h2>}
+          {body && <p class="process__body">{body}</p>}
         </div>
       )}
 
+      {steps.length > 0 && (
       <div class="process__grid">
         {steps.map((step) => (
           <article class="process__card">
@@ -93,6 +100,7 @@ function iconFor(stepNumber: number) {
           </article>
         ))}
       </div>
+      )}
     </div>
   </section>
 )}
@@ -112,6 +120,23 @@ function iconFor(stepNumber: number) {
   .process__heading {
     text-align: center;
     margin-bottom: 3rem;
+  }
+
+  .process__kicker {
+    margin: 0 0 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: hsl(145 40% 35%);
+  }
+
+  .process__body {
+    margin: 0.85rem auto 0;
+    max-width: 40rem;
+    color: hsl(220 10% 35%);
+    font-size: 1.05rem;
+    line-height: 1.55;
   }
 
   .process h2 {
