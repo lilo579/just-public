@@ -205,9 +205,10 @@ test("workerd canonical renderer + theme: Alpha/Beta isolation and error paths",
   assert.match(badBrand.body, /data-renderer="canonical"/)
   // Invalid colors → safe defaults (not raw evil strings).
   assert.match(badBrand.body, /--site-color-primary:#2563eb/)
-  assert.doesNotMatch(badBrand.body, /javascript:/i)
-  assert.doesNotMatch(badBrand.body, /url\(/i)
+  // Reject CSS-injection branding payloads (not bare `URL(` in client scripts).
+  assert.doesNotMatch(badBrand.body, /url\s*\(\s*javascript:/i)
   assert.doesNotMatch(badBrand.body, /--site-color-primary:red/)
+  assert.doesNotMatch(badBrand.body, /5511999900001|Alpha Consulting/)
 
   // Basic Static Assets: CSS referenced by HTML returns 200.
   const cssMatch = alpha.body.match(/\/_astro\/[^"'()\s]+\.css/)

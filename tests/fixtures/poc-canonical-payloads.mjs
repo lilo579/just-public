@@ -78,6 +78,7 @@ function buildPlan(tenantKey, nodes) {
  *   title: string
  *   subtitle: string
  *   email: string
+ *   phone: string
  *   primaryColor: string
  *   secondaryColor: string
  *   serviceTitle: string
@@ -88,8 +89,8 @@ function buildTenantFixture(t) {
   const contact = {
     companyName: t.companyName,
     email: t.email,
-    whatsappNumber: null,
-    whatsappVisible: false,
+    whatsappNumber: t.phone,
+    whatsappVisible: true,
   }
 
   const nodes = [
@@ -153,8 +154,8 @@ function buildTenantFixture(t) {
     footer: {
       logoUrl: null,
       tagline: `${t.companyName} tagline`,
-      whatsappNumber: null,
-      whatsappVisible: false,
+      whatsappNumber: t.phone,
+      whatsappVisible: true,
       email: t.email,
       address: null,
       companyName: t.companyName,
@@ -185,6 +186,7 @@ export const TENANT_ALPHA = {
   title: "Alpha Consulting",
   subtitle: "Alpha subtitle for canonical POC",
   email: "alpha@example.test",
+  phone: "5511999900001",
   primaryColor: "#112233",
   secondaryColor: "#445566",
   serviceTitle: "Alpha Services",
@@ -200,14 +202,45 @@ export const TENANT_BETA = {
   title: "Beta Studio",
   subtitle: "Beta subtitle for canonical POC",
   email: "beta@example.test",
+  phone: "5511999900002",
   primaryColor: "#aa5500",
   secondaryColor: "#664422",
   serviceTitle: "Beta Services",
   ctaTitle: "Beta CTA",
 }
 
+export const TENANT_GAMMA = {
+  tenantId: "00000000-0000-4000-8000-0000000000c7",
+  key: "gamma",
+  host: "gamma.justwebsites.com.br",
+  slug: "gamma-labs-poc",
+  companyName: "Gamma Labs",
+  title: "Gamma Labs",
+  subtitle: "Gamma subtitle for canonical POC",
+  email: "gamma@example.test",
+  phone: "5511999900003",
+  primaryColor: "#008866",
+  secondaryColor: "#004433",
+  serviceTitle: "Gamma Services",
+  ctaTitle: "Gamma CTA",
+}
+
 export const FIXTURE_ALPHA = buildTenantFixture(TENANT_ALPHA)
 export const FIXTURE_BETA = buildTenantFixture(TENANT_BETA)
+export const FIXTURE_GAMMA = buildTenantFixture(TENANT_GAMMA)
+
+/** Slice 6 isolation matrix — fictitious tenants only. */
+export const POC_TENANTS = {
+  alpha: TENANT_ALPHA,
+  beta: TENANT_BETA,
+  gamma: TENANT_GAMMA,
+}
+
+export const POC_FIXTURES_BY_HOST = {
+  [TENANT_ALPHA.host]: FIXTURE_ALPHA,
+  [TENANT_BETA.host]: FIXTURE_BETA,
+  [TENANT_GAMMA.host]: FIXTURE_GAMMA,
+}
 
 /** Payload without serializablePlan — must force controlled error (no silent legacy). */
 export const FIXTURE_NO_PLAN = {
@@ -251,6 +284,8 @@ export const FIXTURE_BAD_BRANDING = {
     contact: {
       companyName: "Bad Branding Co",
       email: "bad-branding@example.test",
+      whatsappNumber: null,
+      whatsappVisible: false,
     },
     meta: {
       branding: {
@@ -266,6 +301,8 @@ export const FIXTURE_BAD_BRANDING = {
     companyName: "Bad Branding Co",
     email: "bad-branding@example.test",
     tagline: "Bad Branding tagline",
+    whatsappNumber: null,
+    whatsappVisible: false,
   },
   serializablePlan: buildPlan("badbrand", [
     planNode({
@@ -295,6 +332,7 @@ export const FIXTURE_BAD_BRANDING = {
 export const HOST_FIXTURES = {
   [TENANT_ALPHA.host]: FIXTURE_ALPHA,
   [TENANT_BETA.host]: FIXTURE_BETA,
+  [TENANT_GAMMA.host]: FIXTURE_GAMMA,
   "no-plan.justwebsites.com.br": FIXTURE_NO_PLAN,
   "bad-branding.justwebsites.com.br": FIXTURE_BAD_BRANDING,
 }

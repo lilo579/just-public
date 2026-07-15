@@ -5,7 +5,16 @@ import {
   HOST_FIXTURES,
   HOST_MALFORMED,
   HOST_UNKNOWN,
+  TENANT_ALPHA,
+  TENANT_BETA,
+  TENANT_GAMMA,
 } from "../fixtures/poc-canonical-payloads.mjs"
+
+const TENANT_BY_HOST = {
+  [TENANT_ALPHA.host]: TENANT_ALPHA,
+  [TENANT_BETA.host]: TENANT_BETA,
+  [TENANT_GAMMA.host]: TENANT_GAMMA,
+}
 
 export async function freePort() {
   return await new Promise((resolve, reject) => {
@@ -24,45 +33,68 @@ export async function freePort() {
 }
 
 /**
- * Local public-site-payload mock for POC Slice 4.
+ * Local public-site-payload mock for POC slices.
  * Routes by query `host`; never calls Hub/Supabase.
+ * Each call records: timestamp, host, tenant, mode, status.
  */
 export function startCanonicalPayloadMock() {
-  /** @type {{ pathname: string, host: string | null, mode: string | null, hasAuth: boolean }[]} */
+  /**
+   * @type {{
+   *   timestamp: string
+   *   pathname: string
+   *   host: string | null
+   *   tenant: string | null
+   *   tenantKey: string | null
+   *   mode: string | null
+   *   status: number
+   *   hasAuth: boolean
+   * }[]}
+   */
   const calls = []
 
   const server = http.createServer((req, res) => {
     const u = new URL(req.url ?? "/", "http://127.0.0.1")
     const host = u.searchParams.get("host")
     const mode = u.searchParams.get("mode")
-    calls.push({
-      pathname: u.pathname,
-      host,
-      mode,
-      hasAuth: Boolean(req.headers.authorization),
-    })
+    const timestamp = new Date().toISOString()
+    const hasAuth = Boolean(req.headers.authorization)
+
+    /** @param {number} status @param {string} body @param {string|null} tenant @param {string|null} tenantKey */
+    const respond = (status, body, tenant = null, tenantKey = null) => {
+      calls.push({
+        timestamp,
+        pathname: u.pathname,
+        host,
+        tenant,
+        tenantKey,
+        mode,
+        status,
+        hasAuth,
+      })
+      res.writeHead(status, { "content-type": "application/json; charset=utf-8" })
+      res.end(body)
+    }
 
     if (!host || host === HOST_UNKNOWN) {
-      res.writeHead(404, { "content-type": "application/json; charset=utf-8" })
-      res.end(JSON.stringify({ error: "unknown_host", code: "unknown_host" }))
+      respond(404, JSON.stringify({ error: "unknown_host", code: "unknown_host" }))
       return
     }
 
     if (host === HOST_MALFORMED) {
-      res.writeHead(200, { "content-type": "application/json; charset=utf-8" })
-      res.end("{not-valid-json")
+      respond(200, "{not-valid-json")
       return
     }
 
     const fixture = HOST_FIXTURES[host]
     if (!fixture) {
-      res.writeHead(404, { "content-type": "application/json; charset=utf-8" })
-      res.end(JSON.stringify({ error: "unknown_host", code: "unknown_host" }))
+      respond(404, JSON.stringify({ error: "unknown_host", code: "unknown_host" }))
       return
     }
 
-    res.writeHead(200, { "content-type": "application/json; charset=utf-8" })
-    res.end(JSON.stringify(fixture))
+    const meta = TENANT_BY_HOST[host]
+    const tenant = typeof fixture.tenantId === "string" ? fixture.tenantId : null
+    const tenantKey = meta?.key ?? null
+    respond(200, JSON.stringify(fixture), tenant, tenantKey)
   })
 
   return {
