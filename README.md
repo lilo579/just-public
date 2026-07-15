@@ -127,8 +127,6 @@ Dual gate: `DEPLOY_ENV=preview` **and** `POC_FIXTURE_MODE=true`. Module: `src/po
 | Real Supabase / Edge / leads | **none** |
 | Fixture lifecycle | **keep temporarily** (Preview-only gate) |
 
-Next: **CF-005** rollback. Not yet: DNS, custom domain, `versions deploy` / traffic.
-
 #### Robots (CF-003 / CF-004)
 
 | Surface | `X-Robots-Tag` observada |
@@ -141,6 +139,34 @@ Classificação: **não bloqueadora** (não há workaround adicional no CF-004).
 #### Fixture lifecycle
 
 POC fixtures in `src/poc/publicSiteFixtures.js` are **kept temporarily** for remote regression, Versions validation, future CI, and provable isolation. Gate default is false; production cannot activate them. Removal or promotion to a formal harness is a later decision.
+
+### CF-005 — Deployment / rollback
+
+Validated remotely: promote CF-004 → rollback Bootstrap (`just-public` unchanged @ `7932a67`). Active Deployment restored to Bootstrap 100%. Hub report: CF-005.
+
+### CF-006 — Controlled CI/CD (Preview Version upload)
+
+Workflow: `.github/workflows/cloudflare-preview-version.yml`  
+Trigger: **`workflow_dispatch` only** (push→main deferred until first remote green).  
+Environment: `cloudflare-preview`.
+
+```
+npm ci → npm test → npm run build → wrangler deploy --dry-run
+  → wrangler versions upload
+  → parse Version ID + Preview URL
+  → smoke A/B/G + assets + negatives
+  → assert active Deployment unchanged (Bootstrap 100%)
+```
+
+| Item | Value |
+|------|--------|
+| Decision | Explicit `npx wrangler` (not default `cloudflare/wrangler-action` deploy) |
+| Secrets | `CLOUDFLARE_API_TOKEN` (name only; value never in repo/docs) |
+| Variables | `CLOUDFLARE_ACCOUNT_ID` |
+| Promotion | **forbidden** (`versions deploy` / `rollback` / real `wrangler deploy`) |
+| Remote execution | **pending** commit/push + dedicated API Token secret |
+
+Next: authorize commit/push → set token → first manual `workflow_dispatch`. Then CF-007.
 
 Helper: `src/lib/runtimeEnv.js` (server-only; no production defaults).  
 Copy `.dev.vars.example` → `.dev.vars` for local secrets (gitignored).
