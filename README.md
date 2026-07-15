@@ -55,7 +55,20 @@ Validated locally with **canonical mock fixtures** (Alpha / Beta — **no** real
 - Controlled errors: unknown host, missing plan, malformed JSON; bad branding → safe defaults
 - Basic `/_astro/*.css` asset 200
 
-Not validated yet (Slice 5+): deep Static Assets, real Edge, DNS/preview remote.
+### Slice 5 — Workers Static Assets (local)
+
+Validated locally on workerd (**no remote deploy / DNS / CF cache**):
+
+- Inventory: `dist/_astro/*.css`, favicons, `_routes.json` (routing meta; ignored as asset), Worker under `dist/_worker.js/` (entrypoint — **not** public)
+- `public/.assetsignore` excludes `_worker.js` + `_routes.json` from Static Assets (factual fix: entrypoint was publicly reachable)
+- Referenced CSS/JS (if any) + favicons: HTTP 200, correct MIME, shared across Alpha/Beta
+- Missing `/_astro/does-not-exist.js` → controlled 404 (not homepage, no payload call)
+- Safe path probes do not expose Worker sources
+- Theme tokens remain in SSR HTML (inline); shared CSS has zero Alpha/Beta-specific values
+- No `nodejs_compat`; no SPA fallback; no HTML cache policy added
+- LeadForm: no auto leads calls on asset load; service_role absent (build-time leads URL issue remains remote-preview blocker only)
+
+Next: **Slice 6** (per POC-001). Not yet: real Edge, DNS, preview remote.
 
 Helper: `src/lib/runtimeEnv.js` (server-only; no production defaults).  
 Copy `.dev.vars.example` → `.dev.vars` for local secrets (gitignored).
@@ -66,6 +79,7 @@ npm run cf:dev              # build + wrangler dev (local workerd)
 curl -i http://127.0.0.1:8787/health
 # Host smoke (requires mock PUBLIC_SITE_PAYLOAD_URL — never production):
 # curl -i -H 'Host: alpha.justwebsites.com.br' http://127.0.0.1:8787/
+# Assets: curl -i http://127.0.0.1:8787/_astro/<file>.css
 npm run cf:deploy:dry-run   # analyzes artifact; does not publish
 ```
 
@@ -215,8 +229,9 @@ npm run docker:run
 
 ## Current limitations
 
-- POC-001 Slice 4: canonical mock payload + renderer/theme on workerd; **no Cloudflare deploy/DNS**.
-- Real Edge / `tenant_id_from_host` / deep assets not yet validated (Slice 5+).
+- POC-001 Slice 5: Static Assets validated on local workerd; **no Cloudflare deploy/DNS**.
+- Real Edge / `tenant_id_from_host` / preview remote → Slice 6+.
+- LeadForm still embeds build-time `PUBLIC_LEADS_INTAKE_URL` (fix before remote preview; not a Slice 5 local blocker).
 - Hub Edge Function commit `7266049` may not yet be deployed (tracked in Hub).
 - Content model remains flat (`site_content` / branding / contact).
 

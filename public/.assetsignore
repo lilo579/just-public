@@ -1,0 +1,5 @@
+# Workers Static Assets — do not publish Worker internals as client assets.
+# Official Wrangler pattern for Astro/CF: exclude entrypoint + framework meta.
+# See: https://developers.cloudflare.com/workers/static-assets/binding/#ignoring-assets
+_worker.js
+_routes.json
