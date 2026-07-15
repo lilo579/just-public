@@ -44,11 +44,11 @@ jobs:
       - name: Static workflow policy gate
         run: node scripts/ci/assert-workflow-policy.mjs --file .github/workflows/cloudflare-preview-version.yml
 
-      - name: Test
-        run: npm test
-
       - name: Build
         run: npm run build
+
+      - name: Test
+        run: npm test
 
       - name: Wrangler deploy dry-run
         env:

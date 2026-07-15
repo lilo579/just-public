@@ -147,11 +147,11 @@ Validated remotely: promote CF-004 → rollback Bootstrap (`just-public` unchang
 ### CF-006 — Controlled CI/CD (Preview Version upload)
 
 Workflow: `.github/workflows/cloudflare-preview-version.yml`  
-Trigger: **`workflow_dispatch` only** (push→main deferred until first remote green).  
+Trigger: **`workflow_dispatch` only**.  
 Environment: `cloudflare-preview`.
 
 ```
-npm ci → npm test → npm run build → wrangler deploy --dry-run
+npm ci → policy gate → npm run build → npm test → wrangler deploy --dry-run
   → wrangler versions upload
   → parse Version ID + Preview URL
   → smoke A/B/G + assets + negatives
@@ -161,12 +161,15 @@ npm ci → npm test → npm run build → wrangler deploy --dry-run
 | Item | Value |
 |------|--------|
 | Decision | Explicit `npx wrangler` (not default `cloudflare/wrangler-action` deploy) |
-| Secrets | `CLOUDFLARE_API_TOKEN` (name only; value never in repo/docs) |
+| Secrets | `CLOUDFLARE_API_TOKEN` (name only) |
 | Variables | `CLOUDFLARE_ACCOUNT_ID` |
-| Promotion | **forbidden** (`versions deploy` / `rollback` / real `wrangler deploy`) |
-| Remote execution | **pending** commit/push + dedicated API Token secret |
+| Promotion | **forbidden** |
+| First remote run | **PASS** (`29440565313`) — Version `f3d2721d-…` · Bootstrap still 100% |
+| Workerd coverage (1º run) | **incomplete** — `npm test` before `build` skipped workerd (`dist/_worker.js` missing) |
+| Fix | workflow order **build → test** (this change) |
+| Second remote run | **pending** after push |
 
-Next: authorize commit/push → set token → first manual `workflow_dispatch`. Then CF-007.
+Next: second `workflow_dispatch` to certify full workerd coverage · then CF-007.
 
 Helper: `src/lib/runtimeEnv.js` (server-only; no production defaults).  
 Copy `.dev.vars.example` → `.dev.vars` for local secrets (gitignored).

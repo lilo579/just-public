@@ -40,6 +40,50 @@ test("CF-006 workflow policy: manual-only, permissions, gates, no promote", () =
   assert.doesNotMatch(yaml, /wrangler rollback/)
   assert.doesNotMatch(yaml, /echo\s+[\"']?\$\{?CLOUDFLARE_API_TOKEN\}?/)
   assert.doesNotMatch(yaml, /printenv\s+CLOUDFLARE_API_TOKEN/)
+
+  const active = yaml
+    .split("\n")
+    .filter((line) => !/^\s*#/.test(line))
+    .join("\n")
+  const idxBuild = active.search(/\bnpm run build\b/)
+  const idxTest = active.search(/\bnpm test\b/)
+  const idxDry = active.search(/wrangler deploy --dry-run/)
+  const idxUpload = active.search(/wrangler versions upload/)
+  assert.ok(idxBuild < idxTest, "build before test")
+  assert.ok(idxTest < idxDry, "test before dry-run")
+  assert.ok(idxDry < idxUpload, "dry-run before versions upload")
+})
+
+test("CF-006 workflow policy rejects test-before-build order", () => {
+  const badOrder = `
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: x
+  cancel-in-progress: true
+jobs:
+  j:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npx wrangler deploy --dry-run
+      - run: npx wrangler versions upload
+      - env:
+          CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: true
+`
+  assert.throws(
+    () => assertCloudflarePreviewWorkflowPolicy(badOrder),
+    /build must appear before npm test/,
+  )
 })
 
 test("CF-006 parseWranglerVersionsUploadOutput: standard wrangler 4.x labels", () => {

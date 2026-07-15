@@ -1,24 +1,24 @@
 # SYNC_STATUS — just-public
 
-Updated: 2026-07-15 (IMPLEMENTATION-001 **CF-006** — controlled CI/CD workflow, local implementation)
+Updated: 2026-07-15 (CF-006 — fix CI build→test order; second remote run pending)
 
 ## Source of truth
 
-- Local git working tree (uncommitted CF-006 changes).
-- Canonical published commit: **7932a67** (`origin/main`).
-- Hub: IMPLEMENTATION-001 CF-001…CF-005 COMPLETE (`just-auth-nexus` @ `f742849`).
+- Local pending commit: build-before-test workflow fix.
+- Canonical published commit before this fix: **1b5bfb1** (`origin/main`).
+- Hub: CF-006A COMPLETE (`just-auth-nexus` @ `b7009e7`); CF-006 slice not yet COMPLETE.
 
 ## Current state
 
-### Remote Worker (unchanged by CF-006 implementation)
+### Remote Worker
 
 | Field | Value |
 |-------|--------|
 | Worker | `just-public-poc` |
-| Active Deployment | Bootstrap `3047d28b-9830-4a10-8104-6d783f57ef4f` @ **100%** (post CF-005 rollback) |
-| CF-004 Version | `166faa56-eb39-4f6d-9458-f8232e927546` retained · Preview intact |
-| `workers_dev` | false (hostname 1042) |
-| `previews_enabled` | true |
+| Active Deployment | Bootstrap `3047d28b-…ef4f` @ **100%** (`a0368c3e-…`) |
+| First CI Version | `f3d2721d-30ef-4a12-9fca-1a463d260951` (**0%** traffic) |
+| Preview (1º run) | `https://f3d2721d-just-public-poc.lilo579.workers.dev` |
+| `workers_dev` | false |
 | Routes / Domains / DNS | 0 / 0 / unchanged |
 
 ### CF-006 — Controlled CI/CD
@@ -27,60 +27,35 @@ Updated: 2026-07-15 (IMPLEMENTATION-001 **CF-006** — controlled CI/CD workflow
 |------|--------|
 | Workflow | `.github/workflows/cloudflare-preview-version.yml` |
 | Trigger | `workflow_dispatch` only |
-| Environment | `cloudflare-preview` (GitHub) |
-| Commands | explicit `npx wrangler` (not default wrangler-action `deploy`) |
-| Secret | `CLOUDFLARE_API_TOKEN` — **not yet configured** (manual Dashboard token required) |
-| Variable | `CLOUDFLARE_ACCOUNT_ID` — configured (name only in docs) |
-| Promotion | **never** in this workflow |
-| Remote run | **NOT EXECUTED** (awaiting commit/push + token) |
+| First remote run | **PASS** — [29440565313](https://github.com/lilo579/just-public/actions/runs/29440565313) |
+| Workerd coverage (1º run) | **incomplete** — tests skipped (`dist/_worker.js` missing; test ran before build) |
+| Fix | order **build → test** (policy + tests enforce) |
+| Second remote run | **pending** after this push |
 
-Pipeline:
+Pipeline (corrected):
 
 ```
-checkout → Node 22 → npm ci → policy gate → npm test → npm run build
+checkout → Node 22 → npm ci → policy → npm run build → npm test
 → wrangler deploy --dry-run → wrangler versions upload
-→ parse Version ID + Preview URL → smoke fixtures → assert Deployment unchanged
-→ summary + cf-preview-metadata.json artifact (7d)
+→ parse → smoke → assert Deployment unchanged → summary + artifact
 ```
-
-Helpers: `scripts/ci/*.mjs` · Tests: `tests/cf006-*.test.mjs`
 
 ## Warnings
 
 ### Robots
 
-| Surface | Observed |
-|---------|----------|
-| workerd | `noindex, nofollow` |
-| Preview URL | `noindex` |
+workerd: `noindex, nofollow` · Preview URL: `noindex` (non-blocking).
 
-Non-blocking (CF-004 Issue #001).
+### Intentional skip remaining
 
-### CF-006 remote gate
-
-Until `CLOUDFLARE_API_TOKEN` is set and the workflow is pushed:
-
-- no CI Version upload;
-- no remote smoke from Actions.
-
-Do **not** connect Workers Builds (would default toward `wrangler deploy`).
-
-## Architecture decision
-
-- Pipeline may **upload Versions**; it must **never** create/alter Deployments.
-- Manual promotion remains CF-005-style (`versions deploy`) outside this workflow.
+`Node contingency standalone /health` skips when `@astrojs/cloudflare` does not emit `dist/server/entry.mjs` — expected, unrelated to build order.
 
 ## Next steps
 
-1. Authorize commit/push of CF-006.
-2. Create Dashboard API Token **JUST Public CI — Version Upload** (Workers edit; no DNS/Routes).
-3. `gh secret set CLOUDFLARE_API_TOKEN` (value never logged).
-4. `gh workflow run cloudflare-preview-version.yml --ref main`
-5. Hub CF-006 evidence report.
-6. **CF-007** — production Worker (no traffic).
+1. Push fix · second `workflow_dispatch`.
+2. Confirm workerd tests execute (no build-missing skips).
+3. Hub CF-006 evidence report → CF-006 COMPLETE / CF-007 READY.
 
 ## Do not overwrite
 
-- Homepage / payload Hub contracts.
-- Customer DNS / Cloudflare without explicit ops task.
-- Unrelated Hub finance scripts.
+- Hub contracts · customer DNS · Hub finance scripts.

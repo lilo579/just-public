@@ -58,6 +58,34 @@ export function assertCloudflarePreviewWorkflowPolicy(yaml) {
     errors.push("wrangler versions upload required")
   }
 
+  // Gate order (active lines only): build → test → dry-run → versions upload
+  {
+    const active = yaml
+      .split("\n")
+      .filter((line) => !/^\s*#/.test(line))
+      .join("\n")
+    const idxBuild = active.search(/\bnpm run build\b/)
+    const idxTest = active.search(/\bnpm test\b/)
+    const idxDry = active.search(/wrangler deploy --dry-run/)
+    const idxUpload = active.search(/wrangler versions upload/)
+    if (idxBuild < 0 || idxTest < 0 || idxDry < 0 || idxUpload < 0) {
+      errors.push("gate order check: missing build/test/dry-run/upload markers")
+    } else {
+      if (!(idxBuild < idxTest)) {
+        errors.push("gate order: npm run build must appear before npm test")
+      }
+      if (!(idxTest < idxUpload)) {
+        errors.push("gate order: npm test must appear before wrangler versions upload")
+      }
+      if (!(idxDry < idxUpload)) {
+        errors.push("gate order: wrangler deploy --dry-run must appear before wrangler versions upload")
+      }
+      if (!(idxTest < idxDry)) {
+        errors.push("gate order: npm test must appear before wrangler deploy --dry-run")
+      }
+    }
+  }
+
   // Forbidden remote mutation commands (allow only dry-run deploy).
   const withoutComments = yaml
     .split("\n")
