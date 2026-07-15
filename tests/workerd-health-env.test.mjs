@@ -166,7 +166,7 @@ async function probeHealth({ deployEnv, mockPayloadUrl, expectRobots, mock }) {
   }
 }
 
-test("workerd /health proves env runtime, no external I/O, staging robots matrix", async (t) => {
+test("workerd /health proves env runtime, no external I/O, preview/staging robots matrix", async (t) => {
   try {
     await fs.access(workerEntry)
   } catch {
@@ -182,6 +182,12 @@ test("workerd /health proves env runtime, no external I/O, staging robots matrix
   })
 
   await probeHealth({
+    deployEnv: "preview",
+    mockPayloadUrl,
+    expectRobots: true,
+    mock,
+  })
+  await probeHealth({
     deployEnv: "staging",
     mockPayloadUrl,
     expectRobots: true,
@@ -193,7 +199,10 @@ test("workerd /health proves env runtime, no external I/O, staging robots matrix
     expectRobots: false,
     mock,
   })
+  // Project wrangler.jsonc binds DEPLOY_ENV=preview for CF-003; probe an unknown
+  // override so "no automatic app robots" is covered without relying on unset.
   await probeHealth({
+    deployEnv: "qa",
     mockPayloadUrl,
     expectRobots: false,
     mock,

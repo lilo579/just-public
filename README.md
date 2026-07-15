@@ -90,7 +90,28 @@ Preview ≠ production for lead intake on workerd (**no** remote deploy):
 - Helper: `isLeadIntakeSafeMode` in `src/lib/runtimeEnv.js` (runtime only; no permanent feature flag)
 - Component stays rendered; no service_role; no real Supabase calls in POC
 
-Next: **Slice 7** (per POC-001). Not yet: real Edge, DNS, preview remote.
+### Slice 7 / CF-003 — Remote Astro Version Preview
+
+Earlier Slice 7 attempt (2026-07-14) was **blocked** on Wrangler auth. Auth restored; Cloudflare Foundation CF-002 bootstrapped `just-public-poc`. **CF-003** (2026-07-15) completed remote Astro Version + Preview smoke on commit baseline `5629bb6` (local uncommitted docs/`wrangler.jsonc`).
+
+| Field | Value |
+|-------|--------|
+| Worker | `just-public-poc` |
+| Astro Version (Preview) | `ac18d718-f7a5-402e-9123-19614b278449` |
+| Intermediate Version | `fa410a36-0a55-47af-b4b5-d57cf7df6b0c` (upload before Preview enable) |
+| Preview URL | `https://ac18d718-just-public-poc.lilo579.workers.dev` |
+| Bootstrap deployment | still 100% → `3047d28b-9830-4a10-8104-6d783f57ef4f` |
+| Astro candidate normal traffic | **0%** |
+| `workers_dev` | false (normal hostname 1042) |
+| `preview_urls` / `previews_enabled` | true |
+| Remote `/health` | 200 |
+| Static Assets | CSS/favicons 200; entrypoint/`_routes.json` not public |
+| Renderer remote | **NOT TESTED** |
+| Preview logs (`wrangler tail`) | not available (platform limitation) |
+| DNS / Route / Custom Domain | none |
+| Promotion | **none** |
+
+Next: **CF-004** remote validation matrix. Not yet: DNS, custom domain, `versions deploy` / traffic.
 
 Helper: `src/lib/runtimeEnv.js` (server-only; no production defaults).  
 Copy `.dev.vars.example` → `.dev.vars` for local secrets (gitignored).
@@ -103,6 +124,10 @@ curl -i http://127.0.0.1:8787/health
 # curl -i -H 'Host: alpha.justwebsites.com.br' http://127.0.0.1:8787/
 # Assets: curl -i http://127.0.0.1:8787/_astro/<file>.css
 npm run cf:deploy:dry-run   # analyzes artifact; does not publish
+# Remote CF-003 (auth required — never wrangler deploy / versions deploy):
+# npx wrangler whoami
+# npx wrangler versions upload
+# curl -i https://<8hex>-just-public-poc.lilo579.workers.dev/health
 ```
 
 Node/Docker files remain **contingency**, not dual-active deploy targets.
@@ -251,10 +276,12 @@ npm run docker:run
 
 ## Current limitations
 
-- POC-001 Slice 6.5: Preview Safety — lead intake disabled under `preview`/`staging`; **no Cloudflare deploy/DNS**.
-- Real Edge / `tenant_id_from_host` / preview remote → Slice 7+.
-- Production build-time leads defaults remain for `DEPLOY_ENV=production` only (not used in POC preview).
+- CF-003: Astro Preview URL smoke **PASS**; renderer/payload remote **NOT TESTED** (needs safe fixture for CF-004).
+- Bootstrap Deployment still serves the hello Script at 100%; Astro Version is Preview-only (0% normal traffic).
+- App middleware: `DEPLOY_ENV=preview|staging` → `X-Robots-Tag: noindex, nofollow`; production/unset/unknown → no automatic app robots header.
+- Production build-time leads defaults remain for `DEPLOY_ENV=production` only (gated empty in preview safe mode).
 - Hub Edge Function commit `7266049` may not yet be deployed (tracked in Hub).
 - Content model remains flat (`site_content` / branding / contact).
+- Preview URL logs not available via `wrangler tail` (Cloudflare platform limitation).
 
 See `SYNC_STATUS.md`.

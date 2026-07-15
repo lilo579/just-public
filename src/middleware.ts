@@ -2,7 +2,7 @@ import { defineMiddleware } from "astro:middleware"
 import { resolveDeployEnv } from "./lib/runtimeEnv.js"
 
 /**
- * Staging-only indexing guard. Production / unset / other values: no automatic X-Robots-Tag.
+ * Preview/staging indexing guard. Production / unset / other values: no automatic X-Robots-Tag.
  * Future proxy/Worker must preserve the visitor Host header (or set Host explicitly).
  * This app does not trust X-Forwarded-Host from the public internet.
  *
@@ -12,7 +12,8 @@ import { resolveDeployEnv } from "./lib/runtimeEnv.js"
  */
 export const onRequest = defineMiddleware(async (context, next) => {
   const response = await next()
-  if (resolveDeployEnv(context.locals) === "staging") {
+  const deployEnv = resolveDeployEnv(context.locals)?.trim().toLowerCase()
+  if (deployEnv === "preview" || deployEnv === "staging") {
     response.headers.set("X-Robots-Tag", "noindex, nofollow")
   }
   return response
