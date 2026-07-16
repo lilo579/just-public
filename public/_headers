@@ -1,0 +1,9 @@
+# FT-005B — Workers Static Assets custom headers.
+# Applied only to static asset responses (not Worker SSR). See Cloudflare docs:
+# https://developers.cloudflare.com/workers/static-assets/headers/
+#
+# Hashed Astro build outputs under /_astro/* → long-lived immutable.
+# Do NOT apply immutable to HTML, favicon, health, or payload.
+
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
