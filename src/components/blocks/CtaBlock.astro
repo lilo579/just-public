@@ -1,7 +1,6 @@
 ---
 import LeadForm from "../LeadForm.astro";
 import TrackedCTA from "../TrackedCTA.astro";
-import { isLeadIntakeSafeMode, resolveDeployEnv } from "../../lib/runtimeEnv.js";
 
 const { block } = Astro.props as {
   block: {
@@ -23,8 +22,8 @@ const { block } = Astro.props as {
 const { primaryCTA, title, body, buttonLabel } = block.content;
 const finalLabel = buttonLabel || primaryCTA?.label;
 const showButton = primaryCTA?.visible !== false && primaryCTA?.href && finalLabel;
-// Preview/staging: WhatsApp (or other CTA) only — never show disabled “safe” form chrome.
-const showLeadForm = !isLeadIntakeSafeMode(resolveDeployEnv(Astro.locals));
+// DR-001: first official go-live is WhatsApp-only — no public LeadForm.
+const showLeadForm = false;
 ---
 
 {(title || body || showButton || showLeadForm) && (

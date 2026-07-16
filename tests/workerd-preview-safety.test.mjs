@@ -84,19 +84,14 @@ test("workerd Preview Safety: staging/preview disable LeadForm intake; productio
     "payload mock must never receive leads traffic",
   )
 
-  // --- Production simulation preserves prior LeadForm intake config ---
+  // --- Production: DR-001 WhatsApp-only — no public LeadForm ---
   const prod = await renderWithDeployEnv("production")
   assert.equal(prod.status, 200)
   const prodForm = extractLeadForm(prod.body)
-  assert.ok(prodForm, "LeadForm must remain rendered under DEPLOY_ENV=production")
-  assert.doesNotMatch(prodForm, /data-lead-form-safe="true"/)
-  assert.doesNotMatch(prodForm, /Envio desativado neste preview/)
-  assert.match(
-    prodForm,
-    new RegExp(PROD_LEADS.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
-  )
-  assert.match(prodForm, /data-leads-url=/)
-  assert.doesNotMatch(prodForm, /service_role|SUPABASE_SERVICE_ROLE/i)
+  assert.equal(prodForm, null, "LeadForm must not render (DR-001 WhatsApp-only)")
+  assert.doesNotMatch(prod.body, /data-lead-form-safe="true"/)
+  assert.doesNotMatch(prod.body, /Envio desativado neste preview/)
+  assert.doesNotMatch(prod.body, /service_role|SUPABASE_SERVICE_ROLE/i)
   assert.doesNotMatch(prod.body, /SUPABASE_SERVICE_ROLE/i)
 
   assert.ok(

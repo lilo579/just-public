@@ -23,8 +23,9 @@
       "workers_dev": false,
       "preview_urls": true,
       "vars": {
-        "DEPLOY_ENV": "staging",
-        "POC_FIXTURE_MODE": "false"
+        "DEPLOY_ENV": "production",
+        "POC_FIXTURE_MODE": "false",
+        "PUBLIC_SITE_PAYLOAD_URL": "https://ehondnpqztvybvgsjnxe.supabase.co/functions/v1/public-site-payload"
       },
       "assets": {
         "directory": "./dist",
