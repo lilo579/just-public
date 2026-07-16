@@ -1,0 +1,55 @@
+---
+const {
+  title,
+  description,
+  canonicalUrl,
+  ogImage,
+  faviconUrl,
+  robots,
+  jsonLd,
+  twitterCard = "summary",
+} = Astro.props as {
+  title: string
+  description: string
+  canonicalUrl?: string
+  ogImage?: string
+  faviconUrl?: string
+  robots?: string
+  jsonLd?: Record<string, unknown>
+  twitterCard?: string
+}
+
+const jsonLdJson = jsonLd ? JSON.stringify(jsonLd) : ""
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{title}</title>
+{description && <meta name="description" content={description} />}
+{robots && <meta name="robots" content={robots} />}
+{canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+
+{faviconUrl && (
+  <link
+    rel="icon"
+    href={faviconUrl}
+    type={faviconUrl.endsWith(".svg") ? "image/svg+xml" : "image/png"}
+  />
+)}
+<link rel="alternate icon" href="/favicon.ico" />
+
+{canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+<meta property="og:type" content="website" />
+<meta property="og:title" content={title} />
+{description && <meta property="og:description" content={description} />}
+{ogImage && <meta property="og:image" content={ogImage} />}
+<meta property="og:locale" content="pt_BR" />
+
+<meta name="twitter:card" content={twitterCard} />
+<meta name="twitter:title" content={title} />
+{description && <meta name="twitter:description" content={description} />}
+{ogImage && <meta name="twitter:image" content={ogImage} />}
+
+{jsonLdJson && (
+  <script type="application/ld+json" set:html={jsonLdJson} />
+)}

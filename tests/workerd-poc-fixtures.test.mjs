@@ -147,7 +147,8 @@ function assertTenant(tenant, res) {
   assert.match(res.body, new RegExp(tenant.email.replace(".", "\\.")))
   assert.match(res.body, new RegExp(tenant.primaryColor, "i"))
   assert.doesNotMatch(res.body, /data-legacy-fallback/)
-  assert.match(res.body, /data-lead-form-safe="true"|lead-form--safe|Envio desativado neste preview/)
+  assert.doesNotMatch(res.body, /Envio desativado neste preview/)
+  assert.doesNotMatch(res.body, /lead-form--safe|data-lead-form-safe/)
   assert.doesNotMatch(res.body, /service_role|SUPABASE_SERVICE_ROLE/i)
   assert.doesNotMatch(res.body, /ehondnpqztvybvgsjnxe\.supabase\.co/)
   for (const other of TENANTS) {

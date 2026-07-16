@@ -27,7 +27,7 @@ const anonKey = safeMode ? "" : SUPABASE_ANON_KEY;
 >
   {safeMode && (
     <p class="lead-form__safe-notice" role="status">
-      Envio desativado neste preview.
+      Envio indisponível neste momento.
     </p>
   )}
 
@@ -64,7 +64,7 @@ const anonKey = safeMode ? "" : SUPABASE_ANON_KEY;
       const submitButton = formEl.querySelector('button[type="submit"]');
 
       if (formEl.dataset.leadFormSafe === "true") {
-        if (status) status.textContent = "Envio desativado neste preview.";
+        if (status) status.textContent = "Envio indisponível neste momento.";
         return;
       }
 
@@ -197,8 +197,8 @@ const anonKey = safeMode ? "" : SUPABASE_ANON_KEY;
   }
 
   .lead-form input:focus {
-    border-color: hsl(145 63% 42%);
-    box-shadow: 0 0 0 3px hsl(145 63% 42% / 0.14);
+    border-color: var(--site-color-primary, hsl(145 63% 42%));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 14%, transparent);
   }
 
   .lead-form input:disabled {
@@ -211,7 +211,7 @@ const anonKey = safeMode ? "" : SUPABASE_ANON_KEY;
     min-height: 52px;
     border: 0;
     border-radius: 999px;
-    background: hsl(145 63% 42%);
+    background: var(--site-color-primary, hsl(145 63% 42%));
     color: #fff;
     cursor: pointer;
     font: inherit;

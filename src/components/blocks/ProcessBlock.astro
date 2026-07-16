@@ -128,7 +128,7 @@ function iconFor(stepNumber: number) {
     letter-spacing: 0.08em;
     font-size: 0.8rem;
     font-weight: 600;
-    color: hsl(145 40% 35%);
+    color: var(--site-color-primary, hsl(145 40% 35%));
   }
 
   .process__body {
@@ -186,13 +186,13 @@ function iconFor(stepNumber: number) {
     width: 1.9rem;
     height: 1.9rem;
     border-radius: 999px;
-    background: hsl(145 12% 52%);
+    background: var(--site-color-accent, hsl(145 12% 52%));
     color: #ffffff;
     display: grid;
     place-items: center;
     font-size: 0.78rem;
     font-weight: 700;
-    box-shadow: 0 4px 10px hsl(145 12% 52% / 0.22);
+    box-shadow: 0 4px 10px color-mix(in srgb, var(--site-color-accent, hsl(145 12% 52%)) 22%, transparent);
   }
 
   .process__icon-shell {
@@ -204,14 +204,14 @@ function iconFor(stepNumber: number) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: hsl(145 12% 52%);
+    color: var(--site-color-accent, hsl(145 12% 52%));
   }
 
   .process__icon-shell svg {
     width: 2.35rem;
     height: 2.35rem;
     display: block;
-    color: hsl(145 12% 52%);
+    color: var(--site-color-accent, hsl(145 12% 52%));
   }
 
   .process__card h3 {

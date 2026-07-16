@@ -187,6 +187,22 @@ test("invalid branding falls back to safe defaults", () => {
   assert.doesNotMatch(themeTokensToInlineStyle(tokens), /url\(|expression|comic/i)
 })
 
+test("Hub bare HSL branding components become hsl() tokens", () => {
+  assert.equal(sanitizeCssColor("146 7% 45%", "#2563eb"), "hsl(146 7% 45%)")
+  assert.equal(sanitizeCssColor("37 27% 94%", "#0f172a"), "hsl(37 27% 94%)")
+
+  const tokens = themeTokensFromBranding({
+    primaryColor: "146 7% 45%",
+    secondaryColor: "37 27% 94%",
+    accentColor: "207 4% 56%",
+    typography: "modern",
+  })
+  assert.equal(tokens["--site-color-primary"], "hsl(146 7% 45%)")
+  assert.equal(tokens["--site-color-background"], "hsl(37 27% 94%)")
+  assert.equal(tokens["--site-color-accent"], "hsl(207 4% 56%)")
+  assert.equal(tokens["--site-color-secondary"], "#0f172a")
+})
+
 test("alpha/beta isolation: no field leaks across fixtures", () => {
   const alpha = fixtureHomepage(TENANT_ALPHA)
   const beta = fixtureHomepage(TENANT_BETA)

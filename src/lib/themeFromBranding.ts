@@ -1,5 +1,6 @@
 export {
   sanitizeCssColor,
+  parseCssColorLightness,
   resolveFontStack,
   themeTokensFromBranding,
   themeTokensToInlineStyle,
@@ -15,6 +16,7 @@ export type BrandingInput = {
 export type SiteThemeTokens = {
   "--site-color-primary": string
   "--site-color-secondary": string
+  "--site-color-accent": string
   "--site-color-background": string
   "--site-color-text": string
   "--site-radius": string

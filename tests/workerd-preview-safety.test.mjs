@@ -53,23 +53,20 @@ test("workerd Preview Safety: staging/preview disable LeadForm intake; productio
     }
   }
 
-  // --- Preview / staging safe mode ---
+  // --- Preview / staging: no disabled LeadForm chrome (WhatsApp CTA only) ---
   for (const envName of ["preview", "staging"]) {
     const res = await renderWithDeployEnv(envName)
 
     assert.equal(res.status, 200)
     const form = extractLeadForm(res.body)
-    assert.ok(form, `LeadForm must remain rendered under DEPLOY_ENV=${envName}`)
-    assert.match(form, /data-lead-form-safe="true"/)
-    assert.match(form, /Envio desativado neste preview/)
-    assert.match(form, /disabled/)
-    assert.doesNotMatch(
+    assert.equal(
       form,
-      new RegExp(PROD_LEADS.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+      null,
+      `LeadForm must not render under DEPLOY_ENV=${envName} (preview chrome removed)`,
     )
-    assert.doesNotMatch(form, /data-leads-url="https?:\/\//)
-    assert.doesNotMatch(form, /data-anon-key="eyJ/)
-    assert.doesNotMatch(form, /service_role|SUPABASE_SERVICE_ROLE/i)
+    assert.doesNotMatch(res.body, /Envio desativado neste preview/)
+    assert.doesNotMatch(res.body, /lead-form--safe/)
+    assert.doesNotMatch(res.body, /data-lead-form-safe/)
 
     // Whole HTML must not ship production leads intake credentials in preview/staging.
     assert.doesNotMatch(res.body, new RegExp(`${PROD_LEADS_HOST}/functions/v1/leads`))

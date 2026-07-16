@@ -63,8 +63,8 @@ const hasCopy = Boolean(eyebrow || title || highlight || subtitle || showPrimary
     position: relative;
     background: linear-gradient(
       180deg,
-      hsl(145 50% 95% / 0.4) 0%,
-      hsl(30 10% 97%) 100%
+      color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 12%, transparent) 0%,
+      var(--site-color-background, hsl(30 10% 97%)) 100%
     );
   }
 
@@ -93,7 +93,7 @@ const hasCopy = Boolean(eyebrow || title || highlight || subtitle || showPrimary
   .hero__eyebrow {
     display: block;
     margin-bottom: 12px;
-    color: hsl(145 63% 42%);
+    color: var(--site-color-primary, hsl(145 63% 42%));
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-size: 12px;
@@ -103,7 +103,7 @@ const hasCopy = Boolean(eyebrow || title || highlight || subtitle || showPrimary
   .hero h1 {
     margin: 0;
     color: hsl(220 15% 15%);
-    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: var(--site-font-heading, system-ui, sans-serif);
     font-size: 48px;
     font-weight: 700;
     line-height: 1.1;
@@ -122,7 +122,7 @@ const hasCopy = Boolean(eyebrow || title || highlight || subtitle || showPrimary
 
   .hero__highlight {
     margin-top: 16px !important;
-    color: hsl(145 63% 32%) !important;
+    color: var(--site-color-primary, hsl(145 63% 42%)) !important;
     font-weight: 600;
     font-size: 1.125rem !important;
   }
@@ -134,7 +134,7 @@ const hasCopy = Boolean(eyebrow || title || highlight || subtitle || showPrimary
     margin-top: 32px;
     padding: 16px 24px;
     border-radius: 999px;
-    background: hsl(145 63% 42%);
+    background: var(--site-color-primary, hsl(145 63% 42%));
     color: #ffffff;
     text-decoration: none;
     font-weight: 600;

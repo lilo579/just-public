@@ -7,6 +7,7 @@ import CanonicalHomepageRenderer from "../components/CanonicalHomepageRenderer.a
 import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
 import SiteTheme from "../components/SiteTheme.astro"
+import PublicSiteHead from "../components/PublicSiteHead.astro"
 import {
   chooseHomepageRenderer,
   fetchPublicSitePayload,
@@ -14,12 +15,15 @@ import {
   resolveRequestHost,
 } from "../lib/publicHomepage"
 import {
+  isLeadIntakeSafeMode,
   isPocFixtureMode,
+  resolveDeployEnv,
   resolveSitePayloadUrl,
   resolveSupabaseAnonKey,
 } from "../lib/runtimeEnv.js"
 import { resolvePocFixturePayload } from "../poc/publicSiteFixtures.js"
 import { themeTokensFromBranding } from "../lib/themeFromBranding"
+import { buildPublicHomepageSeo } from "../lib/publicPageSeo.js"
 
 const requestUrl = new URL(Astro.request.url)
 const allowLegacy =
@@ -108,6 +112,7 @@ const homepageWithSource = homepage as ResolvedHomepage & {
       }
     }
   }
+  serializablePlan?: unknown
 }
 
 const choice = chooseHomepageRenderer(homepageWithSource, { allowLegacy, forceLegacy })
@@ -140,13 +145,34 @@ const brandingLogo =
   footer.logoUrl ??
   ""
 const tokens = themeTokensFromBranding(homepageWithSource.source?.meta?.branding ?? null)
+
+const deployEnv = resolveDeployEnv(Astro.locals)
+const noindex = isLeadIntakeSafeMode(deployEnv)
+const planForSeo =
+  choice.mode === "canonical" ? choice.plan : homepageWithSource.serializablePlan
+const seo = buildPublicHomepageSeo({
+  host,
+  companyName: brandingName,
+  branding: homepageWithSource.source?.meta?.branding ?? null,
+  contact: homepageWithSource.source?.contact ?? null,
+  plan: planForSeo,
+  footerTagline: footer.tagline,
+  noindex,
+})
 ---
 
 <html lang="pt-BR">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{brandingName}</title>
+    <PublicSiteHead
+      title={seo.title}
+      description={seo.description}
+      canonicalUrl={seo.canonicalUrl}
+      ogImage={seo.ogImage}
+      faviconUrl={seo.faviconUrl}
+      robots={seo.robots}
+      jsonLd={seo.jsonLd}
+      twitterCard={seo.twitterCard}
+    />
   </head>
   <body>
     <SiteTheme tokens={tokens}>
