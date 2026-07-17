@@ -2,6 +2,19 @@
 
 Shared multi-tenant Astro SSR renderer for public websites.
 
+## Documentation governance (CS1)
+
+Public runtime documentation here is **operations and evidence**, subordinate to Hub architecture:
+
+| Authority | Document |
+|-----------|----------|
+| Documentation governance | [Canonical Library Index v3](../just-auth-nexus/docs/governance/canonical-library-index-v3.md) |
+| Public Layer runtime architecture | [ADR-004](../just-auth-nexus/docs/architecture/adr/ADR-004-CLOUDFLARE-RUNTIME-PUBLIC-LAYER.md) |
+| Site Engine canonical owner | [SE-000](../just-auth-nexus/docs/architecture/site-engine/SE-000-SITE-ENGINE-EVOLUTION.md) |
+| Local runbook | [docs/public-runtime-runbook.md](./docs/public-runtime-runbook.md) |
+
+This repository does **not** own Brand, Product, Solution, or Site Engine composition doctrine.
+
 ## Role
 
 - **This repo** renders public HTML for any tenant using the same codebase.
