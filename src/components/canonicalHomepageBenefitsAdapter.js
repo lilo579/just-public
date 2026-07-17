@@ -55,3 +55,43 @@ export function adaptCanonicalBenefits(source) {
     },
   }
 }
+
+/**
+ * Pro differentials (title-only items) originally rendered as FeaturesBlock.
+ * Project benefits → features for that compact visual without changing plan semantics.
+ */
+export function projectBenefitsToFeaturesBlock(benefitsBlock) {
+  const content = benefitsBlock?.content && isRecord(benefitsBlock.content)
+    ? benefitsBlock.content
+    : {}
+  const items = Array.isArray(content.items)
+    ? content.items
+        .filter(isRecord)
+        .map((item) => ({
+          title: asOptionalString(item.title),
+          description: asOptionalString(item.description) ?? null,
+        }))
+        .filter((item) => hasTextContent(item.title))
+    : []
+
+  return {
+    type: "features",
+    content: {
+      title: asOptionalString(content.title) ?? null,
+      items,
+    },
+  }
+}
+
+/** Compact pro layout: no images, no metrics aside, no kicker/body prose. */
+export function shouldRenderBenefitsAsFeatures(benefitsBlock) {
+  const content = benefitsBlock?.content && isRecord(benefitsBlock.content)
+    ? benefitsBlock.content
+    : {}
+  const items = Array.isArray(content.items) ? content.items.filter(isRecord) : []
+  const hasImage = items.some((item) => hasTextContent(item.imageUrl))
+  const metrics = Array.isArray(content.metrics) ? content.metrics : []
+  const hasAside = hasTextContent(content.summary) || metrics.length > 0
+  const hasProse = hasTextContent(content.kicker) || hasTextContent(content.body)
+  return !hasImage && !hasAside && !hasProse && items.length > 0
+}

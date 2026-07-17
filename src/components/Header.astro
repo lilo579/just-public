@@ -1,13 +1,18 @@
 ---
+import TrackedCTA from "./TrackedCTA.astro"
+import WhatsAppIcon from "./icons/WhatsAppIcon.astro"
+
 const {
   siteTitle = "Site",
   logoUrl = "",
   logoAlt = siteTitle,
+  whatsappHref = "",
 } = Astro.props as {
-  siteTitle?: string;
-  logoUrl?: string;
-  logoAlt?: string;
-};
+  siteTitle?: string
+  logoUrl?: string
+  logoAlt?: string
+  whatsappHref?: string
+}
 ---
 
 <header class="site-header">
@@ -20,21 +25,28 @@ const {
       )}
     </a>
 
-    <a href="#cta-final" class="site-header__cta">
-      <span class="site-header__cta-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path
-            d="M20 11.5a8 8 0 0 1-8 8 8.7 8.7 0 0 1-3.2-.6L4 20l1.1-4.1A8 8 0 1 1 20 11.5Z"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </span>
-      <span>WhatsApp</span>
-    </a>
+    {whatsappHref ? (
+      <TrackedCTA
+        href={whatsappHref}
+        label="WhatsApp"
+        class="site-header__cta"
+        ctaId="header-whatsapp-cta"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span class="site-header__cta-icon" aria-hidden="true">
+          <WhatsAppIcon class="site-header__cta-svg" />
+        </span>
+        <span>WhatsApp</span>
+      </TrackedCTA>
+    ) : (
+      <a href="#cta-final" class="site-header__cta">
+        <span class="site-header__cta-icon" aria-hidden="true">
+          <WhatsAppIcon class="site-header__cta-svg" />
+        </span>
+        <span>WhatsApp</span>
+      </a>
+    )}
   </div>
 </header>
 
@@ -81,39 +93,57 @@ const {
     object-fit: contain;
   }
 
-  .site-header__cta {
+  /* TrackedCTA is a child component — styles must be :global */
+  .site-header :global(a.site-header__cta) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.55rem;
-    min-height: 2.2rem;
-    padding: 0.48rem 1.2rem;
+    gap: 0.45rem;
+    min-height: 2rem;
+    padding: 0.28rem 0.95rem;
     border-radius: 999px;
-    border: 1.5px solid var(--site-color-primary, #95a394);
+    border: 1.5px solid var(--site-color-primary, hsl(145 63% 42%));
     background: transparent;
-    color: var(--site-color-primary, #748776);
+    color: var(--site-color-primary, hsl(145 63% 42%));
     text-decoration: none;
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     line-height: 1;
     white-space: nowrap;
     flex: 0 0 auto;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease,
+      border-color 160ms ease,
+      transform 160ms ease;
   }
 
-  .site-header__cta-icon {
-    width: 1.2rem;
-    height: 1.2rem;
+  .site-header :global(a.site-header__cta:hover) {
+    background: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 10%, white);
+  }
+
+  .site-header :global(a.site-header__cta:active) {
+    transform: translateY(1px);
+  }
+
+  .site-header :global(a.site-header__cta:focus-visible) {
+    outline: 3px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 40%, white);
+    outline-offset: 2px;
+  }
+
+  .site-header :global(.site-header__cta-icon) {
+    width: 1.05rem;
+    height: 1.05rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--site-color-primary, #748776);
+    color: inherit;
     flex: 0 0 auto;
   }
 
-  .site-header__cta-icon svg {
-    width: 1.6rem;
-    height: 1.6rem;
-    display: block;
+  .site-header :global(.site-header__cta-svg) {
+    width: 1.05rem;
+    height: 1.05rem;
   }
 
   @media (max-width: 720px) {
@@ -127,17 +157,16 @@ const {
       max-width: 8.8rem;
     }
 
-    .site-header__cta {
-      min-height: 2.5rem;
-      padding: 0.01rem 1.15rem;
-      gap: 0.5rem;
-      font-size: 0.9rem;
+    .site-header :global(a.site-header__cta) {
+      min-height: 1.9rem;
+      padding: 0.24rem 0.85rem;
+      gap: 0.4rem;
+      font-size: 0.85rem;
     }
 
-    .site-header__cta-icon,
-    .site-header__cta-icon svg {
-      width: 1.05rem;
-      height: 1.05rem;
+    .site-header :global(.site-header__cta-svg) {
+      width: 1rem;
+      height: 1rem;
     }
   }
 </style>

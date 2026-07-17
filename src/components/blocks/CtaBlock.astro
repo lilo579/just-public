@@ -1,6 +1,7 @@
 ---
 import LeadForm from "../LeadForm.astro";
 import TrackedCTA from "../TrackedCTA.astro";
+import WhatsAppIcon from "../icons/WhatsAppIcon.astro";
 
 const { block } = Astro.props as {
   block: {
@@ -22,6 +23,8 @@ const { block } = Astro.props as {
 const { primaryCTA, title, body, buttonLabel } = block.content;
 const finalLabel = buttonLabel || primaryCTA?.label;
 const showButton = primaryCTA?.visible !== false && primaryCTA?.href && finalLabel;
+const isWhatsappCta =
+  primaryCTA?.type === "whatsapp" || Boolean(primaryCTA?.href?.includes("wa.me"));
 // DR-001: first official go-live is WhatsApp-only — no public LeadForm.
 const showLeadForm = false;
 ---
@@ -32,13 +35,20 @@ const showLeadForm = false;
       {title && <h2>{title}</h2>}
       {body && <p>{body}</p>}
 
-      {showButton && (primaryCTA?.type === "whatsapp" || primaryCTA?.href?.includes("wa.me")) ? (
+      {showButton && isWhatsappCta ? (
         <TrackedCTA
           href={primaryCTA!.href!}
           label={finalLabel!}
           class="cta__button"
           ctaId="cta-final-primary-cta"
-        />
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="cta__button-icon" aria-hidden="true">
+            <WhatsAppIcon class="cta__button-svg" />
+          </span>
+          <span>{finalLabel}</span>
+        </TrackedCTA>
       ) : showButton ? (
         <a href={primaryCTA!.href} class="cta__button">
           {finalLabel}
@@ -59,6 +69,8 @@ const showLeadForm = false;
     max-width: 720px;
     margin: 0 auto;
     text-align: center;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 
   .cta h2 {
@@ -79,20 +91,57 @@ const showLeadForm = false;
     line-height: 1.72;
   }
 
-  .cta__button {
+  .cta :global(a.cta__button) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 0.45rem;
     margin-top: 28px;
-    padding: 16px 24px;
+    padding: 0.55rem 1.15rem;
     border-radius: 999px;
+    border: none;
     background: var(--site-color-primary, hsl(145 63% 42%));
     color: #ffffff;
     text-decoration: none;
     font-weight: 600;
-    font-size: 1rem;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-    min-height: 56px;
+    font-size: 0.95rem;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+    min-height: 2.5rem;
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      box-shadow 160ms ease,
+      transform 160ms ease;
+  }
+
+  .cta :global(a.cta__button:hover) {
+    background: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 88%, black);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+  }
+
+  .cta :global(a.cta__button:active) {
+    transform: translateY(1px);
+  }
+
+  .cta :global(a.cta__button:focus-visible) {
+    outline: 3px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 45%, white);
+    outline-offset: 3px;
+  }
+
+  .cta :global(.cta__button-icon) {
+    display: inline-flex;
+    width: 1.05rem;
+    height: 1.05rem;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    flex: 0 0 auto;
+  }
+
+  .cta :global(.cta__button-svg) {
+    width: 1.05rem;
+    height: 1.05rem;
+    color: #ffffff;
   }
 
   @media (max-width: 720px) {
@@ -101,7 +150,8 @@ const showLeadForm = false;
     }
 
     .cta__inner {
-      padding: 0 8px;
+      padding-left: 1.25rem;
+      padding-right: 1.25rem;
     }
   }
 </style>

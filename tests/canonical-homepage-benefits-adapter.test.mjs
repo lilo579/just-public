@@ -1,7 +1,11 @@
 import test from "node:test"
 import assert from "node:assert/strict"
 
-import { adaptCanonicalBenefits } from "../src/components/canonicalHomepageBenefitsAdapter.js"
+import {
+  adaptCanonicalBenefits,
+  projectBenefitsToFeaturesBlock,
+  shouldRenderBenefitsAsFeatures,
+} from "../src/components/canonicalHomepageBenefitsAdapter.js"
 
 test("benefits with title and simple items adapts without warnings or feature fallback projection", () => {
   const block = adaptCanonicalBenefits({
@@ -106,4 +110,34 @@ test('componentKey "benefits:default" stays canonically mapped to benefits seman
   assert.equal(baseKey, "benefits")
   assert.equal(block.type, "benefits")
   assert.notEqual(block.type, "features")
+})
+
+test("pro differentials project to FeaturesBlock compact layout", () => {
+  const benefits = adaptCanonicalBenefits({
+    title: "Critérios que orientam meu trabalho clínico",
+    items: [
+      { title: "Condução cuidadosa das conversas" },
+      { title: "Atuação consolidada" },
+    ],
+  })
+
+  assert.equal(shouldRenderBenefitsAsFeatures(benefits), true)
+  assert.deepEqual(projectBenefitsToFeaturesBlock(benefits), {
+    type: "features",
+    content: {
+      title: "Critérios que orientam meu trabalho clínico",
+      items: [
+        { title: "Condução cuidadosa das conversas", description: null },
+        { title: "Atuação consolidada", description: null },
+      ],
+    },
+  })
+})
+
+test("rich benefits with images keep BenefitsBlock path", () => {
+  const benefits = adaptCanonicalBenefits({
+    title: "Beneficios",
+    items: [{ title: "Rede", imageUrl: "https://cdn.example.com/x.png" }],
+  })
+  assert.equal(shouldRenderBenefitsAsFeatures(benefits), false)
 })

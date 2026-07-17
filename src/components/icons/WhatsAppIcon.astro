@@ -1,0 +1,42 @@
+---
+/**
+ * Canonical WhatsApp / conversation bubble icon (same path as site-header).
+ * tone: "current" inherits color; "on-dark" forces white for filled green buttons.
+ */
+const {
+  class: className = "whatsapp-icon",
+  tone = "current",
+} = Astro.props as {
+  class?: string
+  tone?: "current" | "on-dark"
+}
+---
+
+<svg
+  class:list={[className, tone === "on-dark" && "whatsapp-icon--on-dark"]}
+  viewBox="0 0 24 24"
+  aria-hidden="true"
+  focusable="false"
+>
+  <path
+    d="M20 11.5a8 8 0 0 1-8 8 8.7 8.7 0 0 1-3.2-.6L4 20l1.1-4.1A8 8 0 1 1 20 11.5Z"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
+
+<style>
+  .whatsapp-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .whatsapp-icon--on-dark {
+    color: #ffffff;
+  }
+</style>

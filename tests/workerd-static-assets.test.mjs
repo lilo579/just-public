@@ -341,11 +341,13 @@ test("workerd Static Assets: MIME, isolation, 404, traversal, no payload/leads I
   assert.match(alphaHtml.body, /style="[^"]*--site-color-primary:#112233/)
   assert.match(betaHtml.body, /style="[^"]*--site-color-primary:#aa5500/)
 
-  // Slice 6.5: DEPLOY_ENV=staging → LeadForm/TrackedCTA intake safe mode (no prod leads URL).
+  // Slice 6.5 / DR-001: DEPLOY_ENV=staging → no prod leads URL; WhatsApp-only (no LeadForm).
   assert.doesNotMatch(alphaHtml.body, /service_role|SUPABASE_SERVICE_ROLE/i)
   assert.doesNotMatch(betaHtml.body, /service_role|SUPABASE_SERVICE_ROLE/i)
   assert.doesNotMatch(alphaHtml.body, new RegExp(`${LEADS_HOST}/functions/v1/leads`))
-  assert.match(alphaHtml.body, /data-lead-form-safe="true"|data-lead-form/)
+  assert.doesNotMatch(alphaHtml.body, /data-lead-form/)
+  assert.match(alphaHtml.body, /data-tracked-cta="true"/)
+  assert.match(alphaHtml.body, /whatsapp-float|header-whatsapp-cta/)
   assert.doesNotMatch(alphaHtml.body, /eyJ[a-zA-Z0-9_-]+\.eyJ[^"]*role\\?":\\?"service_role/)
 
   assert.ok(inventory.length >= 3)

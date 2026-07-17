@@ -1,6 +1,7 @@
 ---
 import type { HeroBlock as HeroBlockType } from "../../contracts/homepage";
 import TrackedCTA from "../TrackedCTA.astro";
+import WhatsAppIcon from "../icons/WhatsAppIcon.astro";
 
 const { block } = Astro.props as { block: HeroBlockType };
 const { title, subtitle, eyebrow, highlight, metrics = [] } = block.content;
@@ -11,6 +12,8 @@ const visibleMetrics = (metrics ?? []).filter(
   (metric) => metric?.label || metric?.value || metric?.description
 );
 const hasCopy = Boolean(eyebrow || title || highlight || subtitle || showPrimaryCTA);
+const isWhatsappCta =
+  primaryCTA?.type === "whatsapp" || Boolean(primaryCTA?.href?.includes("wa.me"));
 ---
 
 {(hasCopy || visibleMetrics.length > 0) && (
@@ -26,13 +29,20 @@ const hasCopy = Boolean(eyebrow || title || highlight || subtitle || showPrimary
 
           {subtitle && <p>{subtitle}</p>}
 
-          {showPrimaryCTA && primaryCTA?.type === "whatsapp" ? (
+          {showPrimaryCTA && isWhatsappCta ? (
             <TrackedCTA
               href={primaryCTA!.href!}
               label={primaryCTA!.label}
               class="hero__cta"
               ctaId="hero-primary-cta"
-            />
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="hero__cta-icon" aria-hidden="true">
+                <WhatsAppIcon class="hero__cta-svg" />
+              </span>
+              <span>{primaryCTA!.label}</span>
+            </TrackedCTA>
           ) : showPrimaryCTA ? (
             <a href={primaryCTA!.href} class="hero__cta">
               {primaryCTA!.label}
@@ -128,20 +138,62 @@ const hasCopy = Boolean(eyebrow || title || highlight || subtitle || showPrimary
   }
 
   .hero__cta {
+    /* TrackedCTA is a child component — styles must be :global to apply */
+  }
+
+  .hero :global(a.hero__cta) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 0.45rem;
     margin-top: 32px;
-    padding: 16px 24px;
+    padding: 0.55rem 1.15rem;
     border-radius: 999px;
+    border: none;
     background: var(--site-color-primary, hsl(145 63% 42%));
     color: #ffffff;
     text-decoration: none;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.95rem;
     line-height: 1;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-    min-height: 56px;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+    min-height: 2.5rem;
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      box-shadow 160ms ease,
+      transform 160ms ease;
+  }
+
+  .hero :global(a.hero__cta:hover) {
+    background: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 88%, black);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+  }
+
+  .hero :global(a.hero__cta:active) {
+    transform: translateY(1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+  }
+
+  .hero :global(a.hero__cta:focus-visible) {
+    outline: 3px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 45%, white);
+    outline-offset: 3px;
+  }
+
+  .hero :global(.hero__cta-icon) {
+    display: inline-flex;
+    width: 1.05rem;
+    height: 1.05rem;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    flex: 0 0 auto;
+  }
+
+  .hero :global(.hero__cta-svg) {
+    width: 1.05rem;
+    height: 1.05rem;
+    color: #ffffff;
   }
 
   .hero__metrics {
@@ -239,10 +291,11 @@ const hasCopy = Boolean(eyebrow || title || highlight || subtitle || showPrimary
       max-width: 100%;
     }
 
-    .hero__cta {
+    .hero :global(a.hero__cta) {
       margin-top: 28px;
-      padding: 15px 22px;
-      font-size: 0.98rem;
+      padding: 0.5rem 1.05rem;
+      font-size: 0.92rem;
+      min-height: 2.4rem;
     }
   }
 </style>

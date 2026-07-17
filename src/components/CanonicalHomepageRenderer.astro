@@ -11,7 +11,11 @@ import InfoCardBlock from "./blocks/InfoCardBlock.astro"
 import TestimonialsBlock from "./blocks/TestimonialsBlock.astro"
 import CtaBlock from "./blocks/CtaBlock.astro"
 import { buildCanonicalCtaPrimaryCTA } from "./canonicalHomepageCtaAdapter.js"
-import { adaptCanonicalBenefits } from "./canonicalHomepageBenefitsAdapter.js"
+import {
+  adaptCanonicalBenefits,
+  projectBenefitsToFeaturesBlock,
+  shouldRenderBenefitsAsFeatures,
+} from "./canonicalHomepageBenefitsAdapter.js"
 import { adaptCanonicalHero } from "./canonicalHomepageHeroAdapter.js"
 import { adaptCanonicalTrust } from "./canonicalHomepageTrustAdapter.js"
 import { adaptCanonicalTestimonials } from "./canonicalHomepageTestimonialsAdapter.js"
@@ -712,7 +716,11 @@ const renderedCount = renderableNodes.filter(
         return <AboutBlock block={entry.block} />
 
       case "benefits":
-        return <BenefitsBlock block={entry.block} />
+        return shouldRenderBenefitsAsFeatures(entry.block) ? (
+          <FeaturesBlock block={projectBenefitsToFeaturesBlock(entry.block)} />
+        ) : (
+          <BenefitsBlock block={entry.block} />
+        )
 
       case "features":
         return <FeaturesBlock block={entry.block} />
