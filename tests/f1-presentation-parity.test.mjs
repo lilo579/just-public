@@ -4,7 +4,11 @@ import {
   resolveF1PresentationChrome,
   resolveF1PresentationProfile,
   resolveHeaderLogoUrl,
+  resolveFooterLogoUrl,
 } from "../src/lib/f1PresentationProfile.js"
+import { readFileSync } from "node:fs"
+import { fileURLToPath } from "node:url"
+import { dirname, join } from "node:path"
 import {
   resolveFontStack,
   themeTokensFromBranding,
@@ -24,6 +28,72 @@ test("resolves classic and engine chrome without tenant branching", () => {
   assert.equal(classic.servicesLayout, "classic-split")
   assert.equal(classic.benefitsLayout, "classic-criteria-grid")
   assert.equal(classic.justSignatureBand, false)
+})
+
+test("classic chrome declares footer surface and social emphasis", () => {
+  const classic = resolveF1PresentationChrome("f1.presentation.classic_v1")
+  const engine = resolveF1PresentationChrome("f1.presentation.engine_v1")
+  assert.equal(classic.footerSurface, "light")
+  assert.equal(classic.footerSocialIconEmphasis, "primary")
+  assert.equal(classic.footerLogoStrategy, "mono-adaptive")
+  assert.equal(engine.footerSocialIconEmphasis, "muted")
+  assert.equal(engine.footerLogoStrategy, "engine-preserving")
+})
+
+test("resolveFooterLogoUrl mono-adaptive on light footer prefers horizontal", () => {
+  const chrome = resolveF1PresentationChrome("f1.presentation.classic_v1")
+  const branding = {
+    logoUrl: "https://cdn.example/color.png",
+    logoHorizontalUrl: "https://cdn.example/mono-dark.png",
+    logoWhiteUrl: "https://cdn.example/mono-light.png",
+  }
+  assert.equal(resolveFooterLogoUrl(branding, chrome), "https://cdn.example/mono-dark.png")
+  assert.equal(resolveHeaderLogoUrl(branding, chrome), "https://cdn.example/color.png")
+})
+
+test("resolveFooterLogoUrl on dark footer prefers white variant", () => {
+  const chrome = {
+    ...resolveF1PresentationChrome("f1.presentation.classic_v1"),
+    footerSurface: "dark",
+  }
+  const branding = {
+    logoUrl: "https://cdn.example/color.png",
+    logoHorizontalUrl: "https://cdn.example/mono-dark.png",
+    logoWhiteUrl: "https://cdn.example/mono-light.png",
+  }
+  assert.equal(resolveFooterLogoUrl(branding, chrome), "https://cdn.example/mono-light.png")
+})
+
+test("resolveFooterLogoUrl fallback when mono assets missing", () => {
+  const classic = resolveF1PresentationChrome("f1.presentation.classic_v1")
+  assert.equal(
+    resolveFooterLogoUrl({ logoUrl: "https://cdn.example/only-color.png" }, classic),
+    "https://cdn.example/only-color.png",
+  )
+  const engine = resolveF1PresentationChrome("f1.presentation.engine_v1")
+  assert.equal(
+    resolveFooterLogoUrl(
+      {
+        logoUrl: "https://cdn.example/brand.png",
+        logoHorizontalUrl: "https://cdn.example/horiz.png",
+      },
+      engine,
+    ),
+    "https://cdn.example/horiz.png",
+  )
+})
+
+test("footer presentation has no tenant branching or hardcoded Soraya colors", () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), "..")
+  const footerSrc = readFileSync(join(root, "src/components/Footer.astro"), "utf8")
+  const profileSrc = readFileSync(join(root, "src/lib/f1PresentationProfile.js"), "utf8")
+  const indexSrc = readFileSync(join(root, "src/pages/index.astro"), "utf8")
+  for (const src of [footerSrc, profileSrc, indexSrc]) {
+    assert.doesNotMatch(src, /soraya|marcelo|rossana/i)
+    assert.doesNotMatch(src, /tenantId|hostname/i)
+  }
+  assert.match(footerSrc, /data-social-emphasis/)
+  assert.match(footerSrc, /--site-color-primary/)
 })
 
 test("resolveHeaderLogoUrl prefers brand logo for classic_v1", () => {

@@ -29,6 +29,7 @@ import {
   resolveF1PresentationProfile,
   resolveF1PresentationChrome,
   resolveHeaderLogoUrl,
+  resolveFooterLogoUrl,
 } from "../lib/f1PresentationProfile.js"
 
 const requestUrl = new URL(Astro.request.url)
@@ -190,10 +191,9 @@ const footer = {
 
 const brandingName =
   homepageWithSource.source?.contact?.companyName ?? footer.companyName ?? "Site"
-const brandingLogo = resolveHeaderLogoUrl(
-  homepageWithSource.source?.meta?.branding ?? null,
-  presentationChrome,
-)
+const brandingMeta = homepageWithSource.source?.meta?.branding ?? null
+const brandingLogo = resolveHeaderLogoUrl(brandingMeta, presentationChrome)
+const footerLogoUrl = resolveFooterLogoUrl(brandingMeta, presentationChrome)
 const tokens = themeTokensFromBranding(homepageWithSource.source?.meta?.branding ?? null)
 const fontLoadUrl =
   typeof tokens.__fontLoadUrl === "string" ? tokens.__fontLoadUrl : null
@@ -270,9 +270,11 @@ const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : ""
           footer={{
             ...footer,
             companyName: brandingName,
-            logoUrl: brandingLogo,
+            logoUrl: footerLogoUrl,
           }}
           justSignatureBand={presentationChrome.justSignatureBand}
+          footerSurface={presentationChrome.footerSurface}
+          socialIconEmphasis={presentationChrome.footerSocialIconEmphasis}
         />
         {whatsappHref && <WhatsAppFloat href={whatsappHref} />}
       </div>

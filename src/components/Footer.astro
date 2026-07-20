@@ -2,10 +2,19 @@
 import type { HomepageFooter } from "../contracts/homepage"
 import TrackedCTA from "./TrackedCTA.astro";
 
-const { footer, justSignatureBand = true } = Astro.props as {
+const {
+  footer,
+  justSignatureBand = true,
+  footerSurface = "light",
+  socialIconEmphasis = "muted",
+} = Astro.props as {
   footer: HomepageFooter
   /** engine_v1 shows JUST gold band; classic_v1 omits it. */
   justSignatureBand?: boolean
+  /** Typed footer contrast — drives monochrome logo resolution upstream. */
+  footerSurface?: "light" | "dark"
+  /** classic_v1: primary token; engine_v1: muted neutrals. */
+  socialIconEmphasis?: "primary" | "muted"
 }
 
 function formatPhoneDisplay(phone: string) {
@@ -29,7 +38,12 @@ const visibleLinks = (footer.socialLinks ?? []).filter((link) => (link.url ?? ""
 const year = new Date().getFullYear()
 ---
 
-<footer class="site-footer" data-just-signature={justSignatureBand ? "true" : "false"}>
+<footer
+  class="site-footer"
+  data-just-signature={justSignatureBand ? "true" : "false"}
+  data-footer-surface={footerSurface}
+  data-social-emphasis={socialIconEmphasis}
+>
   {justSignatureBand && (
     <div class="site-footer__signature">
       Desenvolvido pela <strong>JUST</strong> — a estrutura para seu negócio funcionar online
@@ -215,10 +229,20 @@ const year = new Date().getFullYear()
                 </svg>
               )}
 
+              {link.type === "tiktok" && (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M16.5 5.5c.9 1.1 2.2 1.9 3.7 2v2.8c-1.3 0-2.5-.4-3.5-1v6.2c0 3.2-2.6 5.8-5.8 5.8S5.1 18.7 5.1 15.5s2.6-5.8 5.8-5.8c.3 0 .6 0 .9.1v3a2.9 2.9 0 0 0-.9-.15c-1.6 0-2.9 1.3-2.9 2.9s1.3 2.9 2.9 2.9 2.9-1.3 2.9-2.9V5.5h2.8Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              )}
+
               {link.type !== "linkedin" &&
                 link.type !== "instagram" &&
                 link.type !== "facebook" &&
-                link.type !== "youtube" && (
+                link.type !== "youtube" &&
+                link.type !== "tiktok" && (
                   <span class="site-footer__social-fallback">
                     {link.type.slice(0, 2).toUpperCase()}
                   </span>
@@ -240,6 +264,25 @@ const year = new Date().getFullYear()
 <style>
   .site-footer {
     background: #f5f3ef;
+  }
+
+  .site-footer[data-footer-surface="dark"] {
+    background: var(--site-footer-bg-dark, #1f2937);
+  }
+
+  .site-footer[data-footer-surface="dark"] .site-footer__tagline,
+  .site-footer[data-footer-surface="dark"] .site-footer__copyright--global,
+  .site-footer[data-footer-surface="dark"] .site-footer__item,
+  .site-footer[data-footer-surface="dark"] .site-footer__item a {
+    color: var(--site-color-inverse, #e5e7eb);
+  }
+
+  .site-footer[data-footer-surface="dark"] .site-footer__section h3 {
+    color: var(--site-color-inverse, #f9fafb);
+  }
+
+  .site-footer[data-footer-surface="dark"] .site-footer__item-icon {
+    color: color-mix(in srgb, var(--site-color-inverse, #e5e7eb) 75%, transparent);
   }
 
   .site-footer__signature {
@@ -369,6 +412,41 @@ const year = new Date().getFullYear()
     align-items: center;
     justify-content: center;
     text-decoration: none;
+    transition:
+      color 0.15s ease,
+      border-color 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  .site-footer[data-social-emphasis="primary"] .site-footer__social-link {
+    color: var(--site-color-primary, hsl(145 63% 42%));
+    border-color: color-mix(
+      in srgb,
+      var(--site-color-primary, hsl(145 63% 42%)) 38%,
+      #cfd6c8
+    );
+  }
+
+  .site-footer[data-social-emphasis="primary"] .site-footer__social-link:hover,
+  .site-footer[data-social-emphasis="primary"] .site-footer__social-link:focus-visible {
+    color: var(--site-color-primary, hsl(145 63% 42%));
+    border-color: var(--site-color-primary, hsl(145 63% 42%));
+    background: color-mix(
+      in srgb,
+      var(--site-color-primary, hsl(145 63% 42%)) 10%,
+      transparent
+    );
+    outline: none;
+  }
+
+  .site-footer[data-footer-surface="dark"][data-social-emphasis="primary"]
+    .site-footer__social-link {
+    color: var(--site-color-primary, hsl(145 63% 42%));
+    border-color: color-mix(
+      in srgb,
+      var(--site-color-primary, hsl(145 63% 42%)) 45%,
+      #4b5563
+    );
   }
 
   .site-footer__social-link svg {

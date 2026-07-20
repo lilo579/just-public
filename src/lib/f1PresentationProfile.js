@@ -10,6 +10,9 @@ export const F1_PRESENTATION_PROFILES = [
 
 /**
  * @typedef {"f1.presentation.engine_v1" | "f1.presentation.classic_v1"} F1PresentationProfile
+ * @typedef {"light" | "dark"} FooterSurface
+ * @typedef {"primary" | "muted"} FooterSocialIconEmphasis
+ * @typedef {"engine-preserving" | "mono-adaptive"} FooterLogoStrategy
  */
 
 export const DEFAULT_F1_PRESENTATION_PROFILE = "f1.presentation.engine_v1"
@@ -35,7 +38,6 @@ export function resolveF1PresentationProfile(raw) {
 
 /**
  * @param {F1PresentationProfile} profile
- * @returns {import('./f1PresentationProfile.js').F1PresentationChrome}
  */
 export function resolveF1PresentationChrome(profile) {
   if (profile === "f1.presentation.classic_v1") {
@@ -52,6 +54,9 @@ export function resolveF1PresentationChrome(profile) {
       justSignatureBand: false,
       headerPillChrome: false,
       headerLogoSource: "brand",
+      footerSurface: "light",
+      footerSocialIconEmphasis: "primary",
+      footerLogoStrategy: "mono-adaptive",
     }
   }
   return {
@@ -67,7 +72,17 @@ export function resolveF1PresentationChrome(profile) {
     justSignatureBand: true,
     headerPillChrome: true,
     headerLogoSource: "horizontal",
+    footerSurface: "light",
+    footerSocialIconEmphasis: "muted",
+    footerLogoStrategy: "engine-preserving",
   }
+}
+
+/**
+ * @param {string | null | undefined} value
+ */
+function trimUrl(value) {
+  return typeof value === "string" ? value.trim() : ""
 }
 
 /**
@@ -75,15 +90,40 @@ export function resolveF1PresentationChrome(profile) {
  * @param {{
  *   logoUrl?: string | null
  *   logoHorizontalUrl?: string | null
+ *   logoWhiteUrl?: string | null
  * } | null | undefined} branding
- * @param {F1PresentationChrome} chrome
+ * @param {ReturnType<typeof resolveF1PresentationChrome>} chrome
  */
 export function resolveHeaderLogoUrl(branding, chrome) {
-  const brand = typeof branding?.logoUrl === "string" ? branding.logoUrl.trim() : ""
-  const horizontal =
-    typeof branding?.logoHorizontalUrl === "string" ? branding.logoHorizontalUrl.trim() : ""
+  const brand = trimUrl(branding?.logoUrl)
+  const horizontal = trimUrl(branding?.logoHorizontalUrl)
   if (chrome.headerLogoSource === "brand") {
     return brand || horizontal || ""
+  }
+  return horizontal || brand || ""
+}
+
+/**
+ * Footer logo — independent from header; mono-adaptive for classic_v1.
+ * @param {{
+ *   logoUrl?: string | null
+ *   logoHorizontalUrl?: string | null
+ *   logoWhiteUrl?: string | null
+ * } | null | undefined} branding
+ * @param {ReturnType<typeof resolveF1PresentationChrome>} chrome
+ */
+export function resolveFooterLogoUrl(branding, chrome) {
+  const brand = trimUrl(branding?.logoUrl)
+  const horizontal = trimUrl(branding?.logoHorizontalUrl)
+  const white = trimUrl(branding?.logoWhiteUrl)
+
+  if (chrome.footerLogoStrategy === "engine-preserving") {
+    return horizontal || brand || ""
+  }
+
+  const surface = chrome.footerSurface === "dark" ? "dark" : "light"
+  if (surface === "dark") {
+    return white || horizontal || brand || ""
   }
   return horizontal || brand || ""
 }
