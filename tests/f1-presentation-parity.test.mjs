@@ -23,10 +23,10 @@ test("resolves classic and engine chrome without tenant branching", () => {
   )
   assert.equal(classic.processIndexIcons, true)
   assert.equal(classic.processBadgeEmphasis, "primary")
-  assert.equal(classic.benefitsAsFeatureCards, false)
+  assert.equal(classic.benefitsAsFeatureCards, true)
   assert.equal(classic.servicesAsCardGrid, false)
   assert.equal(classic.servicesLayout, "classic-split")
-  assert.equal(classic.benefitsLayout, "classic-criteria-grid")
+  assert.equal(classic.benefitsLayout, "classic-feature-cards")
   assert.equal(classic.justSignatureBand, false)
 })
 
@@ -166,7 +166,7 @@ test("prefers explicit seo payload over hero derivation", () => {
   assert.equal(seo.ogImage, "https://cdn.example/og.png")
 })
 
-test("classic chrome suppresses index-icon feature cards for title-only benefits", () => {
+test("classic chrome uses feature cards for title-only benefits", () => {
   const block = {
     type: "benefits",
     content: {
@@ -177,8 +177,9 @@ test("classic chrome suppresses index-icon feature cards for title-only benefits
   }
   assert.equal(shouldRenderBenefitsAsFeatures(block), true)
   const chrome = resolveF1PresentationChrome("f1.presentation.classic_v1")
+  assert.equal(chrome.benefitsLayout, "classic-feature-cards")
   assert.equal(
     chrome.benefitsAsFeatureCards && shouldRenderBenefitsAsFeatures(block),
-    false,
+    true,
   )
 })

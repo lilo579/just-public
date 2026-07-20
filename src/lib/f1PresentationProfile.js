@@ -44,8 +44,8 @@ export function resolveF1PresentationChrome(profile) {
     return {
       profile,
       trustOverlapsHero: false,
-      benefitsAsFeatureCards: false,
-      benefitsLayout: "classic-criteria-grid",
+      benefitsAsFeatureCards: true,
+      benefitsLayout: "classic-feature-cards",
       servicesLayout: "classic-split",
       servicesAsCardGrid: false,
       processIndexIcons: true,
