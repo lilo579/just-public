@@ -3,8 +3,8 @@ import type { ServicesBlock as ServicesBlockType } from "../../contracts/homepag
 
 const { block, layout = "list" } = Astro.props as {
   block: ServicesBlockType
-  /** engine_v1 dotted list; classic_v1 card grid. */
-  layout?: "list" | "cards"
+  /** engine-list | classic-split (F1 classic editorial) | cards (legacy classic mistake — avoid) */
+  layout?: "list" | "classic-split" | "cards"
 };
 const { kicker, title, items } = block.content;
 
@@ -14,20 +14,100 @@ const visibleItems = (items ?? []).filter(
 
 const leftItems = visibleItems.slice(0, 2);
 const rightItems = visibleItems.slice(2);
+const isClassicSplit = layout === "classic-split";
 const isCards = layout === "cards";
 ---
 
 {visibleItems.length > 0 && (
-  <section class:list={["services", isCards && "services--cards"]} data-layout={layout}>
+  <section
+    class:list={["services", isCards && "services--cards", isClassicSplit && "services--classic-split"]}
+    data-layout={layout}
+  >
     <div class="services__container">
       {(kicker || title) && (
-        <div class="services__heading">
+        <div class:list={["services__heading", isClassicSplit && "services__heading--center"]}>
           {kicker && <p class="services__kicker">{kicker}</p>}
           {title && <h2>{title}</h2>}
         </div>
       )}
 
-      {isCards ? (
+      {isClassicSplit ? (
+        <div class="services__classic">
+          <div class="services__classic-col services__classic-col--primary">
+            {leftItems.map((item) => (
+              <article class="services__classic-item">
+                <div class="services__classic-row">
+                  <div class="services__classic-marker" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M5 12.5 10 17.5 19 7.5"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </div>
+                  <div class="services__classic-copy">
+                    <h3>{item.title}</h3>
+                    <p>{item.description}</p>
+                  </div>
+                </div>
+              </article>
+            ))}
+            {rightItems.map((item) => (
+              <article class="services__classic-item services__classic-item--mobile">
+                <div class="services__classic-row">
+                  <div class="services__classic-marker" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M5 12.5 10 17.5 19 7.5"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </div>
+                  <div class="services__classic-copy">
+                    <h3>{item.title}</h3>
+                    <p>{item.description}</p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {rightItems.length > 0 && (
+            <div class="services__classic-col services__classic-col--secondary">
+              {rightItems.map((item) => (
+                <article class="services__classic-item">
+                  <div class="services__classic-row">
+                    <div class="services__classic-marker" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                          d="M5 12.5 10 17.5 19 7.5"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <div class="services__classic-copy">
+                      <h3>{item.title}</h3>
+                      <p>{item.description}</p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : isCards ? (
         <div class="services__cards">
           {visibleItems.map((item) => (
             <article class="services__card">
@@ -273,6 +353,104 @@ const isCards = layout === "cards";
   @media (min-width: 1024px) {
     .services--cards .services__cards {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .services--classic-split {
+    padding: 4rem 0;
+  }
+
+  .services--classic-split .services__heading--center {
+    text-align: center;
+    max-width: 48rem;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 3rem;
+  }
+
+  .services__classic {
+    max-width: 64rem;
+    margin: 0 auto;
+  }
+
+  .services__classic-col {
+    display: grid;
+    gap: 2rem;
+  }
+
+  .services__classic-col--secondary {
+    display: none;
+  }
+
+  .services__classic-item--mobile {
+    display: block;
+  }
+
+  .services__classic-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .services__classic-marker {
+    flex: 0 0 auto;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-top: 0.125rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 22%, transparent);
+    background: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 8%, white);
+    color: var(--site-color-primary, hsl(145 63% 42%));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .services__classic-marker svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    display: block;
+  }
+
+  .services__classic-copy h3 {
+    margin: 0 0 0.5rem;
+    font-family: var(--site-font-heading, system-ui, sans-serif);
+    font-size: 1.125rem;
+    line-height: 1.35;
+    font-weight: 600;
+    color: hsl(220 15% 15%);
+  }
+
+  .services__classic-copy p {
+    margin: 0;
+    color: hsl(220 15% 15% / 0.7);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  @media (min-width: 1024px) {
+    .services--classic-split {
+      padding: 6rem 0;
+    }
+
+    .services__classic {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 3rem;
+      align-items: start;
+    }
+
+    .services__classic-col {
+      gap: 2.5rem;
+    }
+
+    .services__classic-col--secondary {
+      display: grid;
+      padding-top: 4rem;
+    }
+
+    .services__classic-item--mobile {
+      display: none;
     }
   }
 </style>

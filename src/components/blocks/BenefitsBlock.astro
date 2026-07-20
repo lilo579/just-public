@@ -11,7 +11,7 @@ type BenefitMetric = {
   description?: string | null
 }
 
-const { block } = Astro.props as {
+const { block, layout = "standard" } = Astro.props as {
   block: {
     type: "benefits"
     content: {
@@ -23,6 +23,7 @@ const { block } = Astro.props as {
       metrics?: BenefitMetric[]
     }
   }
+  layout?: "standard" | "classic-criteria-grid"
 }
 
 const kicker = block.content?.kicker
@@ -37,19 +38,27 @@ const metrics = (block.content?.metrics ?? []).filter(
 )
 const hasHeader = kicker || title || body
 const hasAside = summary || metrics.length > 0
+const isClassicGrid = layout === "classic-criteria-grid"
 ---
 
 {(hasHeader || items.length > 0 || hasAside) && (
-  <section class="benefits">
+  <section class:list={["benefits", isClassicGrid && "benefits--classic-grid"]} data-layout={layout}>
     <div class="benefits__inner">
       {hasHeader && (
-        <header class="benefits__header">
+        <header class:list={["benefits__header", isClassicGrid && "benefits__header--center"]}>
           {kicker && <p class="benefits__kicker">{kicker}</p>}
           {title && <h2>{title}</h2>}
           {body && <p class="benefits__body">{body}</p>}
         </header>
       )}
 
+      {isClassicGrid && items.length > 0 ? (
+        <div class="benefits__criteria-grid">
+          {items.map((item) => (
+            <p class="benefits__criteria-item">{item.title || item.description}</p>
+          ))}
+        </div>
+      ) : (
       <div class:list={["benefits__content", !hasAside && "benefits__content--single"]}>
         {items.length > 0 && (
           <div class="benefits__items">
@@ -88,6 +97,7 @@ const hasAside = summary || metrics.length > 0
           </aside>
         )}
       </div>
+      )}
     </div>
   </section>
 )}
@@ -261,6 +271,51 @@ const hasAside = summary || metrics.length > 0
     .benefits__image {
       height: 200px;
       border-radius: 14px;
+    }
+  }
+
+  .benefits--classic-grid .benefits__header--center {
+    text-align: center;
+    max-width: 40rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .benefits__criteria-grid {
+    display: grid;
+    gap: 1rem;
+    max-width: 56rem;
+    margin: 0 auto;
+  }
+
+  .benefits__criteria-item {
+    margin: 0;
+    text-align: left;
+    color: hsl(220 15% 15% / 0.82);
+    font-size: 1rem;
+    line-height: 1.55;
+    font-weight: 500;
+  }
+
+  @media (min-width: 640px) {
+    .benefits__criteria-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem 1.25rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .benefits--classic-grid {
+      padding: 6rem 0;
+    }
+
+    .benefits__criteria-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem 1.5rem;
+    }
+
+    .benefits__criteria-item {
+      font-size: 1.02rem;
     }
   }
 </style>

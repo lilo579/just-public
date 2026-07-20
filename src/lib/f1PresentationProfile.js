@@ -35,6 +35,7 @@ export function resolveF1PresentationProfile(raw) {
 
 /**
  * @param {F1PresentationProfile} profile
+ * @returns {import('./f1PresentationProfile.js').F1PresentationChrome}
  */
 export function resolveF1PresentationChrome(profile) {
   if (profile === "f1.presentation.classic_v1") {
@@ -42,19 +43,47 @@ export function resolveF1PresentationChrome(profile) {
       profile,
       trustOverlapsHero: false,
       benefitsAsFeatureCards: false,
-      servicesAsCardGrid: true,
-      processIndexIcons: false,
+      benefitsLayout: "classic-criteria-grid",
+      servicesLayout: "classic-split",
+      servicesAsCardGrid: false,
+      processIndexIcons: true,
+      processBadgeEmphasis: "primary",
+      attendancePillIconEmphasis: "primary",
       justSignatureBand: false,
       headerPillChrome: false,
+      headerLogoSource: "brand",
     }
   }
   return {
     profile: "f1.presentation.engine_v1",
     trustOverlapsHero: true,
     benefitsAsFeatureCards: true,
+    benefitsLayout: "engine-features",
+    servicesLayout: "engine-list",
     servicesAsCardGrid: false,
     processIndexIcons: true,
+    processBadgeEmphasis: "accent",
+    attendancePillIconEmphasis: "accent",
     justSignatureBand: true,
     headerPillChrome: true,
+    headerLogoSource: "horizontal",
   }
+}
+
+/**
+ * Resolve header logo from branding — profile selects asset priority, not tenant.
+ * @param {{
+ *   logoUrl?: string | null
+ *   logoHorizontalUrl?: string | null
+ * } | null | undefined} branding
+ * @param {F1PresentationChrome} chrome
+ */
+export function resolveHeaderLogoUrl(branding, chrome) {
+  const brand = typeof branding?.logoUrl === "string" ? branding.logoUrl.trim() : ""
+  const horizontal =
+    typeof branding?.logoHorizontalUrl === "string" ? branding.logoHorizontalUrl.trim() : ""
+  if (chrome.headerLogoSource === "brand") {
+    return brand || horizontal || ""
+  }
+  return horizontal || brand || ""
 }

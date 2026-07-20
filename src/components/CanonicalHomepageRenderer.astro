@@ -718,7 +718,13 @@ const renderedCount = renderableNodes.filter(
         return (
           <ServicesBlock
             block={entry.block}
-            layout={chrome.servicesAsCardGrid ? "cards" : "list"}
+            layout={
+              chrome.servicesLayout === "classic-split"
+                ? "classic-split"
+                : chrome.servicesAsCardGrid
+                  ? "cards"
+                  : "list"
+            }
           />
         )
 
@@ -736,7 +742,14 @@ const renderedCount = renderableNodes.filter(
           shouldRenderBenefitsAsFeatures(entry.block) ? (
           <FeaturesBlock block={projectBenefitsToFeaturesBlock(entry.block)} />
         ) : (
-          <BenefitsBlock block={entry.block} />
+          <BenefitsBlock
+            block={entry.block}
+            layout={
+              chrome.benefitsLayout === "classic-criteria-grid"
+                ? "classic-criteria-grid"
+                : "standard"
+            }
+          />
         )
 
       case "features":
@@ -744,11 +757,20 @@ const renderedCount = renderableNodes.filter(
 
       case "process":
         return (
-          <ProcessBlock block={entry.block} indexIcons={chrome.processIndexIcons} />
+          <ProcessBlock
+            block={entry.block}
+            indexIcons={chrome.processIndexIcons}
+            badgeEmphasis={chrome.processBadgeEmphasis}
+          />
         )
 
       case "attendance":
-        return <InfoCardBlock block={entry.block} />
+        return (
+          <InfoCardBlock
+            block={entry.block}
+            pillIconEmphasis={chrome.attendancePillIconEmphasis}
+          />
+        )
 
       case "testimonials":
         return <TestimonialsBlock block={entry.block} />

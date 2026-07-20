@@ -1,5 +1,5 @@
 ---
-const { block } = Astro.props as {
+const { block, pillIconEmphasis = "accent" } = Astro.props as {
   block: {
     type: "info_card";
     content: {
@@ -8,6 +8,7 @@ const { block } = Astro.props as {
       pills?: string[];
     };
   };
+  pillIconEmphasis?: "primary" | "accent";
 };
 
 const title = block.content?.title;
@@ -23,7 +24,7 @@ function iconFor(index: number) {
 ---
 
 {(title || paragraphs.length > 0 || pills.length > 0) && (
-  <section class="info-card">
+  <section class="info-card" data-pill-icon={pillIconEmphasis}>
     <div class="info-card__overlay" aria-hidden="true"></div>
 
     <div class="info-card__container">
@@ -187,6 +188,10 @@ function iconFor(index: number) {
     justify-content: center;
     color: var(--site-color-accent, hsl(145 20% 45%));
     flex: 0 0 auto;
+  }
+
+  .info-card[data-pill-icon="primary"] .info-card__pill-icon {
+    color: var(--site-color-primary, hsl(145 63% 42%));
   }
 
   .info-card__pill-icon svg {

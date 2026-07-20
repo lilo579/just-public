@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 import {
   resolveF1PresentationChrome,
   resolveF1PresentationProfile,
+  resolveHeaderLogoUrl,
 } from "../src/lib/f1PresentationProfile.js"
 import {
   resolveFontStack,
@@ -16,10 +17,25 @@ test("resolves classic and engine chrome without tenant branching", () => {
   const classic = resolveF1PresentationChrome(
     resolveF1PresentationProfile("f1.presentation.classic_v1"),
   )
-  assert.equal(classic.processIndexIcons, false)
+  assert.equal(classic.processIndexIcons, true)
+  assert.equal(classic.processBadgeEmphasis, "primary")
   assert.equal(classic.benefitsAsFeatureCards, false)
-  assert.equal(classic.servicesAsCardGrid, true)
+  assert.equal(classic.servicesAsCardGrid, false)
+  assert.equal(classic.servicesLayout, "classic-split")
+  assert.equal(classic.benefitsLayout, "classic-criteria-grid")
   assert.equal(classic.justSignatureBand, false)
+})
+
+test("resolveHeaderLogoUrl prefers brand logo for classic_v1", () => {
+  const chrome = resolveF1PresentationChrome("f1.presentation.classic_v1")
+  const url = resolveHeaderLogoUrl(
+    {
+      logoUrl: "https://cdn.example/color.png",
+      logoHorizontalUrl: "https://cdn.example/horizontal.png",
+    },
+    chrome,
+  )
+  assert.equal(url, "https://cdn.example/color.png")
 })
 
 test("falls back to engine_v1 for unknown profile", () => {

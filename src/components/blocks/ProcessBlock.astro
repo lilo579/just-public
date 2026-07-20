@@ -5,7 +5,7 @@ type Step = {
   description?: string | null;
 };
 
-const { block, indexIcons = true } = Astro.props as {
+const { block, indexIcons = true, badgeEmphasis = "accent" } = Astro.props as {
   block: {
     type: "process";
     content: {
@@ -15,8 +15,8 @@ const { block, indexIcons = true } = Astro.props as {
       steps?: Step[];
     };
   };
-  /** engine_v1 forces semantic icons by step index; classic_v1 uses numbers only. */
   indexIcons?: boolean;
+  badgeEmphasis?: "primary" | "accent";
 };
 
 const kicker = block.content?.kicker;
@@ -33,7 +33,11 @@ function iconFor(stepNumber: number) {
 ---
 
 {(steps.length > 0 || kicker || title || body) && (
-  <section class="process" data-index-icons={indexIcons ? "true" : "false"}>
+  <section
+    class="process"
+    data-index-icons={indexIcons ? "true" : "false"}
+    data-badge={badgeEmphasis}
+  >
     <div class="process__container">
       {(kicker || title || body) && (
         <div class="process__heading">
@@ -200,6 +204,11 @@ function iconFor(stepNumber: number) {
     box-shadow: 0 4px 10px color-mix(in srgb, var(--site-color-accent, hsl(145 12% 52%)) 22%, transparent);
   }
 
+  .process[data-badge="primary"] .process__badge {
+    background: var(--site-color-primary, hsl(145 63% 42%));
+    box-shadow: 0 4px 10px color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 22%, transparent);
+  }
+
   .process__icon-shell {
     width: 3.3rem;
     height: 3.3rem;
@@ -212,11 +221,15 @@ function iconFor(stepNumber: number) {
     color: var(--site-color-accent, hsl(145 12% 52%));
   }
 
+  .process[data-badge="primary"] .process__icon-shell {
+    color: var(--site-color-primary, hsl(145 63% 42%));
+  }
+
   .process__icon-shell svg {
     width: 2.35rem;
     height: 2.35rem;
     display: block;
-    color: var(--site-color-accent, hsl(145 12% 52%));
+    color: inherit;
   }
 
   .process__card h3 {

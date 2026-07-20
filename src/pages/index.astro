@@ -28,6 +28,7 @@ import { buildPublicHomepageSeo } from "../lib/publicPageSeo.js"
 import {
   resolveF1PresentationProfile,
   resolveF1PresentationChrome,
+  resolveHeaderLogoUrl,
 } from "../lib/f1PresentationProfile.js"
 
 const requestUrl = new URL(Astro.request.url)
@@ -189,11 +190,10 @@ const footer = {
 
 const brandingName =
   homepageWithSource.source?.contact?.companyName ?? footer.companyName ?? "Site"
-const brandingLogo =
-  homepageWithSource.source?.meta?.branding?.logoHorizontalUrl ??
-  homepageWithSource.source?.meta?.branding?.logoUrl ??
-  footer.logoUrl ??
-  ""
+const brandingLogo = resolveHeaderLogoUrl(
+  homepageWithSource.source?.meta?.branding ?? null,
+  presentationChrome,
+)
 const tokens = themeTokensFromBranding(homepageWithSource.source?.meta?.branding ?? null)
 const fontLoadUrl =
   typeof tokens.__fontLoadUrl === "string" ? tokens.__fontLoadUrl : null
