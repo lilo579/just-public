@@ -5,7 +5,7 @@ type Step = {
   description?: string | null;
 };
 
-const { block } = Astro.props as {
+const { block, indexIcons = true } = Astro.props as {
   block: {
     type: "process";
     content: {
@@ -15,6 +15,8 @@ const { block } = Astro.props as {
       steps?: Step[];
     };
   };
+  /** engine_v1 forces semantic icons by step index; classic_v1 uses numbers only. */
+  indexIcons?: boolean;
 };
 
 const kicker = block.content?.kicker;
@@ -23,6 +25,7 @@ const body = block.content?.body;
 const steps = (block.content?.steps ?? []).filter((step) => step?.title);
 
 function iconFor(stepNumber: number) {
+  if (!indexIcons) return null;
   if (stepNumber === 1) return "message";
   if (stepNumber === 2) return "calendar";
   return "heart";
@@ -30,7 +33,7 @@ function iconFor(stepNumber: number) {
 ---
 
 {(steps.length > 0 || kicker || title || body) && (
-  <section class="process">
+  <section class="process" data-index-icons={indexIcons ? "true" : "false"}>
     <div class="process__container">
       {(kicker || title || body) && (
         <div class="process__heading">
@@ -46,6 +49,7 @@ function iconFor(stepNumber: number) {
           <article class="process__card">
             <div class="process__badge">{step.number}</div>
 
+            {iconFor(step.number) && (
             <div class="process__icon-shell" aria-hidden="true">
               {iconFor(step.number) === "message" && (
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -94,6 +98,7 @@ function iconFor(stepNumber: number) {
                 </svg>
               )}
             </div>
+            )}
 
             <h3>{step.title}</h3>
             {step.description && <p>{step.description}</p>}
@@ -141,7 +146,7 @@ function iconFor(stepNumber: number) {
 
   .process h2 {
     margin: 0;
-    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: var(--site-font-heading, system-ui, sans-serif);
     font-size: 1.875rem;
     line-height: 1.15;
     font-weight: 700;

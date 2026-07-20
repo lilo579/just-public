@@ -10,6 +10,7 @@ const inlineStyle = themeTokensToInlineStyle(tokens)
 <div
   class="site-theme-root"
   data-site-theme
+  data-font={tokens.__fontKey ?? "modern"}
   style={inlineStyle}
   data-primary={tokens["--site-color-primary"]}
   data-secondary={tokens["--site-color-secondary"]}
@@ -24,6 +25,7 @@ const inlineStyle = themeTokensToInlineStyle(tokens)
     background: var(--site-color-background, #fff);
     color: var(--site-color-text, #0f172a);
     font-family: var(--site-font-body, system-ui, sans-serif);
+    font-weight: var(--site-font-body-weight, 400);
   }
 
   .site-theme-root :global(h1),
@@ -31,5 +33,6 @@ const inlineStyle = themeTokensToInlineStyle(tokens)
   .site-theme-root :global(h3),
   .site-theme-root :global(h4) {
     font-family: var(--site-font-heading, system-ui, sans-serif);
+    font-weight: var(--site-font-heading-weight, 700);
   }
 </style>

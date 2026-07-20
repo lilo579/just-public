@@ -19,6 +19,10 @@ import {
 import { adaptCanonicalHero } from "./canonicalHomepageHeroAdapter.js"
 import { adaptCanonicalTrust } from "./canonicalHomepageTrustAdapter.js"
 import { adaptCanonicalTestimonials } from "./canonicalHomepageTestimonialsAdapter.js"
+import {
+  resolveF1PresentationProfile,
+  resolveF1PresentationChrome,
+} from "../lib/f1PresentationProfile.js"
 
 import type {
   AboutBlock as AboutBlockType,
@@ -36,10 +40,15 @@ import type {
   TrustBlock as TrustBlockType,
 } from "../contracts/homepage"
 
-const { plan, showDiagnostics = false } = Astro.props as {
-  plan: SerializableHomepageRenderPlan
-  showDiagnostics?: boolean
-}
+const { plan, showDiagnostics = false, presentationProfile: presentationProfileProp } =
+  Astro.props as {
+    plan: SerializableHomepageRenderPlan
+    showDiagnostics?: boolean
+    presentationProfile?: string | null
+  }
+
+const presentationProfile = resolveF1PresentationProfile(presentationProfileProp)
+const chrome = resolveF1PresentationChrome(presentationProfile)
 
 type SupportedComponentKey =
   | "hero"
@@ -701,10 +710,17 @@ const renderedCount = renderableNodes.filter(
         return <HeroBlock block={entry.block} />
 
       case "trust":
-        return <TrustBlock block={entry.block} />
+        return (
+          <TrustBlock block={entry.block} overlapHero={chrome.trustOverlapsHero} />
+        )
 
       case "services":
-        return <ServicesBlock block={entry.block} />
+        return (
+          <ServicesBlock
+            block={entry.block}
+            layout={chrome.servicesAsCardGrid ? "cards" : "list"}
+          />
+        )
 
       case "problem":
         return <RichTextBlock block={entry.block} />
@@ -716,7 +732,8 @@ const renderedCount = renderableNodes.filter(
         return <AboutBlock block={entry.block} />
 
       case "benefits":
-        return shouldRenderBenefitsAsFeatures(entry.block) ? (
+        return chrome.benefitsAsFeatureCards &&
+          shouldRenderBenefitsAsFeatures(entry.block) ? (
           <FeaturesBlock block={projectBenefitsToFeaturesBlock(entry.block)} />
         ) : (
           <BenefitsBlock block={entry.block} />
@@ -726,7 +743,9 @@ const renderedCount = renderableNodes.filter(
         return <FeaturesBlock block={entry.block} />
 
       case "process":
-        return <ProcessBlock block={entry.block} />
+        return (
+          <ProcessBlock block={entry.block} indexIcons={chrome.processIndexIcons} />
+        )
 
       case "attendance":
         return <InfoCardBlock block={entry.block} />

@@ -1,7 +1,11 @@
 ---
 import type { TrustBlock as TrustBlockType } from "../../contracts/homepage"
 
-const { block } = Astro.props as { block: TrustBlockType }
+const { block, overlapHero = true } = Astro.props as {
+  block: TrustBlockType
+  /** engine_v1 overlaps hero; classic_v1 sits below. */
+  overlapHero?: boolean
+}
 const { title, items, logos, hasContent } = block.content
 const visibleItems = (items ?? []).filter(Boolean)
 const visibleLogos = (logos ?? []).filter((logo) => logo?.imageUrl || logo?.name)
@@ -9,7 +13,7 @@ const showSection = hasContent && (visibleItems.length > 0 || visibleLogos.lengt
 ---
 
 {showSection && (
-  <section class="trust">
+  <section class="trust" data-overlap-hero={overlapHero ? "true" : "false"}>
     <div class="trust__container">
       {title && <h2 class="trust__title">{title}</h2>}
 
@@ -47,6 +51,12 @@ const showSection = hasContent && (visibleItems.length > 0 || visibleLogos.lengt
     z-index: 10;
     margin-top: -1.5rem;
     padding: 0 0 1.5rem;
+  }
+
+  .trust[data-overlap-hero="false"] {
+    z-index: 1;
+    margin-top: 0;
+    padding: 1.5rem 0 2rem;
   }
 
   .trust__container {

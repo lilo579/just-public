@@ -7,15 +7,18 @@ const {
   logoUrl = "",
   logoAlt = siteTitle,
   whatsappHref = "",
+  pillChrome = true,
 } = Astro.props as {
   siteTitle?: string
   logoUrl?: string
   logoAlt?: string
   whatsappHref?: string
+  /** engine_v1 pill outline; classic_v1 uses softer radius from theme. */
+  pillChrome?: boolean
 }
 ---
 
-<header class="site-header">
+<header class="site-header" data-pill-chrome={pillChrome ? "true" : "false"}>
   <div class="site-header__inner">
     <a href="/" class="site-header__brand" aria-label={siteTitle}>
       {logoUrl ? (
@@ -116,6 +119,13 @@ const {
       color 160ms ease,
       border-color 160ms ease,
       transform 160ms ease;
+  }
+
+  .site-header[data-pill-chrome="false"] :global(a.site-header__cta) {
+    border-radius: var(--site-radius-button, 0.5rem);
+    min-height: 2.35rem;
+    padding: 0.4rem 1.1rem;
+    font-weight: 600;
   }
 
   .site-header :global(a.site-header__cta:hover) {

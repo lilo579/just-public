@@ -25,6 +25,10 @@ import {
 import { resolvePocFixturePayload } from "../poc/publicSiteFixtures.js"
 import { themeTokensFromBranding } from "../lib/themeFromBranding"
 import { buildPublicHomepageSeo } from "../lib/publicPageSeo.js"
+import {
+  resolveF1PresentationProfile,
+  resolveF1PresentationChrome,
+} from "../lib/f1PresentationProfile.js"
 
 const requestUrl = new URL(Astro.request.url)
 const allowLegacy =
@@ -111,9 +115,33 @@ const homepageWithSource = homepage as ResolvedHomepage & {
         logoUrl?: string | null
         logoHorizontalUrl?: string | null
       }
+      presentationProfile?: string | null
+      seo?: {
+        title?: string | null
+        description?: string | null
+        ogTitle?: string | null
+        ogDescription?: string | null
+        ogImage?: string | null
+        favicon?: string | null
+        jsonLdType?: string | null
+      }
+      footer?: {
+        tagline?: string | null
+        socialLinks?: Array<{ type?: string; url?: string }>
+      }
     }
   }
   serializablePlan?: unknown
+  footer?: {
+    logoUrl?: string | null
+    tagline?: string | null
+    whatsappNumber?: string | null
+    whatsappVisible?: boolean
+    email?: string | null
+    address?: string | null
+    companyName?: string | null
+    socialLinks?: Array<{ type?: string; url?: string }>
+  }
 }
 
 const choice = chooseHomepageRenderer(homepageWithSource, { allowLegacy, forceLegacy })
@@ -124,18 +152,39 @@ if (choice.mode === "error") {
   })
 }
 
-const footer = homepageWithSource.footer ?? {
+const presentationProfile = resolveF1PresentationProfile(
+  homepageWithSource.source?.meta?.presentationProfile,
+)
+const presentationChrome = resolveF1PresentationChrome(presentationProfile)
+
+const metaFooter = homepageWithSource.source?.meta?.footer
+const footerSocialLinks = (
+  metaFooter?.socialLinks ??
+  homepageWithSource.footer?.socialLinks ??
+  []
+)
+  .filter((link) => typeof link?.url === "string" && link.url.trim().length > 0)
+  .map((link) => ({
+    type: typeof link.type === "string" ? link.type : "link",
+    url: String(link.url).trim(),
+  }))
+
+const footer = {
   logoUrl:
     homepageWithSource.source?.meta?.branding?.logoHorizontalUrl ??
     homepageWithSource.source?.meta?.branding?.logoUrl ??
+    homepageWithSource.footer?.logoUrl ??
     null,
-  tagline: null,
+  tagline:
+    metaFooter?.tagline ??
+    homepageWithSource.footer?.tagline ??
+    null,
   whatsappNumber: homepageWithSource.source?.contact?.whatsappNumber ?? null,
   whatsappVisible: homepageWithSource.source?.contact?.whatsappVisible === true,
   email: homepageWithSource.source?.contact?.email ?? null,
   address: homepageWithSource.source?.contact?.address ?? null,
   companyName: homepageWithSource.source?.contact?.companyName ?? "Site",
-  socialLinks: [],
+  socialLinks: footerSocialLinks,
 }
 
 const brandingName =
@@ -146,6 +195,8 @@ const brandingLogo =
   footer.logoUrl ??
   ""
 const tokens = themeTokensFromBranding(homepageWithSource.source?.meta?.branding ?? null)
+const fontLoadUrl =
+  typeof tokens.__fontLoadUrl === "string" ? tokens.__fontLoadUrl : null
 
 const deployEnv = resolveDeployEnv(Astro.locals)
 const noindex = isLeadIntakeSafeMode(deployEnv)
@@ -158,6 +209,7 @@ const seo = buildPublicHomepageSeo({
   contact: homepageWithSource.source?.contact ?? null,
   plan: planForSeo,
   footerTagline: footer.tagline,
+  seo: homepageWithSource.source?.meta?.seo ?? null,
   noindex,
 })
 
@@ -172,48 +224,58 @@ const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : ""
     <PublicSiteHead
       title={seo.title}
       description={seo.description}
+      ogTitle={seo.ogTitle}
+      ogDescription={seo.ogDescription}
       canonicalUrl={seo.canonicalUrl}
       ogImage={seo.ogImage}
       faviconUrl={seo.faviconUrl}
       robots={seo.robots}
       jsonLd={seo.jsonLd}
       twitterCard={seo.twitterCard}
+      fontLoadUrl={fontLoadUrl}
     />
   </head>
   <body>
     <SiteTheme tokens={tokens}>
-      <Header
-        siteTitle={brandingName}
-        logoUrl={brandingLogo}
-        logoAlt={brandingName}
-        whatsappHref={whatsappHref}
-      />
+      <div data-f1-presentation={presentationProfile}>
+        <Header
+          siteTitle={brandingName}
+          logoUrl={brandingLogo}
+          logoAlt={brandingName}
+          whatsappHref={whatsappHref}
+          pillChrome={presentationChrome.headerPillChrome}
+        />
 
-      <main class="page-shell" data-renderer={choice.mode}>
-        {choice.mode === "canonical" ? (
-          <CanonicalHomepageRenderer plan={choice.plan} />
-        ) : (
-          <>
-            <section
-              aria-label="Legacy renderer fallback"
-              data-legacy-fallback={choice.reason}
-              style="margin: 1rem 0; padding: 0.75rem 1rem; border: 1px solid #f59e0b; border-radius: 0.5rem; background: #fffbeb; color: #92400e; font-size: 0.875rem;"
-            >
-              Using explicit legacy homepage renderer ({choice.reason}).
-            </section>
-            <HomepageRenderer homepage={homepageWithSource} />
-          </>
-        )}
-      </main>
+        <main class="page-shell" data-renderer={choice.mode} data-f1-presentation={presentationProfile}>
+          {choice.mode === "canonical" ? (
+            <CanonicalHomepageRenderer
+              plan={choice.plan}
+              presentationProfile={presentationProfile}
+            />
+          ) : (
+            <>
+              <section
+                aria-label="Legacy renderer fallback"
+                data-legacy-fallback={choice.reason}
+                style="margin: 1rem 0; padding: 0.75rem 1rem; border: 1px solid #f59e0b; border-radius: 0.5rem; background: #fffbeb; color: #92400e; font-size: 0.875rem;"
+              >
+                Using explicit legacy homepage renderer ({choice.reason}).
+              </section>
+              <HomepageRenderer homepage={homepageWithSource} />
+            </>
+          )}
+        </main>
 
-      <Footer
-        footer={{
-          ...footer,
-          companyName: brandingName,
-          logoUrl: brandingLogo,
-        }}
-      />
-      {whatsappHref && <WhatsAppFloat href={whatsappHref} />}
+        <Footer
+          footer={{
+            ...footer,
+            companyName: brandingName,
+            logoUrl: brandingLogo,
+          }}
+          justSignatureBand={presentationChrome.justSignatureBand}
+        />
+        {whatsappHref && <WhatsAppFloat href={whatsappHref} />}
+      </div>
     </SiteTheme>
   </body>
 </html>

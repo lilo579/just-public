@@ -2,8 +2,10 @@
 import type { HomepageFooter } from "../contracts/homepage"
 import TrackedCTA from "./TrackedCTA.astro";
 
-const { footer } = Astro.props as {
+const { footer, justSignatureBand = true } = Astro.props as {
   footer: HomepageFooter
+  /** engine_v1 shows JUST gold band; classic_v1 omits it. */
+  justSignatureBand?: boolean
 }
 
 function formatPhoneDisplay(phone: string) {
@@ -27,10 +29,12 @@ const visibleLinks = (footer.socialLinks ?? []).filter((link) => (link.url ?? ""
 const year = new Date().getFullYear()
 ---
 
-<footer class="site-footer">
-  <div class="site-footer__signature">
-    Desenvolvido pela <strong>JUST</strong> — a estrutura para seu negócio funcionar online
-  </div>
+<footer class="site-footer" data-just-signature={justSignatureBand ? "true" : "false"}>
+  {justSignatureBand && (
+    <div class="site-footer__signature">
+      Desenvolvido pela <strong>JUST</strong> — a estrutura para seu negócio funcionar online
+    </div>
+  )}
 
   <div class="site-footer__inner">
     <div class="site-footer__brand">

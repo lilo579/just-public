@@ -1,7 +1,11 @@
 ---
 import type { ServicesBlock as ServicesBlockType } from "../../contracts/homepage";
 
-const { block } = Astro.props as { block: ServicesBlockType };
+const { block, layout = "list" } = Astro.props as {
+  block: ServicesBlockType
+  /** engine_v1 dotted list; classic_v1 card grid. */
+  layout?: "list" | "cards"
+};
 const { kicker, title, items } = block.content;
 
 const visibleItems = (items ?? []).filter(
@@ -10,10 +14,11 @@ const visibleItems = (items ?? []).filter(
 
 const leftItems = visibleItems.slice(0, 2);
 const rightItems = visibleItems.slice(2);
+const isCards = layout === "cards";
 ---
 
 {visibleItems.length > 0 && (
-  <section class="services">
+  <section class:list={["services", isCards && "services--cards"]} data-layout={layout}>
     <div class="services__container">
       {(kicker || title) && (
         <div class="services__heading">
@@ -22,6 +27,16 @@ const rightItems = visibleItems.slice(2);
         </div>
       )}
 
+      {isCards ? (
+        <div class="services__cards">
+          {visibleItems.map((item) => (
+            <article class="services__card">
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+            </article>
+          ))}
+        </div>
+      ) : (
       <div class="services__grid">
         <div class="services__column services__column--left">
           {leftItems.map((item) => (
@@ -68,6 +83,7 @@ const rightItems = visibleItems.slice(2);
           </div>
         )}
       </div>
+      )}
     </div>
   </section>
 )}
@@ -101,7 +117,7 @@ const rightItems = visibleItems.slice(2);
 
   .services h2 {
     margin: 0;
-    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: var(--site-font-heading, system-ui, sans-serif);
     font-size: 1.875rem;
     line-height: 1.15;
     font-weight: 700;
@@ -152,7 +168,7 @@ const rightItems = visibleItems.slice(2);
 
   .services__content h3 {
     margin: 0 0 0.5rem;
-    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: var(--site-font-heading, system-ui, sans-serif);
     font-size: 1.125rem;
     line-height: 1.35;
     font-weight: 600;
@@ -213,4 +229,50 @@ const rightItems = visibleItems.slice(2);
     display: none !important;
   }
 }
+
+  .services--cards .services__cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    max-width: 68rem;
+    margin: 0 auto;
+  }
+
+  .services--cards .services__card {
+    margin: 0;
+    padding: 1.5rem 1.35rem;
+    border-radius: var(--site-radius-card, 0.75rem);
+    border: 1px solid var(--site-color-card-border, hsl(30 8% 88%));
+    background: var(--site-color-card, #fff);
+    box-shadow: var(--site-shadow, none);
+  }
+
+  .services--cards .services__card h3 {
+    margin: 0 0 0.65rem;
+    font-family: var(--site-font-heading, system-ui, sans-serif);
+    font-size: 1.125rem;
+    line-height: 1.35;
+    font-weight: 600;
+    color: hsl(220 15% 15%);
+  }
+
+  .services--cards .services__card p {
+    margin: 0;
+    color: hsl(220 15% 15% / 0.7);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  @media (min-width: 768px) {
+    .services--cards .services__cards {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .services--cards .services__cards {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
 </style>

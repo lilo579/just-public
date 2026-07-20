@@ -1,6 +1,6 @@
 /**
  * Production SEO helpers for the public homepage.
- * Derives tags from existing HomepageSource / plan props only (no Edge changes).
+ * Explicit payload SEO (source.meta.seo) wins when present; otherwise derive from plan/hero.
  */
 
 /**
@@ -46,6 +46,14 @@ export function buildDocumentTitle(company, hero) {
 }
 
 /**
+ * @param {unknown} value
+ * @returns {string}
+ */
+function asTrimmed(value) {
+  return typeof value === "string" ? value.trim() : ""
+}
+
+/**
  * @param {{
  *   host: string
  *   companyName: string
@@ -61,6 +69,15 @@ export function buildDocumentTitle(company, hero) {
  *   plan?: unknown
  *   footerTagline?: string | null
  *   noindex?: boolean
+ *   seo?: {
+ *     title?: string | null
+ *     description?: string | null
+ *     ogTitle?: string | null
+ *     ogDescription?: string | null
+ *     ogImage?: string | null
+ *     favicon?: string | null
+ *     jsonLdType?: string | null
+ *   } | null
  * }} input
  */
 export function buildPublicHomepageSeo(input) {
@@ -70,27 +87,33 @@ export function buildPublicHomepageSeo(input) {
     .replace(/:\d+$/, "")
   const company = (input.companyName || "Site").trim() || "Site"
   const hero = extractHeroSeoFields(input.plan)
+  const explicit = input.seo && typeof input.seo === "object" ? input.seo : null
 
-  const description =
+  const derivedDescription =
     hero?.subtitle ||
     hero?.highlight ||
     (typeof input.footerTagline === "string" && input.footerTagline.trim()) ||
     `Conheça ${company}.`
 
-  const title = buildDocumentTitle(company, hero)
+  const title = asTrimmed(explicit?.title) || buildDocumentTitle(company, hero)
+  const description = asTrimmed(explicit?.description) || derivedDescription
+  const ogTitle = asTrimmed(explicit?.ogTitle) || title
+  const ogDescription = asTrimmed(explicit?.ogDescription) || description
 
   const canonicalUrl = host ? `https://${host}/` : ""
-  const ogImage =
+  const derivedOgImage =
     input.branding?.logoHorizontalUrl ||
     input.branding?.logoUrl ||
     ""
+  const ogImage = asTrimmed(explicit?.ogImage) || derivedOgImage
+  const faviconUrl = asTrimmed(explicit?.favicon) || ogImage || "/favicon.svg"
 
-  const faviconUrl = ogImage || "/favicon.svg"
+  const jsonLdType = asTrimmed(explicit?.jsonLdType) || "ProfessionalService"
 
   /** @type {Record<string, unknown>} */
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "ProfessionalService",
+    "@type": jsonLdType,
     name: company,
     url: canonicalUrl || undefined,
     image: ogImage || undefined,
@@ -105,6 +128,8 @@ export function buildPublicHomepageSeo(input) {
   return {
     title,
     description,
+    ogTitle,
+    ogDescription,
     canonicalUrl,
     ogImage,
     faviconUrl,
