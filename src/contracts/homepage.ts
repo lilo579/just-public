@@ -1,7 +1,7 @@
-export type HomepageStatus =
-  | "not_ready"
-  | "structurally_ready"
-  | "ready"
+/**
+ * Public homepage UI contracts (Astro block props, footer, resolved homepage shell).
+ * Painted plan / presentation wire types are owned by `@just/site-engine-authority`.
+ */
 
 export type HomepageCTA = {
   type: string
@@ -44,8 +44,11 @@ export type HomepageSourcePayload = {
   contact?: HomepageSourceContact
   meta?: {
     branding?: HomepageSourceBranding
+    presentationProfile?: string | null
   }
 }
+
+export type HomepageStatus = "not_ready" | "structurally_ready" | "ready"
 
 export type HeroBlock = {
   type: "hero"
@@ -204,71 +207,34 @@ export type HomepageBlock =
   | InfoCardBlock
   | CtaBlock
 
-export type SerializableHomepageRecipeBlock = {
-  id: string
-  order: number
-  variant: string
-}
+/** Plan / paint / presentation wire types — owned by @just/site-engine-authority. */
+export type {
+  PaintedBlockPayload,
+  PaintedComponentKind,
+  PaintedHomepageNode,
+  PaintedHomepageNodeLayout,
+  PaintedHomepagePresentation,
+  SerializableHomepageBlockInstance,
+  SerializableHomepageCapabilities,
+  SerializableHomepageRecipe,
+  SerializableHomepageRecipeBlock,
+  SerializableHomepageRenderNode,
+  SerializableHomepageRenderPlan,
+  SerializableHomepageRuntime,
+  F1PresentationChrome,
+  F1PresentationProfile,
+} from "@just/site-engine-authority"
 
-export type SerializableHomepageRecipe = {
-  id: string
-  version: string
-  blocks: SerializableHomepageRecipeBlock[]
-}
+export {
+  HOMEPAGE_RENDER_CONTRACT_VERSION,
+  DEFAULT_F1_PRESENTATION_PROFILE,
+  resolveF1PresentationProfile,
+  resolveF1PresentationChrome,
+  resolveHeaderLogoUrl,
+  resolveFooterLogoUrl,
+} from "@just/site-engine-authority"
 
-export type SerializableHomepageBlockInstance = {
-  id: string
-  order: number
-  variant: string
-  visible: boolean
-}
-
-export type SerializableHomepageRuntime = {
-  key: string
-  analyticsId: string
-  hydration: string
-  lazy: boolean
-  ssr: boolean
-  priority: string
-}
-
-export type SerializableHomepageCapabilities = {
-  supportsHydration: boolean
-  supportsLazyLoading: boolean
-  supportsSSR: boolean
-  supportsStreaming: boolean
-  supportsAnimation: boolean
-  supportsPersonalization: boolean
-  supportsABTesting: boolean
-}
-
-export type SerializableHomepageRenderNode = {
-  id: string
-  variant: string
-  order: number
-  componentKey: string
-  runtime: SerializableHomepageRuntime
-  capabilities: SerializableHomepageCapabilities
-  /** Source-shaped props (Hub React). Public Astro uses `paint` only. */
-  props: Record<string, unknown>
-  /** Painted Astro block + layout — sole public paint authority. */
-  paint?: {
-    component: string
-    block: Record<string, unknown>
-    layout?: Record<string, unknown>
-  }
-}
-
-export type SerializableHomepageRenderPlan = {
-  contractVersion: string
-  recipe: SerializableHomepageRecipe
-  instances: SerializableHomepageBlockInstance[]
-  nodes: SerializableHomepageRenderNode[]
-  presentation?: {
-    profile: string
-    chrome: Record<string, unknown>
-  }
-}
+import type { SerializableHomepageRenderPlan as AuthorityPlan } from "@just/site-engine-authority"
 
 export type ResolvedHomepage = {
   tenantId: string
@@ -276,5 +242,5 @@ export type ResolvedHomepage = {
   blocks: HomepageBlock[]
   footer: HomepageFooter
   source?: HomepageSourcePayload
-  serializablePlan?: SerializableHomepageRenderPlan
+  serializablePlan?: AuthorityPlan
 }

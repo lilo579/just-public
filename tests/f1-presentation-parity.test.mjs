@@ -5,8 +5,8 @@ import {
   resolveF1PresentationProfile,
   resolveHeaderLogoUrl,
   resolveFooterLogoUrl,
-} from "../src/lib/f1PresentationProfile.js"
-import { readFileSync } from "node:fs"
+} from "@just/site-engine-authority"
+import { readFileSync, existsSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 import { dirname, join } from "node:path"
 import {
@@ -86,14 +86,21 @@ test("resolveFooterLogoUrl fallback when mono assets missing", () => {
 test("footer presentation has no tenant branching or hardcoded Soraya colors", () => {
   const root = join(dirname(fileURLToPath(import.meta.url)), "..")
   const footerSrc = readFileSync(join(root, "src/components/Footer.astro"), "utf8")
-  const profileSrc = readFileSync(join(root, "src/lib/f1PresentationProfile.js"), "utf8")
   const indexSrc = readFileSync(join(root, "src/pages/index.astro"), "utf8")
-  for (const src of [footerSrc, profileSrc, indexSrc]) {
+  const pkg = readFileSync(join(root, "package.json"), "utf8")
+  for (const src of [footerSrc, indexSrc]) {
     assert.doesNotMatch(src, /soraya|marcelo|rossana/i)
     assert.doesNotMatch(src, /tenantId|hostname/i)
   }
+  assert.doesNotMatch(pkg, /Keep in sync/i)
+  assert.match(pkg, /@just\/site-engine-authority/)
   assert.match(footerSrc, /data-social-emphasis/)
   assert.match(footerSrc, /--site-color-primary/)
+  assert.equal(
+    existsSync(join(root, "src/lib/f1PresentationProfile.js")),
+    false,
+    "presentation mirror must be removed",
+  )
 })
 
 test("resolveHeaderLogoUrl prefers brand logo for classic_v1", () => {

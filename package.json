@@ -7,6 +7,10 @@
     "npm": ">=9.6.5"
   },
   "scripts": {
+    "predev": "npm run build:authority",
+    "prebuild": "npm run build:authority",
+    "pretest": "npm run build:authority",
+    "build:authority": "npm run build --prefix ../just-auth-nexus/src/site-engine/authority",
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
@@ -21,6 +25,7 @@
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.13",
+    "@just/site-engine-authority": "file:../just-auth-nexus/src/site-engine/authority",
     "@supabase/supabase-js": "^2.98.0",
     "astro": "^5.17.1"
   },

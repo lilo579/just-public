@@ -1,6 +1,6 @@
 /**
- * Pure homepage resolution helpers (JS mirror for node:test).
- * Keep in sync with publicHomepage.ts — Astro imports the .ts re-exports.
+ * Pure homepage resolution helpers for node:test and Astro.
+ * Implementation owner: this file. `publicHomepage.ts` re-exports for typed Astro imports.
  */
 
 export function chooseHomepageRenderer(homepage, options) {
