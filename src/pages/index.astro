@@ -26,11 +26,10 @@ import { resolvePocFixturePayload } from "../poc/publicSiteFixtures.js"
 import { themeTokensFromBranding } from "../lib/themeFromBranding"
 import { buildPublicHomepageSeo } from "../lib/publicPageSeo.js"
 import {
-  resolveF1PresentationProfile,
-  resolveF1PresentationChrome,
   resolveHeaderLogoUrl,
   resolveFooterLogoUrl,
 } from "@just/site-engine-authority"
+import { resolvePublicPresentationBinding } from "../lib/publicPresentationBinding.js"
 
 const requestUrl = new URL(Astro.request.url)
 /** Kill-switch: ?renderer=legacy is rejected when a canonical plan is present. */
@@ -152,10 +151,9 @@ if (choice.mode === "error") {
   })
 }
 
-const presentationProfile = resolveF1PresentationProfile(
-  homepageWithSource.source?.meta?.presentationProfile,
-)
-const presentationChrome = resolveF1PresentationChrome(presentationProfile)
+const presentationBinding = resolvePublicPresentationBinding(homepageWithSource, choice)
+const presentationProfile = presentationBinding.profile
+const presentationChrome = presentationBinding.chrome
 
 const metaFooter = homepageWithSource.source?.meta?.footer
 const footerSocialLinks = (
