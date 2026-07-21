@@ -2,7 +2,7 @@
 export const prerender = false
 
 import type { ResolvedHomepage } from "../contracts/homepage"
-import HomepageRenderer from "../components/HomepageRenderer.astro"
+import HomepageRenderer from "../components/legacy/HomepageRenderer.astro"
 import CanonicalHomepageRenderer from "../components/CanonicalHomepageRenderer.astro"
 import SiteTheme from "../components/SiteTheme.astro"
 import {
@@ -18,9 +18,7 @@ import {
 import { themeTokensFromBranding } from "../lib/themeFromBranding"
 
 const requestUrl = new URL(Astro.request.url)
-const allowLegacy =
-  requestUrl.searchParams.get("renderer") === "legacy" ||
-  import.meta.env.PUBLIC_ALLOW_LEGACY_RENDERER === "1"
+/** Kill-switch: ?renderer=legacy is rejected when a canonical plan is present. */
 const forceLegacy = requestUrl.searchParams.get("renderer") === "legacy"
 
 let host: string
@@ -59,7 +57,7 @@ if (!fetched.ok) {
 }
 
 const homepage = fetched.homepage as ResolvedHomepage
-const choice = chooseHomepageRenderer(homepage, { allowLegacy, forceLegacy })
+const choice = chooseHomepageRenderer(homepage, { forceLegacy })
 if (choice.mode === "error") {
   return new Response(`Homepage unavailable (${choice.reason})`, {
     status: 502,
@@ -83,12 +81,9 @@ const title = homepage.source?.contact?.companyName ?? "Site"
         {choice.mode === "canonical" ? (
           <CanonicalHomepageRenderer plan={choice.plan} />
         ) : (
-          <>
-            <section data-legacy-fallback={choice.reason} aria-label="Legacy renderer fallback">
-              Explicit legacy fallback: {choice.reason}
-            </section>
+          <div data-legacy-runtime={choice.reason}>
             <HomepageRenderer homepage={homepage} />
-          </>
+          </div>
         )}
       </main>
     </SiteTheme>

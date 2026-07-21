@@ -131,7 +131,7 @@ test("canonical renderer is the default when serializablePlan exists", () => {
 
 test("valid serializablePlan renders via canonical choice", () => {
   const homepage = fixtureHomepage(TENANT_BETA)
-  const choice = chooseHomepageRenderer(homepage, { allowLegacy: true })
+  const choice = chooseHomepageRenderer(homepage)
   assert.equal(choice.mode, "canonical")
 })
 
@@ -142,18 +142,19 @@ test("invalid plan does not silently fall back to another tenant or hardcoded co
   assert.equal(choice.reason, "canonical_plan_missing")
 })
 
-test("legacy fallback is explicit only", () => {
+test("Shop/NoSource: no plan + blocks → legacy runtime (architectural)", () => {
   const homepage = fixtureHomepage(TENANT_ALPHA, { withPlan: false, withBlocks: true })
-  assert.equal(chooseHomepageRenderer(homepage).mode, "error")
-  const legacy = chooseHomepageRenderer(homepage, { allowLegacy: true })
+  const legacy = chooseHomepageRenderer(homepage)
   assert.equal(legacy.mode, "legacy")
-  assert.equal(legacy.reason, "canonical_plan_missing_explicit_legacy_fallback")
+  assert.equal(legacy.reason, "nosource_or_shop_legacy_runtime")
+})
+
+test("forceLegacy with canonical plan is rejected (kill-switch)", () => {
   const forced = chooseHomepageRenderer(fixtureHomepage(TENANT_ALPHA), {
-    allowLegacy: true,
     forceLegacy: true,
   })
-  assert.equal(forced.mode, "legacy")
-  assert.equal(forced.reason, "explicit_force_legacy")
+  assert.equal(forced.mode, "error")
+  assert.equal(forced.reason, "legacy_forbidden_for_canonical_plan")
 })
 
 test("theme A and theme B produce distinct CSS tokens", () => {

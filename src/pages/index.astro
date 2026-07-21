@@ -2,7 +2,7 @@
 export const prerender = false
 
 import type { ResolvedHomepage } from "../contracts/homepage"
-import HomepageRenderer from "../components/HomepageRenderer.astro"
+import HomepageRenderer from "../components/legacy/HomepageRenderer.astro"
 import CanonicalHomepageRenderer from "../components/CanonicalHomepageRenderer.astro"
 import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
@@ -33,9 +33,7 @@ import {
 } from "@just/site-engine-authority"
 
 const requestUrl = new URL(Astro.request.url)
-const allowLegacy =
-  requestUrl.searchParams.get("renderer") === "legacy" ||
-  import.meta.env.PUBLIC_ALLOW_LEGACY_RENDERER === "1"
+/** Kill-switch: ?renderer=legacy is rejected when a canonical plan is present. */
 const forceLegacy = requestUrl.searchParams.get("renderer") === "legacy"
 
 let host: string
@@ -146,7 +144,7 @@ const homepageWithSource = homepage as ResolvedHomepage & {
   }
 }
 
-const choice = chooseHomepageRenderer(homepageWithSource, { allowLegacy, forceLegacy })
+const choice = chooseHomepageRenderer(homepageWithSource, { forceLegacy })
 if (choice.mode === "error") {
   return new Response(`Homepage unavailable (${choice.reason})`, {
     status: 502,
@@ -252,16 +250,9 @@ const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : ""
               plan={choice.plan}
             />
           ) : (
-            <>
-              <section
-                aria-label="Legacy renderer fallback"
-                data-legacy-fallback={choice.reason}
-                style="margin: 1rem 0; padding: 0.75rem 1rem; border: 1px solid #f59e0b; border-radius: 0.5rem; background: #fffbeb; color: #92400e; font-size: 0.875rem;"
-              >
-                Using explicit legacy homepage renderer ({choice.reason}).
-              </section>
+            <div data-legacy-runtime={choice.reason}>
               <HomepageRenderer homepage={homepageWithSource} />
-            </>
+            </div>
           )}
         </main>
 

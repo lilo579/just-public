@@ -33,13 +33,8 @@ export const POC_TENANTS = {
 export const FIXTURE_NO_PLAN = {
   tenantId: "00000000-0000-4000-8000-0000000000c3",
   status: "ready",
-  blocks: [
-    {
-      type: "hero",
-      content: { title: "Should Not Render Silently" },
-      primaryCTA: null,
-    },
-  ],
+  // Broken F1: no Execution Plan and no Shop/NoSource blocks → must error.
+  blocks: [],
   footer: {
     logoUrl: null,
     tagline: null,
@@ -56,6 +51,39 @@ export const FIXTURE_NO_PLAN = {
       branding: {
         primaryColor: "#111111",
         secondaryColor: "#222222",
+        typography: "modern",
+      },
+    },
+  },
+}
+
+/** Shop / NoSource — plan absent, legacy blocks present → legacy runtime. */
+export const FIXTURE_NOSOURCE_LEGACY = {
+  tenantId: "00000000-0000-4000-8000-0000000000c4",
+  status: "ready",
+  blocks: [
+    {
+      type: "hero",
+      content: { title: "NoSource Legacy Hero" },
+      primaryCTA: null,
+    },
+  ],
+  footer: {
+    logoUrl: null,
+    tagline: null,
+    whatsappNumber: null,
+    whatsappVisible: false,
+    email: "nosource@example.test",
+    address: null,
+    companyName: "NoSource Shop Tenant",
+    socialLinks: [],
+  },
+  source: {
+    contact: { companyName: "NoSource Shop Tenant", email: "nosource@example.test" },
+    meta: {
+      branding: {
+        primaryColor: "#333333",
+        secondaryColor: "#444444",
         typography: "modern",
       },
     },
@@ -201,6 +229,7 @@ export const HOST_FIXTURES = {
   [TENANT_BETA.host]: FIXTURE_BETA,
   [TENANT_GAMMA.host]: FIXTURE_GAMMA,
   "no-plan.justwebsites.com.br": FIXTURE_NO_PLAN,
+  "nosource.justwebsites.com.br": FIXTURE_NOSOURCE_LEGACY,
   "bad-branding.justwebsites.com.br": FIXTURE_BAD_BRANDING,
 }
 

@@ -189,9 +189,25 @@ test("workerd canonical renderer + theme: Alpha/Beta isolation and error paths",
   const noPlan = await requestWithHost(port, "no-plan.justwebsites.com.br")
   assert.equal(noPlan.status, 502)
   assert.match(noPlan.body, /canonical_plan_missing/)
-  assert.doesNotMatch(noPlan.body, /Should Not Render Silently/)
   assert.doesNotMatch(noPlan.body, /data-renderer="legacy"/)
   assert.doesNotMatch(noPlan.body, /Alpha Consulting|Beta Studio/)
+
+  const nosource = await requestWithHost(port, "nosource.justwebsites.com.br")
+  assert.equal(nosource.status, 200)
+  assert.match(nosource.body, /data-renderer="legacy"/)
+  assert.match(nosource.body, /data-legacy-runtime="nosource_or_shop_legacy_runtime"/)
+  assert.match(nosource.body, /NoSource Legacy Hero/)
+  assert.doesNotMatch(nosource.body, /Alpha Consulting|Beta Studio/)
+
+  // Kill-switch: ?renderer=legacy must not divert F1 away from canonical.
+  const forceLegacy = await requestWithHost(
+    port,
+    TENANT_ALPHA.host,
+    "/?renderer=legacy",
+  )
+  assert.equal(forceLegacy.status, 502)
+  assert.match(forceLegacy.body, /legacy_forbidden_for_canonical_plan/)
+  assert.doesNotMatch(forceLegacy.body, /data-renderer="legacy"/)
 
   const malformed = await requestWithHost(port, HOST_MALFORMED)
   assert.equal(malformed.status, 502)

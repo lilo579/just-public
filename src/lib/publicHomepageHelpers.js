@@ -1,24 +1,35 @@
 /**
  * Pure homepage resolution helpers for node:test and Astro.
  * Implementation owner: this file. `publicHomepage.ts` re-exports for typed Astro imports.
+ *
+ * Boundary (Slice 7 — Legacy Kill-Switch):
+ * - Canonical plan present → Canonical renderer ONLY.
+ * - No plan + legacy blocks → Shop/NoSource legacy runtime (architectural, not a flag).
+ * - forceLegacy / allowLegacy / PUBLIC_ALLOW_LEGACY_RENDERER are removed for F1.
  */
 
 export function chooseHomepageRenderer(homepage, options) {
-  const allowLegacy = options?.allowLegacy === true
-  const forceLegacy = options?.forceLegacy === true
+  const forceLegacyRequested = options?.forceLegacy === true
+  const hasPlan =
+    homepage?.serializablePlan && Array.isArray(homepage.serializablePlan.nodes)
+  const hasLegacyBlocks =
+    Array.isArray(homepage?.blocks) && homepage.blocks.length > 0
 
-  if (forceLegacy && allowLegacy) {
-    return { mode: "legacy", reason: "explicit_force_legacy" }
-  }
-
-  if (homepage.serializablePlan && Array.isArray(homepage.serializablePlan.nodes)) {
+  if (hasPlan) {
+    if (forceLegacyRequested) {
+      return {
+        mode: "error",
+        reason: "legacy_forbidden_for_canonical_plan",
+      }
+    }
     return { mode: "canonical", plan: homepage.serializablePlan }
   }
 
-  if (allowLegacy && Array.isArray(homepage.blocks) && homepage.blocks.length > 0) {
+  // Shop / NoSource — Execution Plan absent; blocks[] is the legitimate runtime.
+  if (hasLegacyBlocks) {
     return {
       mode: "legacy",
-      reason: "canonical_plan_missing_explicit_legacy_fallback",
+      reason: "nosource_or_shop_legacy_runtime",
     }
   }
 

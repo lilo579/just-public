@@ -2,7 +2,7 @@
 export const prerender = false
 
 import type { ResolvedHomepage } from "../contracts/homepage"
-import HomepageRenderer from "../components/HomepageRenderer.astro"
+import HomepageRenderer from "../components/legacy/HomepageRenderer.astro"
 import CanonicalHomepageRenderer from "../components/CanonicalHomepageRenderer.astro"
 import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
@@ -26,8 +26,7 @@ if (!slug) {
   })
 }
 
-const allowLegacy =
-  renderer === "legacy" || import.meta.env.PUBLIC_ALLOW_LEGACY_RENDERER === "1"
+/** Kill-switch: ?renderer=legacy is rejected when a canonical plan is present. */
 const forceLegacy = renderer === "legacy"
 
 const payloadUrl = resolveSitePayloadUrl(Astro.locals)
@@ -51,7 +50,7 @@ if (!fetched.ok) {
 }
 
 const homepage = fetched.homepage
-const choice = chooseHomepageRenderer(homepage, { allowLegacy, forceLegacy })
+const choice = chooseHomepageRenderer(homepage, { forceLegacy })
 if (choice.mode === "error") {
   return new Response(`Homepage unavailable (${choice.reason})`, {
     status: 502,
@@ -94,16 +93,9 @@ const showCanonicalDiagnostics = debug === "canonical" && choice.mode === "canon
             showDiagnostics={showCanonicalDiagnostics}
           />
         ) : (
-          <>
-            <section
-              aria-label="Legacy renderer fallback"
-              data-legacy-fallback={choice.reason}
-              style="margin: 1.5rem auto 0; max-width: 1100px; padding: 1rem 1.25rem; border: 1px solid hsl(12 75% 78%); border-radius: 0.75rem; background: hsl(12 100% 97%); color: hsl(12 45% 22%); font-size: 0.95rem;"
-            >
-              Explicit legacy fallback ({choice.reason}).
-            </section>
+          <div data-legacy-runtime={choice.reason}>
             <HomepageRenderer homepage={homepage} />
-          </>
+          </div>
         )}
       </main>
 

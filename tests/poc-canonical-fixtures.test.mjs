@@ -32,7 +32,7 @@ test("fixtures are distinct and match SerializableHomepageRenderPlan shape", () 
   }
 })
 
-test("chooseHomepageRenderer: plan → canonical; no plan → error (no silent legacy)", () => {
+test("chooseHomepageRenderer: plan → canonical; empty no-plan → error; blocks → legacy", () => {
   const alphaChoice = chooseHomepageRenderer(FIXTURE_ALPHA)
   assert.equal(alphaChoice.mode, "canonical")
 
@@ -40,10 +40,9 @@ test("chooseHomepageRenderer: plan → canonical; no plan → error (no silent l
   assert.equal(noPlan.mode, "error")
   assert.equal(noPlan.reason, "canonical_plan_missing")
 
-  const noPlanEvenWithLegacyFlag = chooseHomepageRenderer(FIXTURE_NO_PLAN, {
-    allowLegacy: false,
-  })
-  assert.equal(noPlanEvenWithLegacyFlag.mode, "error")
+  const forbidden = chooseHomepageRenderer(FIXTURE_ALPHA, { forceLegacy: true })
+  assert.equal(forbidden.mode, "error")
+  assert.equal(forbidden.reason, "legacy_forbidden_for_canonical_plan")
 })
 
 test("theme Alpha differs from Beta; bad branding uses defaults", () => {

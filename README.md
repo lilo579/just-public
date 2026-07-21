@@ -348,7 +348,6 @@ See `.env.example` and `.dev.vars.example`. Summary:
 | `SUPABASE_ANON_KEY` | SSR / Worker binding | Anon only — never service role |
 | `PUBLIC_SITE_PAYLOAD_URL` | build-time + future runtime | Prefer local mock in POC |
 | `PUBLIC_LEADS_INTAKE_URL` | public | Leads |
-| `PUBLIC_ALLOW_LEGACY_RENDERER` | SSR | Explicit legacy gate |
 | `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` | catalog client | Naming débit vs `SUPABASE_ANON_KEY` |
 
 ## Local development

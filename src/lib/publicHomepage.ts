@@ -25,9 +25,14 @@ export type FetchPublicSitePayloadOptions = {
 
 export { HostResolutionError, normalizeRequestHostname }
 
+/**
+ * @param options.forceLegacy — if true while a canonical plan exists, returns
+ *   `legacy_forbidden_for_canonical_plan` (kill-switch). Ignored when no plan
+ *   (Shop/NoSource already use the legacy runtime architecturally).
+ */
 export function chooseHomepageRenderer(
   homepage: ResolvedHomepage,
-  options?: { allowLegacy?: boolean; forceLegacy?: boolean },
+  options?: { forceLegacy?: boolean },
 ): RendererChoice {
   return chooseRenderer(homepage, options) as RendererChoice
 }
