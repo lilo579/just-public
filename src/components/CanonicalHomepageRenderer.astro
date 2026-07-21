@@ -1,4 +1,8 @@
 ---
+/**
+ * Painted Execution Plan binder — no domain compilation.
+ * Expects `node.paint` (final block + layout) from Hub compile.
+ */
 import HeroBlock from "./blocks/HeroBlock.astro"
 import TrustBlock from "./blocks/TrustBlock.astro"
 import ServicesBlock from "./blocks/ServicesBlock.astro"
@@ -10,19 +14,6 @@ import ProcessBlock from "./blocks/ProcessBlock.astro"
 import InfoCardBlock from "./blocks/InfoCardBlock.astro"
 import TestimonialsBlock from "./blocks/TestimonialsBlock.astro"
 import CtaBlock from "./blocks/CtaBlock.astro"
-import { buildCanonicalCtaPrimaryCTA } from "./canonicalHomepageCtaAdapter.js"
-import {
-  adaptCanonicalBenefits,
-  projectBenefitsToFeaturesBlock,
-  shouldRenderBenefitsAsFeatures,
-} from "./canonicalHomepageBenefitsAdapter.js"
-import { adaptCanonicalHero } from "./canonicalHomepageHeroAdapter.js"
-import { adaptCanonicalTrust } from "./canonicalHomepageTrustAdapter.js"
-import { adaptCanonicalTestimonials } from "./canonicalHomepageTestimonialsAdapter.js"
-import {
-  resolveF1PresentationProfile,
-  resolveF1PresentationChrome,
-} from "../lib/f1PresentationProfile.js"
 
 import type {
   AboutBlock as AboutBlockType,
@@ -40,145 +31,12 @@ import type {
   TrustBlock as TrustBlockType,
 } from "../contracts/homepage"
 
-const { plan, showDiagnostics = false, presentationProfile: presentationProfileProp } =
-  Astro.props as {
-    plan: SerializableHomepageRenderPlan
-    showDiagnostics?: boolean
-    presentationProfile?: string | null
-  }
-
-const presentationProfile = resolveF1PresentationProfile(presentationProfileProp)
-const chrome = resolveF1PresentationChrome(presentationProfile)
-
-type SupportedComponentKey =
-  | "hero"
-  | "trust"
-  | "problem"
-  | "services"
-  | "rich_text"
-  | "about"
-  | "benefits"
-  | "features"
-  | "process"
-  | "attendance"
-  | "testimonials"
-  | "cta_final"
-
-type RenderableNode =
-  | {
-      kind: "hero"
-      node: SerializableHomepageRenderNode
-      block: HeroBlockType
-      warnings: string[]
-    }
-  | {
-      kind: "trust"
-      node: SerializableHomepageRenderNode
-      block: TrustBlockType
-      warnings: string[]
-    }
-  | {
-      kind: "services"
-      node: SerializableHomepageRenderNode
-      block: ServicesBlockType
-      warnings: string[]
-    }
-  | {
-      kind: "problem"
-      node: SerializableHomepageRenderNode
-      block: RichTextBlockType
-      warnings: string[]
-    }
-  | {
-      kind: "rich_text"
-      node: SerializableHomepageRenderNode
-      block: RichTextBlockType
-      warnings: string[]
-    }
-  | {
-      kind: "about"
-      node: SerializableHomepageRenderNode
-      block: AboutBlockType
-      warnings: string[]
-    }
-  | {
-      kind: "benefits"
-      node: SerializableHomepageRenderNode
-      block: BenefitsBlockType
-      warnings: string[]
-    }
-  | {
-      kind: "features"
-      node: SerializableHomepageRenderNode
-      block: FeaturesBlockType
-      warnings: string[]
-    }
-  | {
-      kind: "process"
-      node: SerializableHomepageRenderNode
-      block: ProcessBlockType
-      warnings: string[]
-    }
-  | {
-      kind: "attendance"
-      node: SerializableHomepageRenderNode
-      block: InfoCardBlockType
-      warnings: string[]
-    }
-  | {
-      kind: "testimonials"
-      node: SerializableHomepageRenderNode
-      block: TestimonialsBlockType
-      warnings: string[]
-    }
-  | {
-      kind: "cta_final"
-      node: SerializableHomepageRenderNode
-      block: CtaBlockType
-      warnings: string[]
-    }
-  | {
-      kind: "unsupported"
-      node: SerializableHomepageRenderNode
-      reason: string
-      warnings: string[]
-    }
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
+const { plan, showDiagnostics = false } = Astro.props as {
+  plan: SerializableHomepageRenderPlan
+  showDiagnostics?: boolean
 }
 
-function readContentSource(props: Record<string, unknown>): Record<string, unknown> {
-  if (isRecord(props.content)) return props.content
-  return props
-}
-
-function readNamespacedSource(
-  props: Record<string, unknown>,
-  namespace: string
-): Record<string, unknown> {
-  if (isRecord(props[namespace])) return props[namespace]
-  return readContentSource(props)
-}
-
-function asOptionalString(value: unknown): string | null | undefined {
-  return typeof value === "string" ? value : undefined
-}
-
-function hasTextContent(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0
-}
-
-function asStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return []
-  return value.filter((item): item is string => typeof item === "string")
-}
-
-function sanitizeWhatsappNumber(value: unknown): string | null {
-  if (typeof value !== "string") return null
-  const digits = value.replace(/\D/g, "")
-  return digits ? digits : null
-}
+type PaintedNode = NonNullable<SerializableHomepageRenderNode["paint"]>
 
 function sanitizeCommentValue(value: string): string {
   return value.replaceAll("--", " ").trim()
@@ -191,458 +49,26 @@ function commentFor(node: SerializableHomepageRenderNode, reason: string) {
   return `<!-- CanonicalHomepageRenderer skipped node id=${safeId} componentKey=${safeKey} reason=${safeReason} -->`
 }
 
-function warn(node: SerializableHomepageRenderNode, message: string) {
-  return `${node.componentKey}: ${message}`
-}
+const orderedNodes = [...(plan.nodes ?? [])].sort((left, right) => left.order - right.order)
 
-function adaptHero(node: SerializableHomepageRenderNode): {
-  block: HeroBlockType
-  warnings: string[]
-} {
-  return {
-    block: adaptCanonicalHero(node.props) as HeroBlockType,
-    warnings: [],
-  }
-}
-
-function adaptTrust(node: SerializableHomepageRenderNode): {
-  block: TrustBlockType
-  warnings: string[]
-} {
-  return {
-    block: adaptCanonicalTrust(node.props) as TrustBlockType,
-    warnings: [],
-  }
-}
-
-function adaptServices(node: SerializableHomepageRenderNode): {
-  block: ServicesBlockType
-  warnings: string[]
-} {
-  const source = readNamespacedSource(node.props, "services")
-  const warnings: string[] = []
-  const items = Array.isArray(source.items)
-    ? source.items
-        .filter(isRecord)
-        .map((item, index) => {
-          const title = asOptionalString(item.title) ?? ""
-          const description = asOptionalString(item.description) ?? ""
-
-          if (title && !hasTextContent(description)) {
-            warnings.push(
-              warn(
-                node,
-                `services item ${index + 1} has title but empty description; ServicesBlock will not render this item`
-              )
-            )
-          }
-
-          return {
-            title,
-            description,
-          }
-        })
-        .filter((item) => item.title)
-    : []
-
-  return {
-    block: {
-      type: "services",
-      content: {
-        source: "canonical_preview",
-        kicker: asOptionalString(source.kicker),
-        title: asOptionalString(source.title),
-        items,
-      },
-    },
-    warnings,
-  }
-}
-
-function adaptRichText(node: SerializableHomepageRenderNode): {
-  block: RichTextBlockType
-  warnings: string[]
-} {
-  const source = readContentSource(node.props)
-  return {
-    block: {
-      type: "rich_text",
-      content: {
-        title: asOptionalString(source.title),
-        paragraphs: asStringArray(source.paragraphs),
-      },
-    },
-    warnings: [],
-  }
-}
-
-function adaptProblem(node: SerializableHomepageRenderNode): {
-  block: RichTextBlockType
-  warnings: string[]
-} {
-  const source = readNamespacedSource(node.props, "problem")
-  return {
-    block: {
-      type: "rich_text",
-      content: {
-        title: asOptionalString(source.title),
-        paragraphs: asStringArray(source.paragraphs),
-      },
-    },
-    warnings: [],
-  }
-}
-
-function adaptAbout(node: SerializableHomepageRenderNode): {
-  block: AboutBlockType
-  warnings: string[]
-} {
-  const source = readNamespacedSource(node.props, "about")
-  return {
-    block: {
-      type: "about",
-      content: {
-        title: asOptionalString(source.title),
-        body: asOptionalString(source.body),
-        photoUrl: asOptionalString(source.photoUrl),
-      },
-    },
-    warnings: [],
-  }
-}
-
-function adaptBenefits(node: SerializableHomepageRenderNode): {
-  block: BenefitsBlockType
-  warnings: string[]
-} {
-  const source = readNamespacedSource(node.props, "benefits")
-  return {
-    block: adaptCanonicalBenefits(source),
-    warnings: [],
-  }
-}
-
-function adaptFeatures(node: SerializableHomepageRenderNode): {
-  block: FeaturesBlockType
-  warnings: string[]
-} {
-  const source = readContentSource(node.props)
-  const warnings: string[] = []
-  const items = Array.isArray(source.items)
-    ? source.items
-        .filter(isRecord)
-        .map((item) => ({
-          title: asOptionalString(item.title) ?? "",
-          description: asOptionalString(item.description),
-        }))
-        .filter((item) => item.title)
-    : []
-
-  return {
-    block: {
-      type: "features",
-      content: {
-        title: asOptionalString(source.title),
-        items,
-      },
-    },
-    warnings,
-  }
-}
-
-function adaptProcess(node: SerializableHomepageRenderNode): {
-  block: ProcessBlockType
-  warnings: string[]
-} {
-  const source = readNamespacedSource(node.props, "process")
-  const steps = Array.isArray(source.steps)
-    ? source.steps
-        .filter(isRecord)
-        .map((step, index) => ({
-          number: typeof step.number === "number" ? step.number : index + 1,
-          title: asOptionalString(step.title) ?? "",
-          description: asOptionalString(step.description),
-        }))
-        .filter((step) => step.title)
-    : []
-
-  return {
-    block: {
-      type: "process",
-      content: {
-        kicker: asOptionalString(source.kicker),
-        title: asOptionalString(source.title),
-        body: asOptionalString(source.body),
-        steps,
-      },
-    },
-    warnings: [],
-  }
-}
-
-function adaptInfoCard(node: SerializableHomepageRenderNode): {
-  block: InfoCardBlockType
-  warnings: string[]
-} {
-  const source = readNamespacedSource(node.props, "attendance")
-  return {
-    block: {
-      type: "info_card",
-      content: {
-        title: asOptionalString(source.title),
-        body: asOptionalString(source.body),
-        pills: asStringArray(source.pills),
-      },
-    },
-    warnings: [],
-  }
-}
-
-function adaptTestimonials(node: SerializableHomepageRenderNode): {
-  block: TestimonialsBlockType
-  warnings: string[]
-} {
-  return {
-    block: adaptCanonicalTestimonials(node.props) as TestimonialsBlockType,
-    warnings: [],
-  }
-}
-
-function adaptCta(node: SerializableHomepageRenderNode): {
-  block: CtaBlockType
-  warnings: string[]
-} {
-  const source = readNamespacedSource(node.props, "ctaFinal")
-  const contact = isRecord(node.props.contact) ? node.props.contact : {}
-  const warnings: string[] = []
-  const primaryCTA = buildCanonicalCtaPrimaryCTA(source, contact)
-
-  if (!primaryCTA) {
-    warnings.push(warn(node, "cta_final has no actionable WhatsApp or email channel"))
-  }
-
-  return {
-    block: {
-      type: "cta",
-      content: {
-        title: asOptionalString(source.title),
-        body: asOptionalString(source.body),
-        buttonLabel: asOptionalString(source.buttonLabel),
-        primaryCTA,
-      },
-    },
-    warnings,
-  }
-}
-
-function normalizeComponentKey(componentKey: string): SupportedComponentKey | null {
-  const [baseKey] = componentKey.split(":")
-  switch (baseKey) {
-    case "hero":
-    case "trust":
-    case "problem":
-    case "services":
-    case "rich_text":
-    case "about":
-    case "benefits":
-    case "features":
-    case "process":
-    case "attendance":
-    case "testimonials":
-    case "cta_final":
-      return baseKey
-    default:
-      return null
-  }
-}
-
-function adaptNode(node: SerializableHomepageRenderNode): RenderableNode {
-  const componentKey = normalizeComponentKey(node.componentKey)
-
-  switch (componentKey) {
-    case "hero": {
-      const { block, warnings } = adaptHero(node)
-      return { kind: "hero", node, block, warnings }
-    }
-    case "trust": {
-      const { block, warnings } = adaptTrust(node)
-      return { kind: "trust", node, block, warnings }
-    }
-    case "services": {
-      const { block, warnings } = adaptServices(node)
-      return { kind: "services", node, block, warnings }
-    }
-    case "problem": {
-      const { block, warnings } = adaptProblem(node)
-      return { kind: "problem", node, block, warnings }
-    }
-    case "rich_text": {
-      const { block, warnings } = adaptRichText(node)
-      return { kind: "rich_text", node, block, warnings }
-    }
-    case "about": {
-      const { block, warnings } = adaptAbout(node)
-      return { kind: "about", node, block, warnings }
-    }
-    case "benefits": {
-      const { block, warnings } = adaptBenefits(node)
-      return { kind: "benefits", node, block, warnings }
-    }
-    case "features": {
-      const { block, warnings } = adaptFeatures(node)
-      return { kind: "features", node, block, warnings }
-    }
-    case "process": {
-      const { block, warnings } = adaptProcess(node)
-      return { kind: "process", node, block, warnings }
-    }
-    case "attendance": {
-      const { block, warnings } = adaptInfoCard(node)
-      return { kind: "attendance", node, block, warnings }
-    }
-    case "testimonials": {
-      const { block, warnings } = adaptTestimonials(node)
-      return { kind: "testimonials", node, block, warnings }
-    }
-    case "cta_final": {
-      const { block, warnings } = adaptCta(node)
-      return { kind: "cta_final", node, block, warnings }
-    }
-    default:
-      return {
-        kind: "unsupported",
-        node,
-        reason: "componentKey_not_supported_in_canonical_preview",
-        warnings: [
-          warn(node, "unsupported componentKey; node skipped by canonical preview adapter"),
-        ],
-      }
-  }
-}
-
-function hasUsefulContent(entry: Exclude<RenderableNode, { kind: "unsupported" }>) {
-  switch (entry.kind) {
-    case "hero":
-      return Boolean(
-        hasTextContent(entry.block.content.title) ||
-          hasTextContent(entry.block.content.subtitle) ||
-          hasTextContent(entry.block.content.eyebrow) ||
-          hasTextContent(entry.block.content.highlight) ||
-          (entry.block.content.metrics ?? []).some(
-            (metric) =>
-              hasTextContent(metric.label) ||
-              hasTextContent(metric.value) ||
-              hasTextContent(metric.description)
-          )
-      )
-    case "trust":
-      return (
-        entry.block.content.hasContent &&
-        (Boolean(hasTextContent(entry.block.content.title)) ||
-          entry.block.content.items.some(hasTextContent) ||
-          (entry.block.content.logos ?? []).some(
-            (logo) => hasTextContent(logo.imageUrl) || hasTextContent(logo.name)
-          ))
-      )
-    case "services":
-      return (
-        Boolean(hasTextContent(entry.block.content.kicker)) ||
-        entry.block.content.items.some(
-          (item) => hasTextContent(item.title) && hasTextContent(item.description)
-        )
-      )
-    case "problem":
-    case "rich_text":
-      return Boolean(
-        hasTextContent(entry.block.content.title) ||
-          entry.block.content.paragraphs.some(hasTextContent)
-      )
-    case "about":
-      return Boolean(
-        hasTextContent(entry.block.content.title) ||
-          hasTextContent(entry.block.content.body) ||
-          hasTextContent(entry.block.content.photoUrl)
-      )
-    case "benefits":
-      return Boolean(
-        hasTextContent(entry.block.content.kicker) ||
-          hasTextContent(entry.block.content.title) ||
-          hasTextContent(entry.block.content.body) ||
-          hasTextContent(entry.block.content.summary) ||
-          entry.block.content.items.some(
-            (item) =>
-              hasTextContent(item.title) ||
-              hasTextContent(item.description) ||
-              hasTextContent(item.imageUrl)
-          ) ||
-          entry.block.content.metrics.some(
-            (metric) =>
-              hasTextContent(metric.label) ||
-              hasTextContent(metric.value) ||
-              hasTextContent(metric.description)
-          )
-      )
-    case "features":
-      return entry.block.content.items.some((item) => hasTextContent(item.title))
-    case "process":
-      return Boolean(
-        hasTextContent(entry.block.content.kicker) ||
-          hasTextContent(entry.block.content.title) ||
-          hasTextContent(entry.block.content.body) ||
-          entry.block.content.steps.some((step) => hasTextContent(step.title))
-      )
-    case "attendance":
-      return Boolean(
-        hasTextContent(entry.block.content.title) ||
-          hasTextContent(entry.block.content.body) ||
-          entry.block.content.pills.some(hasTextContent)
-      )
-    case "testimonials":
-      return (
-        entry.block.content.images.some((image) => hasTextContent(image.url)) ||
-        (entry.block.content.items ?? []).some(
-          (item) =>
-            hasTextContent(item.company) ||
-            hasTextContent(item.tag) ||
-            hasTextContent(item.quote) ||
-            hasTextContent(item.result)
-        )
-      )
-    case "cta_final": {
-      const { title, body, buttonLabel, primaryCTA } = entry.block.content
-      const finalLabel = buttonLabel ?? primaryCTA?.label
-      const showButton =
-        primaryCTA?.visible !== false && hasTextContent(primaryCTA?.href) && hasTextContent(finalLabel)
-      return Boolean(hasTextContent(title) || hasTextContent(body) || showButton)
+const paintedEntries = orderedNodes.map((node) => {
+  const paint = node.paint as PaintedNode | undefined
+  if (!paint || !paint.component || !paint.block) {
+    return {
+      kind: "unsupported" as const,
+      node,
+      reason: "paint_missing_on_node",
     }
   }
-}
-
-const renderableNodes = [...(plan.nodes ?? [])]
-  .sort((left, right) => left.order - right.order)
-  .map(adaptNode)
-
-const diagnosticWarnings = renderableNodes.flatMap((entry) => {
-  if (entry.kind === "unsupported") {
-    return entry.warnings
-  }
-
-  const warnings = [...entry.warnings]
-
-  if (!hasUsefulContent(entry)) {
-    warnings.push(warn(entry.node, "adapter produced block with no useful renderable content"))
-  }
-
-  return warnings
+  return { kind: "paint" as const, node, paint }
 })
 
-const unsupportedEntries = renderableNodes.filter(
-  (entry): entry is Extract<RenderableNode, { kind: "unsupported" }> => entry.kind === "unsupported"
+const unsupportedEntries = paintedEntries.filter(
+  (entry): entry is Extract<(typeof paintedEntries)[number], { kind: "unsupported" }> =>
+    entry.kind === "unsupported"
 )
 const unsupportedComponentKeys = unsupportedEntries.map((entry) => entry.node.componentKey)
-const renderedCount = renderableNodes.filter(
-  (entry) => entry.kind !== "unsupported" && hasUsefulContent(entry)
-).length
+const renderedCount = paintedEntries.filter((entry) => entry.kind === "paint").length
 ---
 
 {
@@ -667,8 +93,8 @@ const renderedCount = renderableNodes.filter(
           <dd>{unsupportedEntries.length}</dd>
         </div>
         <div>
-          <dt>Warnings</dt>
-          <dd>{diagnosticWarnings.length}</dd>
+          <dt>Paint mode</dt>
+          <dd>bind-only</dd>
         </div>
       </dl>
 
@@ -687,16 +113,8 @@ const renderedCount = renderableNodes.filter(
         </div>
 
         <div>
-          <h2>Adapter warnings</h2>
-          {diagnosticWarnings.length > 0 ? (
-            <ul>
-              {diagnosticWarnings.map((message) => (
-                <li>{message}</li>
-              ))}
-            </ul>
-          ) : (
-            <p>None</p>
-          )}
+          <h2>Presentation</h2>
+          <p>{plan.presentation?.profile ?? "n/a"}</p>
         </div>
       </div>
     </section>
@@ -704,24 +122,34 @@ const renderedCount = renderableNodes.filter(
 }
 
 {
-  renderableNodes.map((entry) => {
-    switch (entry.kind) {
+  paintedEntries.map((entry) => {
+    if (entry.kind === "unsupported") {
+      return <Fragment set:html={commentFor(entry.node, entry.reason)} />
+    }
+
+    const { paint } = entry
+    const layout = paint.layout ?? {}
+
+    switch (paint.component) {
       case "hero":
-        return <HeroBlock block={entry.block} />
+        return <HeroBlock block={paint.block as HeroBlockType} />
 
       case "trust":
         return (
-          <TrustBlock block={entry.block} overlapHero={chrome.trustOverlapsHero} />
+          <TrustBlock
+            block={paint.block as TrustBlockType}
+            overlapHero={layout.trustOverlapsHero === true}
+          />
         )
 
       case "services":
         return (
           <ServicesBlock
-            block={entry.block}
+            block={paint.block as ServicesBlockType}
             layout={
-              chrome.servicesLayout === "classic-split"
+              layout.servicesLayout === "classic-split"
                 ? "classic-split"
-                : chrome.servicesAsCardGrid
+                : layout.servicesLayout === "cards"
                   ? "cards"
                   : "list"
             }
@@ -729,23 +157,18 @@ const renderedCount = renderableNodes.filter(
         )
 
       case "problem":
-        return <RichTextBlock block={entry.block} />
-
       case "rich_text":
-        return <RichTextBlock block={entry.block} />
+        return <RichTextBlock block={paint.block as RichTextBlockType} />
 
       case "about":
-        return <AboutBlock block={entry.block} />
+        return <AboutBlock block={paint.block as AboutBlockType} />
 
       case "benefits":
-        return chrome.benefitsAsFeatureCards &&
-          shouldRenderBenefitsAsFeatures(entry.block) ? (
-          <FeaturesBlock block={projectBenefitsToFeaturesBlock(entry.block)} />
-        ) : (
+        return (
           <BenefitsBlock
-            block={entry.block}
+            block={paint.block as BenefitsBlockType}
             layout={
-              chrome.benefitsLayout === "classic-criteria-grid"
+              layout.benefitsLayout === "classic-criteria-grid"
                 ? "classic-criteria-grid"
                 : "standard"
             }
@@ -753,33 +176,41 @@ const renderedCount = renderableNodes.filter(
         )
 
       case "features":
-        return <FeaturesBlock block={entry.block} />
+        return <FeaturesBlock block={paint.block as FeaturesBlockType} />
 
       case "process":
         return (
           <ProcessBlock
-            block={entry.block}
-            indexIcons={chrome.processIndexIcons}
-            badgeEmphasis={chrome.processBadgeEmphasis}
+            block={paint.block as ProcessBlockType}
+            indexIcons={layout.processIndexIcons === true}
+            badgeEmphasis={
+              layout.processBadgeEmphasis === "primary" ? "primary" : "accent"
+            }
           />
         )
 
       case "attendance":
         return (
           <InfoCardBlock
-            block={entry.block}
-            pillIconEmphasis={chrome.attendancePillIconEmphasis}
+            block={paint.block as InfoCardBlockType}
+            pillIconEmphasis={
+              layout.attendancePillIconEmphasis === "primary" ? "primary" : "accent"
+            }
           />
         )
 
       case "testimonials":
-        return <TestimonialsBlock block={entry.block} />
+        return <TestimonialsBlock block={paint.block as TestimonialsBlockType} />
 
       case "cta_final":
-        return <CtaBlock block={entry.block} />
+        return <CtaBlock block={paint.block as CtaBlockType} />
 
-      case "unsupported":
-        return <Fragment set:html={commentFor(entry.node, entry.reason)} />
+      default:
+        return (
+          <Fragment
+            set:html={commentFor(entry.node, `unsupported_paint_component_${paint.component}`)}
+          />
+        )
     }
   })
 }

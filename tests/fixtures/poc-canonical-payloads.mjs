@@ -84,6 +84,26 @@ function runtimeFor(id) {
 }
 
 function planNode(partial) {
+  const props = partial.props ?? {}
+  let paint = partial.paint
+  if (!paint && partial.componentKey?.startsWith("hero")) {
+    const hero = props.hero ?? {}
+    paint = {
+      component: "hero",
+      block: {
+        type: "hero",
+        content: {
+          title: hero.title,
+          subtitle: hero.subtitle,
+          eyebrow: hero.eyebrow,
+          highlight: hero.highlight,
+          metrics: hero.metrics ?? [],
+        },
+        primaryCTA: props.primaryCTA ?? null,
+      },
+      layout: {},
+    }
+  }
   return {
     id: partial.id,
     variant: partial.variant ?? "default",
@@ -92,6 +112,7 @@ function planNode(partial) {
     runtime: runtimeFor(partial.id),
     capabilities: { ...CAPABILITIES },
     props: partial.props,
+    paint,
   }
 }
 
@@ -113,6 +134,10 @@ function buildPlan(tenantKey, nodes) {
       variant: n.variant,
       visible: true,
     })),
+    presentation: {
+      profile: "f1.presentation.engine_v1",
+      chrome: {},
+    },
     nodes,
   }
 }

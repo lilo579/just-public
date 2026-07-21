@@ -26,6 +26,89 @@ function runtimeFor(id) {
 }
 
 function planNode(partial) {
+  const paint =
+    partial.paint ??
+    (() => {
+      // Minimal paint for POC fixtures (bind-only renderer).
+      const props = partial.props ?? {}
+      if (partial.componentKey?.startsWith("hero")) {
+        const hero = props.hero ?? {}
+        return {
+          component: "hero",
+          block: {
+            type: "hero",
+            content: {
+              title: hero.title,
+              subtitle: hero.subtitle,
+              eyebrow: hero.eyebrow,
+              highlight: hero.highlight,
+              metrics: hero.metrics ?? [],
+            },
+            primaryCTA: props.primaryCTA ?? null,
+          },
+          layout: {},
+        }
+      }
+      if (partial.componentKey?.startsWith("services")) {
+        const services = props.services ?? {}
+        return {
+          component: "services",
+          block: {
+            type: "services",
+            content: {
+              source: "canonical_preview",
+              kicker: services.kicker,
+              title: services.title,
+              items: services.items ?? [],
+            },
+          },
+          layout: { servicesLayout: "list" },
+        }
+      }
+      if (partial.componentKey?.startsWith("cta_final")) {
+        const ctaFinal = props.ctaFinal ?? {}
+        const contact = props.contact ?? {}
+        const digits =
+          typeof contact.whatsappNumber === "string"
+            ? contact.whatsappNumber.replace(/\D/g, "")
+            : ""
+        const primaryCTA =
+          contact.whatsappVisible && digits
+            ? {
+                type: "whatsapp",
+                href: `https://wa.me/${digits}`,
+                label: ctaFinal.buttonLabel ?? "Fale pelo WhatsApp",
+                visible: true,
+              }
+            : contact.email
+              ? {
+                  type: "email",
+                  href: `mailto:${contact.email}`,
+                  label: ctaFinal.buttonLabel ?? "Enviar email",
+                  visible: true,
+                }
+              : null
+        return {
+          component: "cta_final",
+          block: {
+            type: "cta",
+            content: {
+              title: ctaFinal.title,
+              body: ctaFinal.body,
+              buttonLabel: ctaFinal.buttonLabel,
+              primaryCTA,
+            },
+          },
+          layout: {},
+        }
+      }
+      return {
+        component: "rich_text",
+        block: { type: "rich_text", content: { title: null, paragraphs: [] } },
+        layout: {},
+      }
+    })()
+
   return {
     id: partial.id,
     variant: partial.variant ?? "default",
@@ -34,6 +117,7 @@ function planNode(partial) {
     runtime: runtimeFor(partial.id),
     capabilities: { ...CAPABILITIES },
     props: partial.props,
+    paint,
   }
 }
 
@@ -55,6 +139,14 @@ function buildPlan(tenantKey, nodes) {
       variant: n.variant,
       visible: true,
     })),
+    presentation: {
+      profile: "f1.presentation.engine_v1",
+      chrome: {
+        trustOverlapsHero: true,
+        benefitsAsFeatureCards: true,
+        servicesLayout: "engine-list",
+      },
+    },
     nodes,
   }
 }

@@ -249,7 +249,14 @@ export type SerializableHomepageRenderNode = {
   componentKey: string
   runtime: SerializableHomepageRuntime
   capabilities: SerializableHomepageCapabilities
+  /** Source-shaped props (Hub React). Public Astro uses `paint` only. */
   props: Record<string, unknown>
+  /** Painted Astro block + layout — sole public paint authority. */
+  paint?: {
+    component: string
+    block: Record<string, unknown>
+    layout?: Record<string, unknown>
+  }
 }
 
 export type SerializableHomepageRenderPlan = {
@@ -257,6 +264,10 @@ export type SerializableHomepageRenderPlan = {
   recipe: SerializableHomepageRecipe
   instances: SerializableHomepageBlockInstance[]
   nodes: SerializableHomepageRenderNode[]
+  presentation?: {
+    profile: string
+    chrome: Record<string, unknown>
+  }
 }
 
 export type ResolvedHomepage = {
