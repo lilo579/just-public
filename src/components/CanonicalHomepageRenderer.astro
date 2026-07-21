@@ -14,6 +14,9 @@ import ProcessBlock from "./blocks/ProcessBlock.astro"
 import InfoCardBlock from "./blocks/InfoCardBlock.astro"
 import TestimonialsBlock from "./blocks/TestimonialsBlock.astro"
 import CtaBlock from "./blocks/CtaBlock.astro"
+import CatalogCategoryNavBlock from "./blocks/CatalogCategoryNavBlock.astro"
+import CatalogProductGridBlock from "./blocks/CatalogProductGridBlock.astro"
+import CatalogRichSectionBlock from "./blocks/CatalogRichSectionBlock.astro"
 
 import type {
   AboutBlock as AboutBlockType,
@@ -204,6 +207,17 @@ const renderedCount = paintedEntries.filter((entry) => entry.kind === "paint").l
 
       case "cta_final":
         return <CtaBlock block={paint.block as CtaBlockType} />
+
+      case "category_nav":
+        return <CatalogCategoryNavBlock block={paint.block} />
+
+      case "product_grid":
+        return <CatalogProductGridBlock block={paint.block} />
+
+      case "customization":
+      case "maker_story":
+      case "fulfillment":
+        return <CatalogRichSectionBlock block={paint.block} />
 
       default:
         return (

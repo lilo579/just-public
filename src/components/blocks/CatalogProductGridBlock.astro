@@ -1,0 +1,19 @@
+---
+/** Bind-only F3 product grid (paint.product_grid). */
+const { block } = Astro.props as {
+  block: { type: string; content: Record<string, unknown> };
+};
+const items = Array.isArray(block.content.items)
+  ? (block.content.items as Array<{ title?: string | null; description?: string | null }>)
+  : [];
+---
+<section class="catalog-product-grid" aria-label="Featured products">
+  <ul>
+    {items.map((item) => (
+      <li>
+        <strong>{item.title ?? ""}</strong>
+        {item.description ? <p>{item.description}</p> : null}
+      </li>
+    ))}
+  </ul>
+</section>

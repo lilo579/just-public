@@ -1,0 +1,12 @@
+---
+/** Bind-only generic catalog narrative block (customization / maker / fulfillment). */
+const { block } = Astro.props as {
+  block: { type: string; content: Record<string, unknown> };
+};
+const title = typeof block.content.title === "string" ? block.content.title : null;
+const body = typeof block.content.body === "string" ? block.content.body : null;
+---
+<section class="catalog-rich-section">
+  {title ? <h2>{title}</h2> : null}
+  {body ? <p>{body}</p> : null}
+</section>
