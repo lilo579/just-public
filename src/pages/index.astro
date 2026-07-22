@@ -27,6 +27,7 @@ import { themeTokensFromBranding } from "../lib/themeFromBranding"
 import { buildPublicHomepageSeo } from "../lib/publicPageSeo.js"
 import {
   resolveHeaderLogoUrl,
+  resolveHeaderOverHeroLogoUrl,
   resolveFooterLogoUrl,
 } from "@just/site-engine-authority"
 import { resolvePublicPresentationBinding } from "../lib/publicPresentationBinding.js"
@@ -189,7 +190,26 @@ const brandingName =
   homepageWithSource.source?.contact?.companyName ?? footer.companyName ?? "Site"
 const brandingMeta = homepageWithSource.source?.meta?.branding ?? null
 const brandingLogo = resolveHeaderLogoUrl(brandingMeta, presentationChrome)
+const brandingLogoOverHero = resolveHeaderOverHeroLogoUrl(
+  brandingMeta,
+  presentationChrome,
+)
 const footerLogoUrl = resolveFooterLogoUrl(brandingMeta, presentationChrome)
+const headerOverHero = presentationChrome.headerOverHero === true
+const cinematicEditorial =
+  presentationChrome &&
+  "cinematicEditorial" in presentationChrome &&
+  presentationChrome.cinematicEditorial
+    ? presentationChrome.cinematicEditorial
+    : null
+const headerNavItems = Array.isArray(cinematicEditorial?.navItems)
+  ? cinematicEditorial.navItems
+  : []
+const headerCtaLabel =
+  typeof cinematicEditorial?.headerCtaLabel === "string" &&
+  cinematicEditorial.headerCtaLabel.trim()
+    ? cinematicEditorial.headerCtaLabel
+    : "WhatsApp"
 const tokens = themeTokensFromBranding(homepageWithSource.source?.meta?.branding ?? null)
 const fontLoadUrl =
   typeof tokens.__fontLoadUrl === "string" ? tokens.__fontLoadUrl : null
@@ -237,15 +257,20 @@ const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : ""
         <Header
           siteTitle={brandingName}
           logoUrl={brandingLogo}
+          logoOverHeroUrl={brandingLogoOverHero}
           logoAlt={brandingName}
           whatsappHref={whatsappHref}
           pillChrome={presentationChrome.headerPillChrome}
+          overHero={headerOverHero}
+          ctaLabel={headerCtaLabel}
+          navItems={headerNavItems}
         />
 
         <main class="page-shell" data-renderer={choice.mode} data-f1-presentation={presentationProfile}>
           {choice.mode === "canonical" ? (
             <CanonicalHomepageRenderer
               plan={choice.plan}
+              presentationChrome={presentationChrome}
             />
           ) : (
             <div data-legacy-runtime={choice.reason}>

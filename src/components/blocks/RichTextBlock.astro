@@ -1,30 +1,55 @@
 ---
 import type { HomepageBlock } from "../../contracts/homepage";
 
-const { block } = Astro.props as {
+const { block, layout = "standard" } = Astro.props as {
   block: HomepageBlock & {
     type: "rich_text";
     content: {
       title?: string;
       paragraphs?: string[];
+      kicker?: string | null;
+      pullQuote?: string | null;
     };
   };
+  layout?: "standard" | "cinematic-editorial";
 };
 
-const { title, paragraphs = [] } = block.content;
+const { title, paragraphs = [], kicker, pullQuote } = block.content;
 const visibleParagraphs = paragraphs.filter(Boolean);
+const isCinematic = layout === "cinematic-editorial";
 ---
 
-{(title || visibleParagraphs.length > 0) && (
-  <section class="rich-text">
+{(title || visibleParagraphs.length > 0 || (isCinematic && (kicker || pullQuote))) && (
+  <section class:list={["rich-text", isCinematic && "rich-text--cinematic"]}>
+    {isCinematic && (
+      <>
+        <div class="rich-text__glow" aria-hidden="true"></div>
+        <div class="rich-text__ring" aria-hidden="true"></div>
+      </>
+    )}
+
     <div class="rich-text__inner">
+      {isCinematic && kicker && <p class="rich-text__kicker">{kicker}</p>}
+
       {title && <h2>{title}</h2>}
+
+      {isCinematic && <div class="rich-text__hairline" aria-hidden="true"></div>}
 
       {visibleParagraphs.length > 0 && (
         <div class="rich-text__body">
           {visibleParagraphs.map((paragraph) => (
             <p>{paragraph}</p>
           ))}
+        </div>
+      )}
+
+      {isCinematic && pullQuote && (
+        <div class="rich-text__pull">
+          <p>
+            <span class="rich-text__q" aria-hidden="true">“</span>
+            {pullQuote}
+            <span class="rich-text__q" aria-hidden="true">”</span>
+          </p>
         </div>
       )}
     </div>
@@ -115,6 +140,152 @@ const visibleParagraphs = paragraphs.filter(Boolean);
       line-height: 1.72;
       text-align: left;
       text-wrap: pretty;
+    }
+  }
+
+  /* —— cinematic-editorial —— */
+  .rich-text--cinematic {
+    position: relative;
+    overflow: visible;
+    padding: 3.5rem 0;
+    background: #fbf8f4;
+  }
+
+  .rich-text--cinematic .rich-text__glow {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle at 78% 28%,
+      color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 4%, transparent) 0%,
+      transparent 34%
+    );
+  }
+
+  .rich-text--cinematic .rich-text__ring {
+    pointer-events: none;
+    position: absolute;
+    left: -140px;
+    top: 20px;
+    display: none;
+    height: 520px;
+    width: 520px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 10%, transparent);
+  }
+
+  .rich-text--cinematic .rich-text__inner {
+    position: relative;
+    z-index: 1;
+    max-width: 980px;
+  }
+
+  .rich-text--cinematic .rich-text__kicker {
+    margin: 0 0 1.5rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 72%, transparent);
+  }
+
+  .rich-text--cinematic h2 {
+    margin: 0 auto;
+    max-width: 22ch;
+    text-align: center;
+    font-family: var(--site-font-heading, Georgia, serif);
+    font-size: 2.45rem;
+    font-weight: 500;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    color: hsl(220 15% 15%);
+  }
+
+  .rich-text--cinematic .rich-text__hairline {
+    margin: 1.75rem auto 0;
+    height: 1px;
+    width: 5rem;
+    background: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 36%, transparent);
+  }
+
+  .rich-text--cinematic .rich-text__body {
+    margin: 2.25rem auto 0;
+    max-width: 980px;
+    gap: 1.5rem;
+  }
+
+  .rich-text--cinematic .rich-text__body p {
+    color: hsl(220 15% 15% / 0.72);
+    font-size: 1rem;
+    line-height: 1.95;
+    text-align: left;
+  }
+
+  .rich-text--cinematic .rich-text__pull {
+    margin: 3.5rem auto 0;
+    max-width: 760px;
+    text-align: center;
+  }
+
+  .rich-text--cinematic .rich-text__pull p {
+    margin: 0;
+    font-family: var(--site-font-heading, Georgia, serif);
+    font-style: italic;
+    font-size: 1.35rem;
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: -0.018em;
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 86%, transparent);
+    text-align: center;
+  }
+
+  .rich-text--cinematic .rich-text__q {
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 34%, transparent);
+  }
+
+  @media (min-width: 640px) {
+    .rich-text--cinematic h2 {
+      font-size: 2.85rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .rich-text--cinematic {
+      padding: 5rem 0;
+    }
+
+    .rich-text--cinematic .rich-text__ring {
+      display: block;
+    }
+
+    .rich-text--cinematic h2 {
+      font-size: 3.75rem;
+    }
+
+    .rich-text--cinematic .rich-text__body {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr 0.9fr;
+      gap: 1.5rem 2.5rem;
+    }
+
+    .rich-text--cinematic .rich-text__body p {
+      font-size: 1.02rem;
+    }
+
+    .rich-text--cinematic .rich-text__pull p {
+      font-size: 1.7rem;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .rich-text--cinematic {
+      padding: 3rem 0;
+    }
+
+    .rich-text--cinematic h2 {
+      font-size: 2.1rem;
+      text-align: center;
     }
   }
 </style>

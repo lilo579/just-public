@@ -6,18 +6,24 @@ type FeatureItem = {
   description?: string | null;
 };
 
-const { block } = Astro.props as {
+const { block, layout = "standard" } = Astro.props as {
   block: {
     type: "features";
     content: {
       title?: string | null;
       items?: FeatureItem[];
+      kicker?: string | null;
+      imageUrl?: string | null;
     };
   };
+  layout?: "standard" | "cinematic-principles";
 };
 
 const title = block.content?.title;
+const kicker = block.content?.kicker;
+const imageUrl = block.content?.imageUrl;
 const items = (block.content?.items ?? []).filter((item) => item?.title);
+const isCinematic = layout === "cinematic-principles";
 
 const iconNames = ["shield", "heart", "users", "clock", "star"] as const;
 
@@ -26,31 +32,69 @@ function iconFor(index: number) {
 }
 ---
 
-{items.length > 0 && (
-  <section class="features">
-    <div class="features__overlay" aria-hidden="true"></div>
+{(items.length > 0 || (isCinematic && (title || kicker || imageUrl))) && (
+  <section class:list={["features", isCinematic && "features--cinematic"]}>
+    {!isCinematic && <div class="features__overlay" aria-hidden="true"></div>}
 
     <div class="features__container">
-      {title && (
-        <div class="features__heading">
-          <h2>{title}</h2>
+      {isCinematic ? (
+        <div class="features__principles">
+          {imageUrl && (
+            <div class="features__media">
+              <div class="features__blob-ring" aria-hidden="true"></div>
+              <div class="features__frame">
+                <img src={imageUrl} alt="" class="features__image" loading="lazy" />
+                <div class="features__image-wash" aria-hidden="true"></div>
+              </div>
+            </div>
+          )}
+
+          <div class="features__panel">
+            {kicker && <p class="features__kicker">{kicker}</p>}
+            {title && <h2>{title}</h2>}
+            <div class="features__hairline" aria-hidden="true"></div>
+
+            {items.length > 0 && (
+              <div class="features__principles-grid">
+                {items.map((item, index) => (
+                  <article class="features__principle">
+                    <div class="features__principle-icon">
+                      <JustFeatureIcon name={iconFor(index)} />
+                    </div>
+                    <div class="features__principle-copy">
+                      <p class="features__principle-title">{item.title}</p>
+                      {item.description && <p>{item.description}</p>}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
+      ) : (
+        <>
+          {title && (
+            <div class="features__heading">
+              <h2>{title}</h2>
+            </div>
+          )}
+
+          <div class="features__grid">
+            {items.map((item, index) => (
+              <article class="features__card">
+                <div class="features__icon">
+                  <JustFeatureIcon name={iconFor(index)} />
+                </div>
+
+                <div class="features__content">
+                  <h3>{item.title}</h3>
+                  {item.description && <p>{item.description}</p>}
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
       )}
-
-      <div class="features__grid">
-        {items.map((item, index) => (
-          <article class="features__card">
-            <div class="features__icon">
-              <JustFeatureIcon name={iconFor(index)} />
-            </div>
-
-            <div class="features__content">
-              <h3>{item.title}</h3>
-              {item.description && <p>{item.description}</p>}
-            </div>
-          </article>
-        ))}
-      </div>
     </div>
   </section>
 )}
@@ -121,7 +165,6 @@ function iconFor(index: number) {
       0 8px 24px -6px hsl(220 15% 15% / 0.10);
   }
 
-  /* 🔥 ICON BASE (container) */
   .features__icon {
     flex: 0 0 auto;
     width: 2.8rem;
@@ -133,7 +176,6 @@ function iconFor(index: number) {
     justify-content: center;
   }
 
-  /* 🔥 ICON SVG CONTROL (ESSENCIAL) */
   .features__content {
     min-width: 0;
   }
@@ -187,6 +229,172 @@ function iconFor(index: number) {
     .features__card {
       gap: 1rem;
       padding: 1.25rem 1.25rem;
+    }
+  }
+
+  /* —— cinematic-principles —— */
+  .features--cinematic {
+    padding: 2.5rem 0 4rem;
+    background: #fbf8f4;
+  }
+
+  .features--cinematic .features__principles {
+    display: grid;
+    gap: 3.5rem;
+    align-items: center;
+  }
+
+  .features--cinematic .features__media {
+    position: relative;
+    display: none;
+  }
+
+  .features--cinematic .features__blob-ring {
+    position: absolute;
+    left: -2rem;
+    top: -2rem;
+    height: 108%;
+    width: 96%;
+    border-radius: 3.2rem 9rem 3.2rem 9rem;
+    border: 1px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 14%, transparent);
+  }
+
+  .features--cinematic .features__frame {
+    position: relative;
+    overflow: hidden;
+    border-radius: 3.2rem 9rem 3.2rem 9rem;
+    border: 1px solid hsl(30 8% 88% / 0.35);
+    background: #fff;
+    box-shadow: 0 34px 90px -62px hsl(220 15% 15% / 0.28);
+  }
+
+  .features--cinematic .features__image {
+    display: block;
+    width: 100%;
+    height: 420px;
+    object-fit: cover;
+    object-position: 50% 62%;
+    transform: scale(1.02);
+  }
+
+  .features--cinematic .features__image-wash {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, hsl(0 0% 100% / 0.22) 0%, transparent 45%);
+  }
+
+  .features--cinematic .features__panel {
+    position: relative;
+    padding: 2rem 1.5rem 4rem;
+    border-radius: 2.2rem;
+    border: 1px solid hsl(30 8% 88% / 0.3);
+    background: #fbf8f4;
+    box-shadow: 0 28px 90px -78px hsl(220 15% 15% / 0.4);
+  }
+
+  .features--cinematic .features__kicker {
+    margin: 0 0 1.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 72%, transparent);
+  }
+
+  .features--cinematic h2 {
+    max-width: 17ch;
+    font-family: var(--site-font-heading, Georgia, serif);
+    font-size: 2.15rem;
+    font-weight: 400;
+    line-height: 1.06;
+    letter-spacing: -0.02em;
+  }
+
+  .features--cinematic .features__hairline {
+    margin-top: 1.75rem;
+    height: 1px;
+    width: 5rem;
+    background: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 42%, transparent);
+  }
+
+  .features--cinematic .features__principles-grid {
+    margin-top: 2.5rem;
+    display: grid;
+    gap: 1.75rem;
+  }
+
+  .features--cinematic .features__principle {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .features--cinematic .features__principle-icon {
+    flex: 0 0 auto;
+    display: flex;
+    height: 3rem;
+    width: 3rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 10%, transparent);
+    background: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 7.5%, white);
+  }
+
+  .features--cinematic .features__principle-icon :global(.just-feature-icon) {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 60%, transparent);
+  }
+
+  .features--cinematic .features__principle-title {
+    margin: 0;
+    max-width: 15rem;
+    color: hsl(220 15% 15% / 0.7);
+    font-size: 0.96rem;
+    line-height: 1.72;
+  }
+
+  .features--cinematic .features__principle-copy p + p {
+    margin: 0.35rem 0 0;
+    max-width: 15rem;
+    color: hsl(220 15% 15% / 0.62);
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+
+  @media (min-width: 640px) {
+    .features--cinematic h2 {
+      font-size: 2.55rem;
+    }
+
+    .features--cinematic .features__principles-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2rem 2.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .features--cinematic {
+      padding: 3rem 0 6rem;
+    }
+
+    .features--cinematic .features__principles {
+      grid-template-columns: 0.88fr 1.12fr;
+      gap: 5rem;
+    }
+
+    .features--cinematic .features__media {
+      display: block;
+    }
+
+    .features--cinematic .features__panel {
+      padding: 2.5rem 2.5rem 5rem;
+    }
+
+    .features--cinematic h2 {
+      font-size: 3.1rem;
     }
   }
 </style>

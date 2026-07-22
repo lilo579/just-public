@@ -231,6 +231,7 @@ export {
   resolveF1PresentationProfile,
   resolveF1PresentationChrome,
   resolveHeaderLogoUrl,
+  resolveHeaderOverHeroLogoUrl,
   resolveFooterLogoUrl,
 } from "@just/site-engine-authority"
 

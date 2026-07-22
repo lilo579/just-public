@@ -1,49 +1,132 @@
 ---
 import type { AboutBlock as AboutBlockType } from "../../contracts/homepage";
+import CinematicSectionIcon from "../icons/CinematicSectionIcon.astro";
 
-const { block } = Astro.props as { block: AboutBlockType };
+type AboutStat = { value?: string | null; label?: string | null };
+type StatIcon = "heart" | "users" | "star" | "circle";
+
+const { block, layout = "standard", sectionId } = Astro.props as {
+  block: AboutBlockType & {
+    content: AboutBlockType["content"] & {
+      stats?: AboutStat[] | null;
+    };
+  };
+  layout?: "standard" | "cinematic-authority";
+  sectionId?: string;
+};
+
 const { title, body, photoUrl } = block.content;
+const stats = ((block.content as { stats?: AboutStat[] }).stats ?? []).filter(
+  (stat) => stat?.value || stat?.label
+);
 
 const paragraphs = body
   ? body.split("\n\n").map((p) => p.trim()).filter(Boolean)
   : [];
+
+const isCinematic = layout === "cinematic-authority";
+const statIcons: StatIcon[] = ["heart", "users", "star", "circle"];
 ---
 
-{(title || paragraphs.length > 0 || photoUrl) && (
-  <section class="about">
-    <div class="about__overlay" aria-hidden="true"></div>
+{(title || paragraphs.length > 0 || photoUrl || (isCinematic && stats.length > 0)) && (
+  <section
+    class:list={["about", isCinematic && "about--cinematic"]}
+    id={isCinematic ? sectionId : undefined}
+  >
+    {!isCinematic && <div class="about__overlay" aria-hidden="true"></div>}
+    {isCinematic && (
+      <>
+        <div class="about__glow" aria-hidden="true"></div>
+        <div class="about__ring" aria-hidden="true"></div>
+      </>
+    )}
 
     <div class="about__container">
       <div class="about__grid">
-        {photoUrl && (
-          <div class="about__media">
-            <div class="about__media-inner">
-              <div class="about__frame">
-                <img
-                  src={photoUrl}
-                  alt={`${title || "Foto"}${block.content.title ? "" : ""}`}
-                  class="about__image"
-                />
+        {isCinematic ? (
+          <>
+            <div class:list={[
+              "about__content",
+              photoUrl ? "about__content--with-photo" : "about__content--full"
+            ]}>
+              {title && <h2>{title}</h2>}
+              <div class="about__hairline" aria-hidden="true"></div>
+              {paragraphs.length > 0 && (
+                <div class="about__body">
+                  {paragraphs.map((paragraph) => (
+                    <p>{paragraph}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {photoUrl && (
+              <div class="about__media">
+                <div class="about__media-inner">
+                  <div class="about__blob-ring" aria-hidden="true"></div>
+                  <div class="about__frame">
+                    <img
+                      src={photoUrl}
+                      alt={title || "Foto"}
+                      class="about__image"
+                      loading="lazy"
+                    />
+                    <div class="about__image-wash" aria-hidden="true"></div>
+                  </div>
+                </div>
               </div>
+            )}
+          </>
+        ) : (
+          <>
+            {photoUrl && (
+              <div class="about__media">
+                <div class="about__media-inner">
+                  <div class="about__frame">
+                    <img
+                      src={photoUrl}
+                      alt={`${title || "Foto"}`}
+                      class="about__image"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div class:list={[
+              "about__content",
+              photoUrl ? "about__content--with-photo" : "about__content--full"
+            ]}>
+              {title && <h2>{title}</h2>}
+
+              {paragraphs.length > 0 && (
+                <div class="about__body">
+                  {paragraphs.map((paragraph) => (
+                    <p>{paragraph}</p>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
+          </>
         )}
-
-        <div class:list={[
-          "about__content",
-          photoUrl ? "about__content--with-photo" : "about__content--full"
-        ]}>
-          {title && <h2>{title}</h2>}
-
-          {paragraphs.length > 0 && (
-            <div class="about__body">
-              {paragraphs.map((paragraph) => (
-                <p>{paragraph}</p>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
+
+      {isCinematic && stats.length > 0 && (
+        <div class="about__stats">
+          <div class="about__stats-grid">
+            {stats.map((stat, index) => (
+              <div class="about__stat">
+                <CinematicSectionIcon
+                  name={statIcons[index % statIcons.length]}
+                  class="about__stat-icon"
+                />
+                {stat.value && <p class="about__stat-value">{stat.value}</p>}
+                {stat.label && <p class="about__stat-label">{stat.label}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   </section>
 )}
@@ -61,13 +144,13 @@ const paragraphs = body
   }
 
   .about__container {
-  position: relative;
-  z-index: 1;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-}
+    position: relative;
+    z-index: 1;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
 
   .about__grid {
     display: grid;
@@ -138,42 +221,256 @@ const paragraphs = body
   }
 
   @media (min-width: 1024px) {
-  .about {
-    padding: 6rem 0;
+    .about {
+      padding: 6rem 0;
+    }
+
+    .about__grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 3rem;
+    }
+
+    .about__media {
+      order: 1;
+      max-width: 32rem;
+    }
+
+    .about__content--with-photo {
+      order: 2;
+      max-width: none;
+    }
+
+    .about__media-inner {
+      margin-top: 0;
+    }
+
+    .about__frame {
+      border-radius: 1rem;
+    }
+
+    .about h2 {
+      font-size: 2.25rem;
+      line-height: 2.5rem;
+    }
+
+    .about__body {
+      margin-top: 1.5rem;
+      gap: 1.25rem;
+      line-height: 1.85;
+    }
   }
 
-  .about__grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  /* —— cinematic-authority —— */
+  .about--cinematic {
+    overflow: hidden;
+    padding: 4rem 0;
+    background: transparent;
+  }
+
+  .about--cinematic .about__glow {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle at 76% 34%,
+      color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 5.5%, transparent) 0%,
+      transparent 38%
+    );
+  }
+
+  .about--cinematic .about__ring {
+    pointer-events: none;
+    position: absolute;
+    left: -7rem;
+    top: 5rem;
+    display: none;
+    height: 520px;
+    width: 280px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 10%, transparent);
+  }
+
+  .about--cinematic .about__grid {
     gap: 3rem;
   }
 
-  .about__media {
+  .about--cinematic .about__content {
     order: 1;
-    max-width: 32rem;
+    max-width: 650px;
   }
 
-  .about__content--with-photo {
+  .about--cinematic .about__media {
     order: 2;
     max-width: none;
   }
 
-  .about__media-inner {
-    margin-top: 0;
+  .about--cinematic h2 {
+    max-width: 15ch;
+    font-family: var(--site-font-heading, Georgia, serif);
+    font-size: 2.45rem;
+    font-weight: 500;
+    line-height: 0.98;
+    letter-spacing: -0.025em;
   }
 
-  .about__frame {
-    border-radius: 1rem;
+  .about--cinematic .about__hairline {
+    margin-top: 1.75rem;
+    height: 1px;
+    width: 5rem;
+    background: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 42%, transparent);
   }
 
-  .about h2 {
-    font-size: 2.25rem;
-    line-height: 2.5rem;
-  }
-
-  .about__body {
-    margin-top: 1.5rem;
+  .about--cinematic .about__body {
+    margin-top: 2rem;
+    max-width: 38rem;
     gap: 1.25rem;
+    font-size: 1.03rem;
     line-height: 1.85;
+    color: hsl(220 15% 15% / 0.72);
   }
-}
+
+  .about--cinematic .about__blob-ring {
+    position: absolute;
+    left: -3.5rem;
+    top: -3rem;
+    height: 104%;
+    width: 86%;
+    border-radius: 62% 38% 58% 42% / 44% 56% 44% 56%;
+    border: 1px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 14%, transparent);
+  }
+
+  .about--cinematic .about__frame {
+    position: relative;
+    aspect-ratio: auto;
+    height: min(620px, 78vw);
+    border-radius: 62% 38% 58% 42% / 44% 56% 44% 56%;
+    border: 1px solid hsl(30 8% 88% / 0.4);
+    box-shadow: 0 42px 110px -58px hsl(220 15% 15% / 0.42);
+  }
+
+  .about--cinematic .about__image {
+    height: 100%;
+    transform: scale(1.03);
+    object-position: 34% 18%;
+  }
+
+  .about--cinematic .about__image-wash {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, hsl(0 0% 100% / 0.2) 0%, transparent 32%);
+  }
+
+  .about--cinematic .about__stats {
+    margin-top: 2rem;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    border: 1px solid hsl(30 8% 88% / 0.3);
+    background: hsl(0 0% 100% / 0.58);
+    box-shadow: 0 18px 54px -44px hsl(220 15% 15% / 0.16);
+  }
+
+  .about--cinematic .about__stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    background: hsl(30 8% 88% / 0.2);
+  }
+
+  .about--cinematic .about__stat {
+    display: flex;
+    min-height: 132px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    background: hsl(0 0% 100% / 0.68);
+  }
+
+  .about--cinematic :global(.about__stat-icon) {
+    margin-bottom: 0.65rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 48%, transparent);
+  }
+
+  .about--cinematic .about__stat-value {
+    margin: 0;
+    font-family: var(--site-font-heading, Georgia, serif);
+    font-size: 1.62rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: hsl(220 15% 15%);
+  }
+
+  .about--cinematic .about__stat-label {
+    margin: 0.5rem 0 0;
+    max-width: 20ch;
+    font-size: 0.93rem;
+    line-height: 1.5;
+    color: hsl(220 15% 15% / 0.62);
+  }
+
+  @media (min-width: 640px) {
+    .about--cinematic h2 {
+      font-size: 3rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .about--cinematic {
+      padding: 6rem 0;
+    }
+
+    .about--cinematic .about__ring {
+      display: block;
+    }
+
+    .about--cinematic .about__grid {
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 3rem;
+    }
+
+    .about--cinematic .about__content,
+    .about--cinematic .about__content--with-photo {
+      order: 1;
+    }
+
+    .about--cinematic .about__media {
+      order: 2;
+    }
+
+    .about--cinematic h2 {
+      font-size: 3.55rem;
+    }
+
+    .about--cinematic .about__body {
+      font-size: 1.08rem;
+    }
+
+    .about--cinematic .about__frame {
+      height: 620px;
+    }
+
+    .about--cinematic .about__stats-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .about--cinematic .about__stat {
+      min-height: 0;
+      padding: 1.5rem 1.5rem;
+    }
+
+    .about--cinematic .about__stat-label {
+      font-size: 0.78rem;
+    }
+
+    .about--cinematic :global(.about__stat-icon) {
+      width: 1.5rem;
+      height: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+  }
 </style>

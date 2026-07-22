@@ -2,6 +2,7 @@
 /**
  * Painted Execution Plan binder — no domain compilation.
  * Expects `node.paint` (final block + layout) from Hub compile.
+ * Optionally enriches paint from F1 presentation chrome (cinematic_v1).
  */
 import HeroBlock from "./blocks/HeroBlock.astro"
 import TrustBlock from "./blocks/TrustBlock.astro"
@@ -17,6 +18,7 @@ import CtaBlock from "./blocks/CtaBlock.astro"
 import CatalogCategoryNavBlock from "./blocks/CatalogCategoryNavBlock.astro"
 import CatalogProductGridBlock from "./blocks/CatalogProductGridBlock.astro"
 import CatalogRichSectionBlock from "./blocks/CatalogRichSectionBlock.astro"
+import { enrichPlanPaintWithPresentationChrome } from "../lib/enrichPlanPaintWithPresentationChrome.js"
 
 import type {
   AboutBlock as AboutBlockType,
@@ -34,10 +36,13 @@ import type {
   TrustBlock as TrustBlockType,
 } from "../contracts/homepage"
 
-const { plan, showDiagnostics = false } = Astro.props as {
+const { plan: rawPlan, showDiagnostics = false, presentationChrome = null } = Astro.props as {
   plan: SerializableHomepageRenderPlan
   showDiagnostics?: boolean
+  presentationChrome?: unknown
 }
+
+const plan = enrichPlanPaintWithPresentationChrome(rawPlan, presentationChrome as any) as SerializableHomepageRenderPlan
 
 type PaintedNode = NonNullable<SerializableHomepageRenderNode["paint"]>
 
@@ -54,7 +59,30 @@ function commentFor(node: SerializableHomepageRenderNode, reason: string) {
 
 const orderedNodes = [...(plan.nodes ?? [])].sort((left, right) => left.order - right.order)
 
-const paintedEntries = orderedNodes.map((node) => {
+/** Cinematic SPA parity: principles (features) follow journey (process), before CTA. */
+function cinematicPresentationNodes(
+  nodes: SerializableHomepageRenderNode[],
+): SerializableHomepageRenderNode[] {
+  const featuresIdx = nodes.findIndex((node) => node.paint?.component === "features")
+  const processIdx = nodes.findIndex((node) => node.paint?.component === "process")
+  if (featuresIdx < 0 || processIdx < 0 || featuresIdx > processIdx) {
+    return nodes
+  }
+  const next = [...nodes]
+  const [featuresNode] = next.splice(featuresIdx, 1)
+  const newProcessIdx = next.findIndex((node) => node.paint?.component === "process")
+  next.splice(newProcessIdx + 1, 0, featuresNode)
+  return next
+}
+
+const presentationOrderedNodes =
+  presentationChrome &&
+  typeof presentationChrome === "object" &&
+  (presentationChrome as { profile?: string }).profile === "f1.presentation.cinematic_v1"
+    ? cinematicPresentationNodes(orderedNodes)
+    : orderedNodes
+
+const paintedEntries = presentationOrderedNodes.map((node) => {
   const paint = node.paint as PaintedNode | undefined
   if (!paint || !paint.component || !paint.block) {
     return {
@@ -135,7 +163,12 @@ const renderedCount = paintedEntries.filter((entry) => entry.kind === "paint").l
 
     switch (paint.component) {
       case "hero":
-        return <HeroBlock block={paint.block as HeroBlockType} />
+        return (
+          <HeroBlock
+            block={paint.block as HeroBlockType}
+            layout={layout.heroLayout === "cinematic" ? "cinematic" : "standard"}
+          />
+        )
 
       case "trust":
         return (
@@ -152,19 +185,41 @@ const renderedCount = paintedEntries.filter((entry) => entry.kind === "paint").l
             layout={
               layout.servicesLayout === "classic-split"
                 ? "classic-split"
-                : layout.servicesLayout === "cards"
-                  ? "cards"
-                  : "list"
+                : layout.servicesLayout === "cinematic-signs"
+                  ? "cinematic-signs"
+                  : layout.servicesLayout === "cards"
+                    ? "cards"
+                    : "list"
             }
+            sectionId={typeof layout.sectionId === "string" ? layout.sectionId : undefined}
           />
         )
 
       case "problem":
       case "rich_text":
-        return <RichTextBlock block={paint.block as RichTextBlockType} />
+        return (
+          <RichTextBlock
+            block={paint.block as RichTextBlockType}
+            layout={
+              layout.problemLayout === "cinematic-editorial"
+                ? "cinematic-editorial"
+                : "standard"
+            }
+          />
+        )
 
       case "about":
-        return <AboutBlock block={paint.block as AboutBlockType} />
+        return (
+          <AboutBlock
+            block={paint.block as AboutBlockType}
+            layout={
+              layout.aboutLayout === "cinematic-authority"
+                ? "cinematic-authority"
+                : "standard"
+            }
+            sectionId={typeof layout.sectionId === "string" ? layout.sectionId : undefined}
+          />
+        )
 
       case "benefits":
         return (
@@ -179,7 +234,16 @@ const renderedCount = paintedEntries.filter((entry) => entry.kind === "paint").l
         )
 
       case "features":
-        return <FeaturesBlock block={paint.block as FeaturesBlockType} />
+        return (
+          <FeaturesBlock
+            block={paint.block as FeaturesBlockType}
+            layout={
+              layout.benefitsLayout === "cinematic-principles"
+                ? "cinematic-principles"
+                : "standard"
+            }
+          />
+        )
 
       case "process":
         return (
@@ -189,6 +253,12 @@ const renderedCount = paintedEntries.filter((entry) => entry.kind === "paint").l
             badgeEmphasis={
               layout.processBadgeEmphasis === "primary" ? "primary" : "accent"
             }
+            layout={
+              layout.processLayout === "cinematic-journey"
+                ? "cinematic-journey"
+                : "standard"
+            }
+            sectionId={typeof layout.sectionId === "string" ? layout.sectionId : undefined}
           />
         )
 
@@ -206,7 +276,12 @@ const renderedCount = paintedEntries.filter((entry) => entry.kind === "paint").l
         return <TestimonialsBlock block={paint.block as TestimonialsBlockType} />
 
       case "cta_final":
-        return <CtaBlock block={paint.block as CtaBlockType} />
+        return (
+          <CtaBlock
+            block={paint.block as CtaBlockType}
+            layout={layout.ctaLayout === "cinematic-band" ? "cinematic-band" : "standard"}
+          />
+        )
 
       case "category_nav":
         return <CatalogCategoryNavBlock block={paint.block} />

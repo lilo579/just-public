@@ -1,12 +1,31 @@
 ---
 import type { ServicesBlock as ServicesBlockType } from "../../contracts/homepage";
+import CinematicSectionIcon from "../icons/CinematicSectionIcon.astro";
 
-const { block, layout = "list" } = Astro.props as {
-  block: ServicesBlockType
-  /** engine-list | classic-split (F1 classic editorial) | cards (legacy classic mistake — avoid) */
-  layout?: "list" | "classic-split" | "cards"
+type ServiceIcon =
+  | "brain"
+  | "book"
+  | "clock"
+  | "shield"
+  | "heart"
+  | "users";
+
+const { block, layout = "list", sectionId } = Astro.props as {
+  block: ServicesBlockType & {
+    content: ServicesBlockType["content"] & {
+      body?: string | null;
+    };
+  };
+  /** engine-list | classic-split | cards | cinematic-signs */
+  layout?: "list" | "classic-split" | "cards" | "cinematic-signs";
+  sectionId?: string;
 };
+
 const { kicker, title, items } = block.content;
+const body =
+  typeof (block.content as { body?: string }).body === "string"
+    ? (block.content as { body?: string }).body
+    : null;
 
 const visibleItems = (items ?? []).filter(
   (item) => item?.title && item?.description
@@ -16,62 +35,62 @@ const leftItems = visibleItems.slice(0, 2);
 const rightItems = visibleItems.slice(2);
 const isClassicSplit = layout === "classic-split";
 const isCards = layout === "cards";
+const isCinematic = layout === "cinematic-signs";
+
+const serviceIcons: ServiceIcon[] = [
+  "brain",
+  "book",
+  "clock",
+  "shield",
+  "heart",
+  "users",
+];
 ---
 
 {visibleItems.length > 0 && (
   <section
-    class:list={["services", isCards && "services--cards", isClassicSplit && "services--classic-split"]}
+    class:list={[
+      "services",
+      isCards && "services--cards",
+      isClassicSplit && "services--classic-split",
+      isCinematic && "services--cinematic",
+    ]}
     data-layout={layout}
+    id={isCinematic ? sectionId : undefined}
   >
-    <div class="services__container">
-      {(kicker || title) && (
-        <div class:list={["services__heading", isClassicSplit && "services__heading--center"]}>
-          {kicker && <p class="services__kicker">{kicker}</p>}
-          {title && <h2>{title}</h2>}
-        </div>
-      )}
+    {isCinematic && (
+      <>
+        <div class="services__glow" aria-hidden="true"></div>
+        <div class="services__ring" aria-hidden="true"></div>
+      </>
+    )}
 
-      {isClassicSplit ? (
-        <div class="services__classic">
-          <div class="services__classic-col services__classic-col--primary">
-            {leftItems.map((item) => (
-              <article class="services__classic-item">
-                <div class="services__classic-row">
-                  <div class="services__classic-marker" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path
-                        d="M5 12.5 10 17.5 19 7.5"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
+    <div class="services__container">
+      {isCinematic ? (
+        <>
+          {(kicker || title || body) && (
+            <div class="services__split-heading">
+              <div class="services__split-lead">
+                {kicker && <p class="services__kicker">{kicker}</p>}
+                {title && <h2>{title}</h2>}
+              </div>
+              {body && <p class="services__support">{body}</p>}
+            </div>
+          )}
+
+          <div class="services__signs">
+            {visibleItems.map((item, index) => (
+              <article
+                class:list={[
+                  "services__sign",
+                  index % 2 === 1 && "services__sign--stagger",
+                ]}
+              >
+                <div class="services__sign-row">
+                  <div class="services__sign-icon" aria-hidden="true">
+                    <CinematicSectionIcon name={serviceIcons[index % serviceIcons.length]} />
                   </div>
-                  <div class="services__classic-copy">
-                    <h3>{item.title}</h3>
-                    <p>{item.description}</p>
-                  </div>
-                </div>
-              </article>
-            ))}
-            {rightItems.map((item) => (
-              <article class="services__classic-item services__classic-item--mobile">
-                <div class="services__classic-row">
-                  <div class="services__classic-marker" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path
-                        d="M5 12.5 10 17.5 19 7.5"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </div>
-                  <div class="services__classic-copy">
+                  <div class="services__sign-copy">
                     <h3>{item.title}</h3>
                     <p>{item.description}</p>
                   </div>
@@ -79,90 +98,150 @@ const isCards = layout === "cards";
               </article>
             ))}
           </div>
+        </>
+      ) : (
+        <>
+          {(kicker || title) && (
+            <div class:list={["services__heading", isClassicSplit && "services__heading--center"]}>
+              {kicker && <p class="services__kicker">{kicker}</p>}
+              {title && <h2>{title}</h2>}
+            </div>
+          )}
 
-          {rightItems.length > 0 && (
-            <div class="services__classic-col services__classic-col--secondary">
-              {rightItems.map((item) => (
-                <article class="services__classic-item">
-                  <div class="services__classic-row">
-                    <div class="services__classic-marker" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path
-                          d="M5 12.5 10 17.5 19 7.5"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        />
-                      </svg>
+          {isClassicSplit ? (
+            <div class="services__classic">
+              <div class="services__classic-col services__classic-col--primary">
+                {leftItems.map((item) => (
+                  <article class="services__classic-item">
+                    <div class="services__classic-row">
+                      <div class="services__classic-marker" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            d="M5 12.5 10 17.5 19 7.5"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div class="services__classic-copy">
+                        <h3>{item.title}</h3>
+                        <p>{item.description}</p>
+                      </div>
                     </div>
-                    <div class="services__classic-copy">
-                      <h3>{item.title}</h3>
-                      <p>{item.description}</p>
+                  </article>
+                ))}
+                {rightItems.map((item) => (
+                  <article class="services__classic-item services__classic-item--mobile">
+                    <div class="services__classic-row">
+                      <div class="services__classic-marker" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            d="M5 12.5 10 17.5 19 7.5"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div class="services__classic-copy">
+                        <h3>{item.title}</h3>
+                        <p>{item.description}</p>
+                      </div>
                     </div>
-                  </div>
+                  </article>
+                ))}
+              </div>
+
+              {rightItems.length > 0 && (
+                <div class="services__classic-col services__classic-col--secondary">
+                  {rightItems.map((item) => (
+                    <article class="services__classic-item">
+                      <div class="services__classic-row">
+                        <div class="services__classic-marker" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                              d="M5 12.5 10 17.5 19 7.5"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div class="services__classic-copy">
+                          <h3>{item.title}</h3>
+                          <p>{item.description}</p>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : isCards ? (
+            <div class="services__cards">
+              {visibleItems.map((item) => (
+                <article class="services__card">
+                  <h3>{item.title}</h3>
+                  <p>{item.description}</p>
                 </article>
               ))}
             </div>
+          ) : (
+            <div class="services__grid">
+              <div class="services__column services__column--left">
+                {leftItems.map((item) => (
+                  <article class="services__item">
+                    <div class="services__icon">
+                      <span class="services__dot"></span>
+                    </div>
+
+                    <div class="services__content">
+                      <h3>{item.title}</h3>
+                      <p>{item.description}</p>
+                    </div>
+                  </article>
+                ))}
+
+                {rightItems.map((item) => (
+                  <article class="services__item services__item--mobile">
+                    <div class="services__icon">
+                      <span class="services__dot"></span>
+                    </div>
+
+                    <div class="services__content">
+                      <h3>{item.title}</h3>
+                      <p>{item.description}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              {rightItems.length > 0 && (
+                <div class="services__column services__column--right">
+                  {rightItems.map((item) => (
+                    <article class="services__item">
+                      <div class="services__icon">
+                        <span class="services__dot"></span>
+                      </div>
+
+                      <div class="services__content">
+                        <h3>{item.title}</h3>
+                        <p>{item.description}</p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
-        </div>
-      ) : isCards ? (
-        <div class="services__cards">
-          {visibleItems.map((item) => (
-            <article class="services__card">
-              <h3>{item.title}</h3>
-              <p>{item.description}</p>
-            </article>
-          ))}
-        </div>
-      ) : (
-      <div class="services__grid">
-        <div class="services__column services__column--left">
-          {leftItems.map((item) => (
-            <article class="services__item">
-              <div class="services__icon">
-                <span class="services__dot"></span>
-              </div>
-
-              <div class="services__content">
-                <h3>{item.title}</h3>
-                <p>{item.description}</p>
-              </div>
-            </article>
-          ))}
-
-          {rightItems.map((item) => (
-            <article class="services__item services__item--mobile">
-              <div class="services__icon">
-                <span class="services__dot"></span>
-              </div>
-
-              <div class="services__content">
-                <h3>{item.title}</h3>
-                <p>{item.description}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        {rightItems.length > 0 && (
-          <div class="services__column services__column--right">
-            {rightItems.map((item) => (
-              <article class="services__item">
-                <div class="services__icon">
-                  <span class="services__dot"></span>
-                </div>
-
-                <div class="services__content">
-                  <h3>{item.title}</h3>
-                  <p>{item.description}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </div>
+        </>
       )}
     </div>
   </section>
@@ -267,48 +346,48 @@ const isCards = layout === "cards";
   }
 
   @media (min-width: 1024px) {
-  .services {
-    padding: 6rem 0;
-  }
+    .services {
+      padding: 6rem 0;
+    }
 
-  .services__heading {
-    text-align: center;
-    margin-bottom: 4rem;
-  }
+    .services__heading {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
 
-  .services h2 {
-    font-size: 2.25rem;
-  }
+    .services h2 {
+      font-size: 2.25rem;
+    }
 
-  .services__grid {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 4rem;
-    align-items: start;
-    max-width: 68rem; /* ← diminui largura total */
-    margin: 0 auto;
-  }
+    .services__grid {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 4rem;
+      align-items: start;
+      max-width: 68rem;
+      margin: 0 auto;
+    }
 
-  .services__column {
-    display: grid;
-    gap: 2.5rem;
-  }
+    .services__column {
+      display: grid;
+      gap: 2.5rem;
+    }
 
-  .services__column--left {
-    padding-right: 1rem;
-  }
+    .services__column--left {
+      padding-right: 1rem;
+    }
 
-  .services__column--right {
-    display: grid !important;
-    gap: 2.5rem;
-    padding-top: 4rem;
-    padding-left: 1rem;
-  }
+    .services__column--right {
+      display: grid !important;
+      gap: 2.5rem;
+      padding-top: 4rem;
+      padding-left: 1rem;
+    }
 
-  .services__item--mobile {
-    display: none !important;
+    .services__item--mobile {
+      display: none !important;
+    }
   }
-}
 
   .services--cards .services__cards {
     display: grid;
@@ -451,6 +530,210 @@ const isCards = layout === "cards";
 
     .services__classic-item--mobile {
       display: none;
+    }
+  }
+
+  /* —— cinematic-signs —— */
+  .services--cinematic {
+    position: relative;
+    overflow: visible;
+    padding: 3.5rem 0;
+    background: #fbf8f4;
+  }
+
+  .services--cinematic .services__glow {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle at 18% 18%,
+      color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 3.5%, transparent) 0%,
+      transparent 30%
+    );
+  }
+
+  .services--cinematic .services__ring {
+    pointer-events: none;
+    position: absolute;
+    right: -170px;
+    top: -90px;
+    display: none;
+    height: 360px;
+    width: 360px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 10%, transparent);
+  }
+
+  .services--cinematic .services__container {
+    position: relative;
+    z-index: 1;
+  }
+
+  .services--cinematic .services__split-heading {
+    display: grid;
+    gap: 2rem;
+    align-items: end;
+  }
+
+  .services--cinematic .services__kicker {
+    margin: 0 0 1.25rem;
+    letter-spacing: 0.14em;
+    font-size: 0.78rem;
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 70%, transparent);
+  }
+
+  .services--cinematic h2 {
+    max-width: 13ch;
+    font-family: var(--site-font-heading, Georgia, serif);
+    font-size: 2.2rem;
+    font-weight: 400;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+  }
+
+  .services--cinematic .services__support {
+    margin: 0;
+    max-width: 42rem;
+    color: hsl(220 15% 15% / 0.68);
+    font-size: 1rem;
+    line-height: 1.85;
+  }
+
+  .services--cinematic .services__signs {
+    margin-top: 3rem;
+    display: grid;
+    gap: 2rem;
+  }
+
+  .services--cinematic .services__sign {
+    margin: 0 0.75rem;
+    padding: 1.75rem;
+    border-radius: 2rem;
+    border: 1px solid hsl(30 8% 88% / 0.24);
+    background: hsl(0 0% 100% / 0.62);
+    box-shadow: 0 18px 50px -42px hsl(220 15% 15% / 0.12);
+    backdrop-filter: blur(4px);
+    transition:
+      transform 300ms ease,
+      box-shadow 300ms ease;
+  }
+
+  .services--cinematic .services__sign:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 24px 60px -40px hsl(220 15% 15% / 0.16);
+  }
+
+  .services--cinematic .services__sign-row {
+    position: relative;
+    padding-left: 1.3rem;
+  }
+
+  .services--cinematic .services__sign-icon {
+    position: absolute;
+    left: -3.5rem;
+    top: 50%;
+    display: flex;
+    height: 56px;
+    width: 56px;
+    transform: translateY(-50%);
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 10%, transparent);
+    background: #fbf8f4;
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 62%, transparent);
+    box-shadow: 0 8px 24px -18px hsl(220 15% 15% / 0.18);
+  }
+
+  .services--cinematic .services__sign-icon :global(svg) {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .services--cinematic .services__sign-copy h3 {
+    margin: 0;
+    font-family: var(--site-font-heading, Georgia, serif);
+    font-size: 1.22rem;
+    font-weight: 500;
+    line-height: 1.18;
+    letter-spacing: -0.018em;
+    color: hsl(220 15% 15%);
+  }
+
+  .services--cinematic .services__sign-copy p {
+    margin: 0.75rem 0 0;
+    color: hsl(220 15% 15% / 0.62);
+    font-size: 0.95rem;
+    line-height: 1.72;
+  }
+
+  @media (min-width: 640px) {
+    .services--cinematic h2 {
+      font-size: 2.65rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .services--cinematic {
+      padding: 5rem 0;
+    }
+
+    .services--cinematic .services__ring {
+      display: block;
+    }
+
+    .services--cinematic .services__split-heading {
+      grid-template-columns: 0.7fr 1fr;
+      gap: 4rem;
+    }
+
+    .services--cinematic h2 {
+      font-size: 3.15rem;
+    }
+
+    .services--cinematic .services__support {
+      font-size: 1.04rem;
+    }
+
+    .services--cinematic .services__signs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2.5rem 2.5rem;
+    }
+
+    .services--cinematic .services__sign {
+      margin: 0;
+    }
+
+    .services--cinematic .services__sign--stagger {
+      transform: translateY(2rem);
+    }
+
+    .services--cinematic .services__sign--stagger:hover {
+      transform: translateY(calc(2rem - 2px));
+    }
+
+    .services--cinematic .services__sign-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+      padding-left: 0;
+    }
+
+    .services--cinematic .services__sign-icon {
+      position: static;
+      transform: none;
+      flex-shrink: 0;
+      margin-top: 0.25rem;
+      height: 3rem;
+      width: 3rem;
+      border-radius: 1.2rem;
+      background: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 3.5%, white);
+      box-shadow: none;
+    }
+
+    .services--cinematic .services__sign-icon :global(svg) {
+      width: 1.25rem;
+      height: 1.25rem;
     }
   }
 </style>

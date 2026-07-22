@@ -1,11 +1,21 @@
 ---
+import CinematicSectionIcon from "../icons/CinematicSectionIcon.astro";
+
 type Step = {
   number: number;
   title: string;
   description?: string | null;
 };
 
-const { block, indexIcons = true, badgeEmphasis = "accent" } = Astro.props as {
+type JourneyIcon = "handshake" | "search" | "target" | "users" | "sprout";
+
+const {
+  block,
+  indexIcons = true,
+  badgeEmphasis = "accent",
+  layout = "standard",
+  sectionId,
+} = Astro.props as {
   block: {
     type: "process";
     content: {
@@ -13,16 +23,31 @@ const { block, indexIcons = true, badgeEmphasis = "accent" } = Astro.props as {
       title?: string | null;
       body?: string | null;
       steps?: Step[];
+      imageUrl?: string | null;
+      closingPullQuote?: string | null;
     };
   };
   indexIcons?: boolean;
   badgeEmphasis?: "primary" | "accent";
+  layout?: "standard" | "cinematic-journey";
+  sectionId?: string;
 };
 
 const kicker = block.content?.kicker;
 const title = block.content?.title;
 const body = block.content?.body;
+const imageUrl = block.content?.imageUrl;
+const closingPullQuote = block.content?.closingPullQuote;
 const steps = (block.content?.steps ?? []).filter((step) => step?.title);
+const isCinematic = layout === "cinematic-journey";
+
+const journeyIcons: JourneyIcon[] = [
+  "handshake",
+  "search",
+  "target",
+  "users",
+  "sprout",
+];
 
 function iconFor(stepNumber: number) {
   if (!indexIcons) return null;
@@ -30,85 +55,176 @@ function iconFor(stepNumber: number) {
   if (stepNumber === 2) return "calendar";
   return "heart";
 }
+
+function padStep(n: number, index: number) {
+  const value = Number.isFinite(n) && n > 0 ? n : index + 1;
+  return String(value).padStart(2, "0");
+}
 ---
 
-{(steps.length > 0 || kicker || title || body) && (
+{(steps.length > 0 || kicker || title || body || (isCinematic && (imageUrl || closingPullQuote))) && (
   <section
-    class="process"
+    class:list={["process", isCinematic && "process--cinematic"]}
     data-index-icons={indexIcons ? "true" : "false"}
     data-badge={badgeEmphasis}
+    id={isCinematic ? sectionId : undefined}
   >
+    {isCinematic && <div class="process__glow" aria-hidden="true"></div>}
+
     <div class="process__container">
-      {(kicker || title || body) && (
-        <div class="process__heading">
-          {kicker && <p class="process__kicker">{kicker}</p>}
-          {title && <h2>{title}</h2>}
-          {body && <p class="process__body">{body}</p>}
-        </div>
-      )}
-
-      {steps.length > 0 && (
-      <div class="process__grid">
-        {steps.map((step) => (
-          <article class="process__card">
-            <div class="process__badge">{step.number}</div>
-
-            {iconFor(step.number) && (
-            <div class="process__icon-shell" aria-hidden="true">
-              {iconFor(step.number) === "message" && (
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    d="M20 11.5a8 8 0 0 1-8 8 8.7 8.7 0 0 1-3.2-.6L4 20l1.1-4.1A8 8 0 1 1 20 11.5Z"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              )}
-
-              {iconFor(step.number) === "calendar" && (
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <rect
-                    x="4"
-                    y="5"
-                    width="16"
-                    height="15"
-                    rx="2"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                  />
-                  <path
-                    d="M8 3v4M16 3v4M4 10h16"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                  />
-                </svg>
-              )}
-
-              {iconFor(step.number) === "heart" && (
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              )}
+      {isCinematic ? (
+        <>
+          <div class="process__intro">
+            <div class="process__intro-copy">
+              {kicker && <p class="process__kicker">{kicker}</p>}
+              {title && <h2>{title}</h2>}
+              <div class="process__hairline" aria-hidden="true"></div>
+              {body && <p class="process__body">{body}</p>}
             </div>
-            )}
 
-            <h3>{step.title}</h3>
-            {step.description && <p>{step.description}</p>}
-          </article>
-        ))}
-      </div>
+            {imageUrl && (
+              <div class="process__intro-media">
+                <div class="process__blob-ring" aria-hidden="true"></div>
+                <div class="process__frame">
+                  <img src={imageUrl} alt="" class="process__image" loading="lazy" />
+                  <div class="process__image-wash" aria-hidden="true"></div>
+                </div>
+                <div class="process__sprout" aria-hidden="true">
+                  <CinematicSectionIcon name="sprout" class="process__sprout-icon" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {steps.length > 0 && (
+            <div class="process__journey">
+              <div class="process__journey-rail" aria-hidden="true">
+                <div class="process__journey-line"></div>
+                {steps.map((_, index) => {
+                  const positions = [8.5, 28, 47.5, 67, 86.5];
+                  const left =
+                    steps.length === 5
+                      ? `${positions[index]}%`
+                      : `${((index + 0.5) / steps.length) * 100}%`;
+                  return (
+                    <span class="process__journey-dot" style={`left: ${left}`}></span>
+                  );
+                })}
+              </div>
+
+              <div
+                class="process__journey-grid"
+                style={`--journey-cols: ${Math.max(steps.length, 1)}`}
+              >
+                {steps.map((step, index) => (
+                  <article class="process__journey-step">
+                    <div class="process__journey-num" aria-hidden="true">
+                      <span>{padStep(step.number, index)}</span>
+                    </div>
+                    <div class="process__journey-copy">
+                      <div class="process__journey-icon" aria-hidden="true">
+                        <CinematicSectionIcon
+                          name={journeyIcons[index % journeyIcons.length]}
+                        />
+                      </div>
+                      <h3>{step.title}</h3>
+                      {step.description && <p>{step.description}</p>}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {closingPullQuote && (
+            <div class="process__closing">
+              <p>
+                <span class="process__q" aria-hidden="true">“</span>
+                {closingPullQuote}
+                <span class="process__q" aria-hidden="true">”</span>
+              </p>
+              <div class="process__heart-divider" aria-hidden="true">
+                <span></span>
+                <CinematicSectionIcon name="heart" />
+                <span></span>
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {(kicker || title || body) && (
+            <div class="process__heading">
+              {kicker && <p class="process__kicker">{kicker}</p>}
+              {title && <h2>{title}</h2>}
+              {body && <p class="process__body">{body}</p>}
+            </div>
+          )}
+
+          {steps.length > 0 && (
+            <div class="process__grid">
+              {steps.map((step) => (
+                <article class="process__card">
+                  <div class="process__badge">{step.number}</div>
+
+                  {iconFor(step.number) && (
+                    <div class="process__icon-shell" aria-hidden="true">
+                      {iconFor(step.number) === "message" && (
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            d="M20 11.5a8 8 0 0 1-8 8 8.7 8.7 0 0 1-3.2-.6L4 20l1.1-4.1A8 8 0 1 1 20 11.5Z"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      )}
+
+                      {iconFor(step.number) === "calendar" && (
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <rect
+                            x="4"
+                            y="5"
+                            width="16"
+                            height="15"
+                            rx="2"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          />
+                          <path
+                            d="M8 3v4M16 3v4M4 10h16"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                          />
+                        </svg>
+                      )}
+
+                      {iconFor(step.number) === "heart" && (
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  )}
+
+                  <h3>{step.title}</h3>
+                  {step.description && <p>{step.description}</p>}
+                </article>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   </section>
@@ -288,6 +404,356 @@ function iconFor(stepNumber: number) {
 
     .process h2 {
       font-size: 1.6rem;
+    }
+  }
+
+  /* —— cinematic-journey —— */
+  .process--cinematic {
+    position: relative;
+    overflow: hidden;
+    padding: 4rem 0;
+    background: #fbf8f4;
+  }
+
+  .process--cinematic .process__glow {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle at 80% 6%,
+      color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 6%, transparent) 0%,
+      transparent 34%
+    );
+  }
+
+  .process--cinematic .process__container {
+    position: relative;
+    z-index: 1;
+  }
+
+  .process--cinematic .process__intro {
+    display: grid;
+    gap: 3.5rem;
+    align-items: center;
+  }
+
+  .process--cinematic .process__kicker {
+    margin: 0 0 1.5rem;
+    letter-spacing: 0.14em;
+    font-size: 0.78rem;
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 72%, transparent);
+  }
+
+  .process--cinematic h2 {
+    max-width: 13ch;
+    font-family: var(--site-font-heading, Georgia, serif);
+    font-size: 2.45rem;
+    font-weight: 400;
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+  }
+
+  .process--cinematic .process__hairline {
+    margin-top: 2rem;
+    height: 1px;
+    width: 6rem;
+    background: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 48%, transparent);
+  }
+
+  .process--cinematic .process__body {
+    margin: 2.25rem 0 0;
+    max-width: 34rem;
+    color: hsl(220 15% 15% / 0.7);
+    font-size: 1.05rem;
+    line-height: 1.85;
+  }
+
+  .process--cinematic .process__intro-media {
+    position: relative;
+  }
+
+  .process--cinematic .process__blob-ring {
+    position: absolute;
+    left: -2.5rem;
+    top: -2.5rem;
+    height: 104%;
+    width: 88%;
+    border-radius: 58% 42% 64% 36% / 44% 58% 42% 56%;
+    border: 1px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 16%, transparent);
+  }
+
+  .process--cinematic .process__frame {
+    position: relative;
+    overflow: hidden;
+    border-radius: 58% 42% 64% 36% / 44% 58% 42% 56%;
+    border: 1px solid hsl(30 8% 88% / 0.35);
+    background: #fff;
+    box-shadow: 0 42px 110px -64px hsl(220 15% 15% / 0.34);
+  }
+
+  .process--cinematic .process__image {
+    display: block;
+    width: 100%;
+    height: 430px;
+    object-fit: cover;
+    object-position: 58% center;
+  }
+
+  .process--cinematic .process__image-wash {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, hsl(0 0% 100% / 0.12) 0%, transparent 34%);
+  }
+
+  .process--cinematic .process__sprout {
+    pointer-events: none;
+    position: absolute;
+    right: 2.5rem;
+    bottom: -2rem;
+    display: none;
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 36%, transparent);
+  }
+
+  .process--cinematic :global(.process__sprout-icon) {
+    width: 5rem;
+    height: 5rem;
+  }
+
+  .process--cinematic .process__journey {
+    position: relative;
+    margin-top: 4rem;
+  }
+
+  .process--cinematic .process__journey-rail {
+    pointer-events: none;
+    position: absolute;
+    left: 1.15rem;
+    right: -5.5rem;
+    top: 1.55rem;
+    display: none;
+  }
+
+  .process--cinematic .process__journey-line {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 16%, transparent),
+      color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 34%, transparent) 12%,
+      color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 34%, transparent) 88%,
+      color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 12%, transparent)
+    );
+  }
+
+  .process--cinematic .process__journey-dot {
+    position: absolute;
+    top: 0;
+    height: 0.625rem;
+    width: 0.625rem;
+    transform: translate(-50%, -50%);
+    border-radius: 999px;
+    border: 1px solid #fbf8f4;
+    background: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 58%, transparent);
+    box-shadow: 0 0 0 7px #fbf8f4;
+  }
+
+  .process--cinematic .process__journey-grid {
+    display: grid;
+    gap: 0;
+  }
+
+  .process--cinematic .process__journey-step {
+    position: relative;
+    margin-left: 1.25rem;
+    padding: 0 0 2rem 3.5rem;
+    border-left: 1px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 20%, transparent);
+  }
+
+  .process--cinematic .process__journey-step:last-child {
+    padding-bottom: 0;
+  }
+
+  .process--cinematic .process__journey-num {
+    position: absolute;
+    left: -1.05rem;
+    top: 0;
+    display: flex;
+    height: 2rem;
+    width: 2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid #fbf8f4;
+    background: #fbf8f4;
+  }
+
+  .process--cinematic .process__journey-num span {
+    font-family: var(--site-font-heading, Georgia, serif);
+    font-size: 2.1rem;
+    line-height: 1;
+    letter-spacing: -0.055em;
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 68%, transparent);
+  }
+
+  .process--cinematic .process__journey-icon {
+    display: none;
+    margin-bottom: 1.25rem;
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 46%, transparent);
+  }
+
+  .process--cinematic .process__journey-icon :global(svg) {
+    width: 2.15rem;
+    height: 2.15rem;
+  }
+
+  .process--cinematic .process__journey-copy h3 {
+    margin: 0;
+    max-width: 18rem;
+    font-family: var(--site-font-heading, Georgia, serif);
+    font-size: 1.28rem;
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -0.018em;
+    color: hsl(220 15% 15%);
+  }
+
+  .process--cinematic .process__journey-copy p {
+    margin: 0.75rem 0 0;
+    max-width: 24rem;
+    color: hsl(220 15% 15% / 0.64);
+    font-size: 0.9rem;
+    line-height: 1.68;
+  }
+
+  .process--cinematic .process__closing {
+    margin: 5rem auto 0;
+    max-width: 760px;
+    text-align: center;
+  }
+
+  .process--cinematic .process__closing p {
+    margin: 0;
+    font-family: var(--site-font-heading, Georgia, serif);
+    font-style: italic;
+    font-size: 1.55rem;
+    line-height: 1.45;
+    letter-spacing: -0.018em;
+    color: hsl(220 15% 15% / 0.82);
+  }
+
+  .process--cinematic .process__q {
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 34%, transparent);
+  }
+
+  .process--cinematic .process__heart-divider {
+    margin-top: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 42%, transparent);
+  }
+
+  .process--cinematic .process__heart-divider span {
+    height: 1px;
+    width: 9rem;
+    background: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 20%, transparent);
+  }
+
+  .process--cinematic .process__heart-divider :global(svg) {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .process--cinematic h2 {
+      font-size: 2.85rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .process--cinematic {
+      padding: 6rem 0;
+    }
+
+    .process--cinematic .process__intro {
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 5rem;
+    }
+
+    .process--cinematic h2 {
+      font-size: 3.75rem;
+    }
+
+    .process--cinematic .process__body {
+      font-size: 1.12rem;
+    }
+
+    .process--cinematic .process__image {
+      height: 520px;
+    }
+
+    .process--cinematic .process__sprout {
+      display: block;
+    }
+
+    .process--cinematic .process__journey {
+      margin-top: 5rem;
+    }
+
+    .process--cinematic .process__journey-rail {
+      display: block;
+    }
+
+    .process--cinematic .process__journey-grid {
+      grid-template-columns: repeat(var(--journey-cols, 5), minmax(0, 1fr));
+      gap: 1.75rem;
+    }
+
+    .process--cinematic .process__journey-step {
+      margin-left: 0;
+      padding: 0;
+      border-left: 0;
+    }
+
+    .process--cinematic .process__journey-num {
+      position: static;
+      display: block;
+      height: 5.3rem;
+      width: auto;
+      margin-bottom: 2rem;
+      border: 0;
+      background: transparent;
+    }
+
+    .process--cinematic .process__journey-num span {
+      font-size: 2.35rem;
+    }
+
+    .process--cinematic .process__journey-icon {
+      display: block;
+    }
+
+    .process--cinematic .process__journey-copy {
+      min-height: 13.4rem;
+    }
+
+    .process--cinematic .process__journey-copy h3 {
+      max-width: 11rem;
+      font-size: 1.32rem;
+    }
+
+    .process--cinematic .process__journey-copy p {
+      margin-top: 1rem;
+      max-width: 13.4rem;
+      line-height: 1.72;
+    }
+
+    .process--cinematic .process__closing p {
+      font-size: 1.8rem;
     }
   }
 </style>

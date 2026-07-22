@@ -115,11 +115,33 @@ test("resolveHeaderLogoUrl prefers brand logo for classic_v1", () => {
   assert.equal(url, "https://cdn.example/color.png")
 })
 
-test("falls back to engine_v1 for unknown profile", () => {
-  assert.equal(
-    resolveF1PresentationProfile("something-else"),
-    "f1.presentation.engine_v1",
+test("cinematic_v1 chrome exposes over-hero and editorial without tenant keys", () => {
+  const cinematic = resolveF1PresentationChrome("f1.presentation.cinematic_v1")
+  assert.equal(cinematic.heroLayout, "cinematic")
+  assert.equal(cinematic.headerOverHero, true)
+  assert.equal(cinematic.processLayout, "cinematic-journey")
+  assert.equal(cinematic.ctaLayout, "cinematic-band")
+  assert.ok(cinematic.cinematicEditorial)
+  assert.equal(cinematic.cinematicEditorial.processSupplementalSteps.length, 2)
+  assert.ok(cinematic.cinematicEditorial.navItems.length > 0)
+  const src = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "../src/lib/enrichPlanPaintWithPresentationChrome.js"),
+    "utf8",
   )
+  assert.doesNotMatch(src, /celina|b7c2d3c1|tenantId/i)
+})
+
+test("resolveHeaderOverHeroLogoUrl prefers white logo when over-hero", async () => {
+  const { resolveHeaderOverHeroLogoUrl } = await import("@just/site-engine-authority")
+  const cinematic = resolveF1PresentationChrome("f1.presentation.cinematic_v1")
+  const url = resolveHeaderOverHeroLogoUrl(
+    {
+      logoUrl: "https://cdn.example/color.png",
+      logoWhiteUrl: "https://cdn.example/white.png",
+    },
+    cinematic,
+  )
+  assert.equal(url, "https://cdn.example/white.png")
 })
 
 test("supports lato explicitly (not via classic→Georgia)", () => {
