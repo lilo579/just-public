@@ -1,12 +1,17 @@
 ---
 import type { HomepageFooter } from "../contracts/homepage"
-import TrackedCTA from "./TrackedCTA.astro";
+import TrackedCTA from "./TrackedCTA.astro"
+import MessageCircleIcon from "./icons/MessageCircleIcon.astro"
 
 const {
   footer,
   justSignatureBand = true,
   footerSurface = "light",
   socialIconEmphasis = "muted",
+  layout = "standard",
+  navItems = [],
+  whatsappHref = "",
+  headerCtaLabel = "Fale comigo",
 } = Astro.props as {
   footer: HomepageFooter
   /** engine_v1 shows JUST gold band; classic_v1 omits it. */
@@ -15,6 +20,10 @@ const {
   footerSurface?: "light" | "dark"
   /** classic_v1: primary token; engine_v1: muted neutrals. */
   socialIconEmphasis?: "primary" | "muted"
+  layout?: "standard" | "cinematic-editorial"
+  navItems?: Array<{ label: string; href: string }>
+  whatsappHref?: string
+  headerCtaLabel?: string
 }
 
 function formatPhoneDisplay(phone: string) {
@@ -29,6 +38,7 @@ function formatPhoneDisplay(phone: string) {
   return phone
 }
 
+const isCinematic = layout === "cinematic-editorial"
 const hasContactInfo =
   (footer.whatsappVisible && footer.whatsappNumber) ||
   footer.email ||
@@ -36,230 +46,499 @@ const hasContactInfo =
 
 const visibleLinks = (footer.socialLinks ?? []).filter((link) => (link.url ?? "").trim() !== "")
 const year = new Date().getFullYear()
+const resolvedWhatsappHref =
+  (typeof whatsappHref === "string" && whatsappHref.trim()) ||
+  (footer.whatsappVisible && footer.whatsappNumber
+    ? `https://wa.me/${footer.whatsappNumber}`
+    : "")
+const cinematicNavItems = Array.isArray(navItems) ? navItems : []
+const ctaLabel =
+  typeof headerCtaLabel === "string" && headerCtaLabel.trim()
+    ? headerCtaLabel.trim()
+    : "Fale comigo"
 ---
 
-<footer
-  class="site-footer"
-  data-just-signature={justSignatureBand ? "true" : "false"}
-  data-footer-surface={footerSurface}
-  data-social-emphasis={socialIconEmphasis}
->
-  {justSignatureBand && (
-    <div class="site-footer__signature">
-      Desenvolvido pela <strong>JUST</strong> — a estrutura para seu negócio funcionar online
-    </div>
-  )}
-
-  <div class="site-footer__inner">
-    <div class="site-footer__brand">
-      {footer.logoUrl && (
-        <a href="/" class="site-footer__logo-link">
-          <img
-            src={footer.logoUrl}
-            alt={footer.companyName || "Logo"}
-            class="site-footer__logo"
-          />
-        </a>
-      )}
-
-      {footer.tagline && <p class="site-footer__tagline">{footer.tagline}</p>}
-    </div>
-
-    {hasContactInfo ? (
-      <div class="site-footer__section">
-        <h3>Contato</h3>
-
-        <ul class="site-footer__list">
-          {footer.whatsappVisible && footer.whatsappNumber && (
-            <li class="site-footer__item">
-              <span class="site-footer__item-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M20 11.5a8 8 0 0 1-8 8 8.7 8.7 0 0 1-3.2-.6L4 20l1.1-4.1A8 8 0 1 1 20 11.5Z"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </span>
-
-              <TrackedCTA
-                href={`https://wa.me/${footer.whatsappNumber}`}
-                label={formatPhoneDisplay(footer.whatsappNumber)}
-                ctaId="footer-whatsapp"
-                target="_blank"
-                rel="noopener noreferrer"
-              />
-            </li>
-          )}
-
-          {footer.email && (
-            <li class="site-footer__item">
-              <span class="site-footer__item-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M4 6h16v12H4z"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linejoin="round"
-                  />
-                  <path
-                    d="m5 7 7 6 7-6"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </span>
-
-              <a href={`mailto:${footer.email}`}>{footer.email}</a>
-            </li>
-          )}
-
-          {footer.address && (
-            <li class="site-footer__item site-footer__item--start">
-              <span class="site-footer__item-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M12 21s6-5.7 6-11a6 6 0 1 0-12 0c0 5.3 6 11 6 11Z"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linejoin="round"
-                  />
-                  <circle
-                    cx="12"
-                    cy="10"
-                    r="2.2"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                  />
-                </svg>
-              </span>
-
-              <span class="site-footer__address">{footer.address}</span>
-            </li>
-          )}
-        </ul>
+{
+  isCinematic ? (
+    <footer
+      id="contato"
+      class="site-footer site-footer--cinematic"
+      data-just-signature="true"
+      data-footer-surface={footerSurface}
+      data-layout="cinematic-editorial"
+    >
+      <div class="site-footer__signature site-footer__signature--cream" aria-label="Desenvolvido pela JUST">
+        <p class="site-footer__signature-text">
+          Desenvolvido pela{" "}
+          <a
+            href="https://www.justwebsites.com.br"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="site-footer__signature-brand"
+          >
+            JUST
+          </a>{" "}
+          <span class="site-footer__signature-tail">
+            — a estrutura para seu negócio funcionar online
+          </span>
+        </p>
       </div>
-    ) : (
-      <div class="site-footer__section site-footer__section--empty"></div>
-    )}
 
-    {visibleLinks.length > 0 ? (
-      <div class="site-footer__section">
-        <h3>Redes Sociais</h3>
-
-        <div class="site-footer__social">
-          {visibleLinks.map((link) => (
-            <a
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={link.type}
-              class="site-footer__social-link"
-            >
-              {link.type === "linkedin" && (
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    d="M6.94 6.5a1.44 1.44 0 1 1 0-2.88 1.44 1.44 0 0 1 0 2.88ZM5.5 8.5h2.88V19H5.5V8.5Zm5.06 0h2.76v1.43h.04c.38-.72 1.32-1.48 2.72-1.48 2.9 0 3.44 1.9 3.44 4.36V19h-2.88v-5.1c0-1.22-.02-2.78-1.7-2.78-1.7 0-1.96 1.32-1.96 2.7V19h-2.88V8.5Z"
-                    fill="currentColor"
+      <div class="site-footer__cinematic-shell">
+        <div class="site-footer__card">
+          <div class="site-footer__card-grid">
+            <div class="site-footer__col site-footer__col--brand">
+              {footer.logoUrl && (
+                <a href="/" class="site-footer__logo-link">
+                  <img
+                    src={footer.logoUrl}
+                    alt={footer.companyName || "Logo"}
+                    class="site-footer__logo site-footer__logo--cinematic"
                   />
-                </svg>
+                </a>
               )}
 
-              {link.type === "instagram" && (
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <rect
-                    x="4"
-                    y="4"
-                    width="16"
-                    height="16"
-                    rx="5"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                  />
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                  />
-                  <circle cx="17" cy="7" r="1" fill="currentColor" />
-                </svg>
-              )}
+              {footer.tagline && <p class="site-footer__tagline site-footer__tagline--cinematic">{footer.tagline}</p>}
 
-              {link.type === "facebook" && (
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    d="M13 20v-7h3l.4-3H13V8.3c0-.9.3-1.5 1.6-1.5h2V4.1c-.3 0-1.2-.1-2.4-.1-2.4 0-4 1.4-4 4.2V10H8v3h2.2v7"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              )}
-
-              {link.type === "youtube" && (
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    d="M21 12c0 2.8-.3 4.4-.7 5.2-.3.6-.8 1.1-1.4 1.4-.8.4-2.4.7-6.9.7s-6.1-.3-6.9-.7c-.6-.3-1.1-.8-1.4-1.4C3.3 16.4 3 14.8 3 12s.3-4.4.7-5.2c.3-.6.8-1.1 1.4-1.4.8-.4 2.4-.7 6.9-.7s6.1.3 6.9.7c.6.3 1.1.8 1.4 1.4.4.8.7 2.4.7 5.2Z"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                  />
-                  <path
-                    d="m10 9 5 3-5 3V9Z"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              )}
-
-              {link.type === "tiktok" && (
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    d="M16.5 5.5c.9 1.1 2.2 1.9 3.7 2v2.8c-1.3 0-2.5-.4-3.5-1v6.2c0 3.2-2.6 5.8-5.8 5.8S5.1 18.7 5.1 15.5s2.6-5.8 5.8-5.8c.3 0 .6 0 .9.1v3a2.9 2.9 0 0 0-.9-.15c-1.6 0-2.9 1.3-2.9 2.9s1.3 2.9 2.9 2.9 2.9-1.3 2.9-2.9V5.5h2.8Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              )}
-
-              {link.type !== "linkedin" &&
-                link.type !== "instagram" &&
-                link.type !== "facebook" &&
-                link.type !== "youtube" &&
-                link.type !== "tiktok" && (
-                  <span class="site-footer__social-fallback">
-                    {link.type.slice(0, 2).toUpperCase()}
+              {resolvedWhatsappHref && (
+                <TrackedCTA
+                  href={resolvedWhatsappHref}
+                  label={ctaLabel}
+                  ctaId="footer-whatsapp"
+                  class="site-footer__cta f1-cta f1-cta--outline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span class="f1-cta__icon" aria-hidden="true">
+                    <MessageCircleIcon />
                   </span>
-                )}
-            </a>
-          ))}
+                  <span>{ctaLabel}</span>
+                </TrackedCTA>
+              )}
+            </div>
+
+            {cinematicNavItems.length > 0 && (
+              <div class="site-footer__col site-footer__col--nav">
+                <h3 class="site-footer__kicker">Navegação</h3>
+                <div class="site-footer__kicker-rule" aria-hidden="true"></div>
+                <nav class="site-footer__nav" aria-label="Navegação do rodapé">
+                  {cinematicNavItems.map((item) => (
+                    <a href={item.href} class="site-footer__nav-link">
+                      {item.label}
+                    </a>
+                  ))}
+                </nav>
+              </div>
+            )}
+
+            <div class="site-footer__col site-footer__col--contact">
+              {hasContactInfo && (
+                <>
+                  <h3 class="site-footer__kicker">Contato</h3>
+                  <div class="site-footer__kicker-rule" aria-hidden="true"></div>
+                  <ul class="site-footer__list site-footer__list--cinematic">
+                    {footer.email && (
+                      <li class="site-footer__item site-footer__item--pill">
+                        <span class="site-footer__pill-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24">
+                            <path
+                              d="M4 6h16v12H4z"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.8"
+                              stroke-linejoin="round"
+                            />
+                            <path
+                              d="m5 7 7 6 7-6"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.8"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </span>
+                        <a href={`mailto:${footer.email}`}>{footer.email}</a>
+                      </li>
+                    )}
+
+                    {footer.whatsappVisible && footer.whatsappNumber && (
+                      <li class="site-footer__item site-footer__item--pill">
+                        <span class="site-footer__pill-icon" aria-hidden="true">
+                          <MessageCircleIcon />
+                        </span>
+                        {resolvedWhatsappHref ? (
+                          <a
+                            href={resolvedWhatsappHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {formatPhoneDisplay(footer.whatsappNumber)}
+                          </a>
+                        ) : (
+                          <span>{formatPhoneDisplay(footer.whatsappNumber)}</span>
+                        )}
+                      </li>
+                    )}
+
+                    {footer.address && (
+                      <li class="site-footer__item site-footer__item--pill site-footer__item--start">
+                        <span class="site-footer__pill-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24">
+                            <path
+                              d="M12 21s6-5.7 6-11a6 6 0 1 0-12 0c0 5.3 6 11 6 11Z"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.8"
+                              stroke-linejoin="round"
+                            />
+                            <circle
+                              cx="12"
+                              cy="10"
+                              r="2.2"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.8"
+                            />
+                          </svg>
+                        </span>
+                        <span class="site-footer__address">{footer.address}</span>
+                      </li>
+                    )}
+                  </ul>
+                </>
+              )}
+
+              {visibleLinks.length > 0 && (
+                <div class="site-footer__social site-footer__social--cinematic">
+                  {visibleLinks.map((link) => (
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={link.type}
+                      class="site-footer__social-link site-footer__social-link--cinematic"
+                    >
+                      {link.type === "linkedin" && (
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            d="M6.94 6.5a1.44 1.44 0 1 1 0-2.88 1.44 1.44 0 0 1 0 2.88ZM5.5 8.5h2.88V19H5.5V8.5Zm5.06 0h2.76v1.43h.04c.38-.72 1.32-1.48 2.72-1.48 2.9 0 3.44 1.9 3.44 4.36V19h-2.88v-5.1c0-1.22-.02-2.78-1.7-2.78-1.7 0-1.96 1.32-1.96 2.7V19h-2.88V8.5Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      )}
+
+                      {link.type === "instagram" && (
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <rect
+                            x="4"
+                            y="4"
+                            width="16"
+                            height="16"
+                            rx="5"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          />
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          />
+                          <circle cx="17" cy="7" r="1" fill="currentColor" />
+                        </svg>
+                      )}
+
+                      {link.type === "facebook" && (
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            d="M13 20v-7h3l.4-3H13V8.3c0-.9.3-1.5 1.6-1.5h2V4.1c-.3 0-1.2-.1-2.4-.1-2.4 0-4 1.4-4 4.2V10H8v3h2.2v7"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      )}
+
+                      {link.type === "youtube" && (
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            d="M21 12c0 2.8-.3 4.4-.7 5.2-.3.6-.8 1.1-1.4 1.4-.8.4-2.4.7-6.9.7s-6.1-.3-6.9-.7c-.6-.3-1.1-.8-1.4-1.4C3.3 16.4 3 14.8 3 12s.3-4.4.7-5.2c.3-.6.8-1.1 1.4-1.4.8-.4 2.4-.7 6.9-.7s6.1.3 6.9.7c.6.3 1.1.8 1.4 1.4.4.8.7 2.4.7 5.2Z"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.6"
+                          />
+                          <path
+                            d="m10 9 5 3-5 3V9Z"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      )}
+
+                      {link.type === "tiktok" && (
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            d="M16.5 5.5c.9 1.1 2.2 1.9 3.7 2v2.8c-1.3 0-2.5-.4-3.5-1v6.2c0 3.2-2.6 5.8-5.8 5.8S5.1 18.7 5.1 15.5s2.6-5.8 5.8-5.8c.3 0 .6 0 .9.1v3a2.9 2.9 0 0 0-.9-.15c-1.6 0-2.9 1.3-2.9 2.9s1.3 2.9 2.9 2.9 2.9-1.3 2.9-2.9V5.5h2.8Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      )}
+
+                      {link.type !== "linkedin" &&
+                        link.type !== "instagram" &&
+                        link.type !== "facebook" &&
+                        link.type !== "youtube" &&
+                        link.type !== "tiktok" && (
+                          <span class="site-footer__social-fallback">
+                            {link.type.slice(0, 2).toUpperCase()}
+                          </span>
+                        )}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <p class="site-footer__copyright site-footer__copyright--card">
+            {`© ${year} ${footer.companyName || "Empresa"}. Todos os direitos reservados.`}
+          </p>
         </div>
       </div>
-    ) : (
-      <div class="site-footer__section site-footer__section--empty"></div>
-    )}
+    </footer>
+  ) : (
+    <footer
+      class="site-footer"
+      data-just-signature={justSignatureBand ? "true" : "false"}
+      data-footer-surface={footerSurface}
+      data-social-emphasis={socialIconEmphasis}
+    >
+      {justSignatureBand && (
+        <div class="site-footer__signature">
+          Desenvolvido pela <strong>JUST</strong> — a estrutura para seu negócio funcionar online
+        </div>
+      )}
 
-    <p class="site-footer__copyright site-footer__copyright--global">
-      © {year} {footer.companyName || "Empresa"}. Todos os direitos reservados.
-    </p>
-  </div>
-</footer>
+      <div class="site-footer__inner">
+        <div class="site-footer__brand">
+          {footer.logoUrl && (
+            <a href="/" class="site-footer__logo-link">
+              <img
+                src={footer.logoUrl}
+                alt={footer.companyName || "Logo"}
+                class="site-footer__logo"
+              />
+            </a>
+          )}
+
+          {footer.tagline && <p class="site-footer__tagline">{footer.tagline}</p>}
+        </div>
+
+        {hasContactInfo ? (
+          <div class="site-footer__section">
+            <h3>Contato</h3>
+
+            <ul class="site-footer__list">
+              {footer.whatsappVisible && footer.whatsappNumber && (
+                <li class="site-footer__item">
+                  <span class="site-footer__item-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="M20 11.5a8 8 0 0 1-8 8 8.7 8.7 0 0 1-3.2-.6L4 20l1.1-4.1A8 8 0 1 1 20 11.5Z"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </span>
+
+                  <TrackedCTA
+                    href={`https://wa.me/${footer.whatsappNumber}`}
+                    label={formatPhoneDisplay(footer.whatsappNumber)}
+                    ctaId="footer-whatsapp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                </li>
+              )}
+
+              {footer.email && (
+                <li class="site-footer__item">
+                  <span class="site-footer__item-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="M4 6h16v12H4z"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linejoin="round"
+                      />
+                      <path
+                        d="m5 7 7 6 7-6"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </span>
+
+                  <a href={`mailto:${footer.email}`}>{footer.email}</a>
+                </li>
+              )}
+
+              {footer.address && (
+                <li class="site-footer__item site-footer__item--start">
+                  <span class="site-footer__item-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="M12 21s6-5.7 6-11a6 6 0 1 0-12 0c0 5.3 6 11 6 11Z"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linejoin="round"
+                      />
+                      <circle
+                        cx="12"
+                        cy="10"
+                        r="2.2"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                      />
+                    </svg>
+                  </span>
+
+                  <span class="site-footer__address">{footer.address}</span>
+                </li>
+              )}
+            </ul>
+          </div>
+        ) : (
+          <div class="site-footer__section site-footer__section--empty"></div>
+        )}
+
+        {visibleLinks.length > 0 ? (
+          <div class="site-footer__section">
+            <h3>Redes Sociais</h3>
+
+            <div class="site-footer__social">
+              {visibleLinks.map((link) => (
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={link.type}
+                  class="site-footer__social-link"
+                >
+                  {link.type === "linkedin" && (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M6.94 6.5a1.44 1.44 0 1 1 0-2.88 1.44 1.44 0 0 1 0 2.88ZM5.5 8.5h2.88V19H5.5V8.5Zm5.06 0h2.76v1.43h.04c.38-.72 1.32-1.48 2.72-1.48 2.9 0 3.44 1.9 3.44 4.36V19h-2.88v-5.1c0-1.22-.02-2.78-1.7-2.78-1.7 0-1.96 1.32-1.96 2.7V19h-2.88V8.5Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  )}
+
+                  {link.type === "instagram" && (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <rect
+                        x="4"
+                        y="4"
+                        width="16"
+                        height="16"
+                        rx="5"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                      />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                      />
+                      <circle cx="17" cy="7" r="1" fill="currentColor" />
+                    </svg>
+                  )}
+
+                  {link.type === "facebook" && (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M13 20v-7h3l.4-3H13V8.3c0-.9.3-1.5 1.6-1.5h2V4.1c-.3 0-1.2-.1-2.4-.1-2.4 0-4 1.4-4 4.2V10H8v3h2.2v7"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  )}
+
+                  {link.type === "youtube" && (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M21 12c0 2.8-.3 4.4-.7 5.2-.3.6-.8 1.1-1.4 1.4-.8.4-2.4.7-6.9.7s-6.1-.3-6.9-.7c-.6-.3-1.1-.8-1.4-1.4C3.3 16.4 3 14.8 3 12s.3-4.4.7-5.2c.3-.6.8-1.1 1.4-1.4.8-.4 2.4-.7 6.9-.7s6.1.3 6.9.7c.6.3 1.1.8 1.4 1.4.4.8.7 2.4.7 5.2Z"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                      />
+                      <path
+                        d="m10 9 5 3-5 3V9Z"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  )}
+
+                  {link.type === "tiktok" && (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M16.5 5.5c.9 1.1 2.2 1.9 3.7 2v2.8c-1.3 0-2.5-.4-3.5-1v6.2c0 3.2-2.6 5.8-5.8 5.8S5.1 18.7 5.1 15.5s2.6-5.8 5.8-5.8c.3 0 .6 0 .9.1v3a2.9 2.9 0 0 0-.9-.15c-1.6 0-2.9 1.3-2.9 2.9s1.3 2.9 2.9 2.9 2.9-1.3 2.9-2.9V5.5h2.8Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  )}
+
+                  {link.type !== "linkedin" &&
+                    link.type !== "instagram" &&
+                    link.type !== "facebook" &&
+                    link.type !== "youtube" &&
+                    link.type !== "tiktok" && (
+                      <span class="site-footer__social-fallback">
+                        {link.type.slice(0, 2).toUpperCase()}
+                      </span>
+                    )}
+                </a>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div class="site-footer__section site-footer__section--empty"></div>
+        )}
+
+        <p class="site-footer__copyright site-footer__copyright--global">
+          {`© ${year} ${footer.companyName || "Empresa"}. Todos os direitos reservados.`}
+        </p>
+      </div>
+    </footer>
+  )
+}
 
 <style>
   .site-footer {
@@ -315,6 +594,8 @@ const year = new Date().getFullYear()
   .site-footer__logo-link {
     display: inline-flex;
     width: fit-content;
+    line-height: 0;
+    text-decoration: none;
   }
 
   .site-footer__logo {
@@ -467,6 +748,324 @@ const year = new Date().getFullYear()
     display: none;
   }
 
+  /* —— cinematic-editorial —— */
+  .site-footer--cinematic {
+    background: #fbf8f4;
+    overflow-x: clip;
+    max-width: 100%;
+  }
+
+  .site-footer__signature--cream {
+    position: relative;
+    background: #fbf8f4;
+    color: color-mix(in srgb, #1f2937 52%, transparent);
+    padding: 2rem 1rem 0.875rem;
+    letter-spacing: 0.055em;
+  }
+
+  .site-footer__signature--cream::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4rem;
+    background: linear-gradient(to bottom, #f8f5f1 0%, #fbf8f4 100%);
+    pointer-events: none;
+  }
+
+  .site-footer__signature-text {
+    position: relative;
+    z-index: 1;
+    margin: 0 auto;
+    max-width: 42ch;
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+
+  .site-footer__signature-brand {
+    font-weight: 600;
+    color: color-mix(in srgb, #1f2937 82%, transparent);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .site-footer__signature-brand:hover,
+  .site-footer__signature-brand:focus-visible {
+    color: var(--site-color-primary, hsl(145 63% 42%));
+    text-decoration: underline;
+    outline: none;
+  }
+
+  .site-footer__signature-tail {
+    color: color-mix(in srgb, #1f2937 44%, transparent);
+  }
+
+  .site-footer__cinematic-shell {
+    position: relative;
+    padding: 1rem 1rem 2rem;
+    overflow-x: clip;
+  }
+
+  .site-footer__cinematic-shell::before {
+    content: "";
+    position: absolute;
+    right: -7.5rem;
+    top: 2.5rem;
+    width: 18.75rem;
+    height: 18.75rem;
+    border-radius: 999px;
+    background: color-mix(
+      in srgb,
+      var(--site-color-primary, hsl(145 63% 42%)) 3.5%,
+      transparent
+    );
+    pointer-events: none;
+  }
+
+  .site-footer__card {
+    position: relative;
+    z-index: 1;
+    margin: 0 auto;
+    max-width: 1360px;
+    overflow: hidden;
+    border-radius: 2.2rem;
+    border: 1px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 16%, transparent);
+    background: linear-gradient(180deg, #fffcf8 0%, #fbf7f1 100%);
+    box-shadow: 0 34px 110px -82px hsl(220 15% 15% / 0.36);
+  }
+
+  .site-footer__card-grid {
+    display: grid;
+    gap: 2.5rem;
+    padding: 2.5rem 1.75rem;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .site-footer__col {
+    display: grid;
+    gap: 0;
+    justify-items: center;
+    width: 100%;
+  }
+
+  .site-footer__col--brand {
+    gap: 0;
+  }
+
+  .site-footer__logo--cinematic {
+    height: 5rem; /* mobile: +25% vs prior 4rem */
+    max-width: 20rem;
+    width: auto;
+  }
+
+  .site-footer__tagline--cinematic {
+    margin-top: 1.25rem;
+    max-width: 32ch;
+    color: color-mix(in srgb, #1f2937 68%, transparent);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    text-align: center;
+  }
+
+  .site-footer__col--brand :global(a.site-footer__cta) {
+    margin-top: 1.75rem;
+  }
+
+  .site-footer__kicker {
+    margin: 0 0 1.25rem;
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 72%, transparent);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .site-footer__kicker-rule {
+    width: 2.5rem;
+    height: 1px;
+    margin: 0 0 1.75rem;
+    background: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 34%, transparent);
+  }
+
+  .site-footer__nav {
+    display: grid;
+    gap: 1rem;
+    font-size: 0.98rem;
+  }
+
+  .site-footer__nav-link {
+    color: color-mix(in srgb, #1f2937 66%, transparent);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .site-footer__nav-link:hover,
+  .site-footer__nav-link:focus-visible {
+    color: var(--site-color-primary, hsl(145 63% 42%));
+    outline: none;
+  }
+
+  .site-footer__list--cinematic {
+    gap: 1.25rem;
+    width: 100%;
+  }
+
+  .site-footer__item--pill {
+    gap: 1rem;
+    color: color-mix(in srgb, #1f2937 68%, transparent);
+    font-size: 0.98rem;
+    line-height: 1.55;
+  }
+
+  .site-footer__item--pill a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .site-footer__item--pill a:hover,
+  .site-footer__item--pill a:focus-visible {
+    color: var(--site-color-primary, hsl(145 63% 42%));
+    outline: none;
+  }
+
+  .site-footer__pill-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 10%, transparent);
+    background: color-mix(in srgb, #fff 58%, transparent);
+    color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 72%, transparent);
+  }
+
+  .site-footer__pill-icon svg,
+  .site-footer__pill-icon :global(svg) {
+    width: 1rem;
+    height: 1rem;
+    display: block;
+  }
+
+  .site-footer__social--cinematic {
+    margin-top: 2rem;
+    gap: 0.75rem;
+    justify-content: center;
+  }
+
+  .site-footer__social-link--cinematic {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 12%, transparent);
+    background: color-mix(in srgb, #fff 62%, transparent);
+    color: var(--site-color-primary, hsl(145 63% 42%));
+    box-shadow: 0 12px 34px -26px hsl(220 15% 15% / 0.35);
+    transition:
+      transform 0.3s ease,
+      border-color 0.3s ease,
+      background-color 0.3s ease;
+  }
+
+  .site-footer__social-link--cinematic:hover,
+  .site-footer__social-link--cinematic:focus-visible {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 34%, transparent);
+    background: #fff;
+    outline: none;
+  }
+
+  .site-footer__social-link--cinematic svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .site-footer__copyright--card {
+    margin: 0;
+    padding: 1.5rem 1.75rem 2rem;
+    border-top: 1px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 12%, transparent);
+    color: color-mix(in srgb, #1f2937 50%, transparent);
+    font-size: 0.875rem;
+    line-height: 1.55;
+    letter-spacing: -0.01em;
+    text-align: center;
+  }
+
+  @media (min-width: 640px) {
+    .site-footer__signature-text {
+      max-width: none;
+      font-size: 0.86rem;
+    }
+
+    .site-footer__cinematic-shell {
+      padding: 1.5rem 1.5rem 3rem;
+    }
+
+    .site-footer__card-grid {
+      grid-template-columns: 1.35fr 0.85fr 1.1fr;
+      gap: 3rem;
+      padding: 3.5rem 2.5rem;
+      justify-items: start;
+      text-align: left;
+      align-items: start;
+    }
+
+    .site-footer__col {
+      justify-items: start;
+    }
+
+    .site-footer__logo--cinematic {
+      height: 6.25rem; /* tablet+: +25% vs prior desktop 5rem */
+      max-width: 24rem;
+    }
+
+    .site-footer__tagline--cinematic {
+      margin-top: 2rem;
+      max-width: 30ch;
+      font-size: 1rem;
+      line-height: 1.85;
+      text-align: left;
+    }
+
+    .site-footer__col--brand :global(a.site-footer__cta) {
+      margin-top: 2.25rem;
+    }
+
+    .site-footer__social--cinematic {
+      justify-content: flex-start;
+    }
+
+    .site-footer__copyright--card {
+      padding: 2rem 2.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .site-footer__cinematic-shell {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+
+    .site-footer__card-grid {
+      gap: 3.5rem;
+      padding: 4rem 3.5rem;
+    }
+
+    /* Desktop: lock the +25% logo size (prior desktop was 5rem) */
+    .site-footer--cinematic .site-footer__logo--cinematic {
+      height: 6.25rem;
+      max-width: 26rem;
+    }
+
+    .site-footer__copyright--card {
+      padding-left: 3.5rem;
+      padding-right: 3.5rem;
+    }
+  }
+
   @media (min-width: 768px) {
     .site-footer__inner {
       grid-template-columns: 1.2fr 1fr 0.8fr;
@@ -487,36 +1086,46 @@ const year = new Date().getFullYear()
   }
 
   @media (max-width: 767px) {
-    .site-footer__inner {
+    .site-footer:not(.site-footer--cinematic) .site-footer__inner {
       text-align: center;
       justify-items: center;
       gap: 1.75rem;
     }
 
-    .site-footer__brand {
+    .site-footer:not(.site-footer--cinematic) .site-footer__brand {
       justify-items: center;
     }
 
-    .site-footer__tagline {
+    .site-footer:not(.site-footer--cinematic) .site-footer__tagline {
       text-align: center;
       max-width: 32ch;
     }
 
-    .site-footer__item {
+    .site-footer:not(.site-footer--cinematic) .site-footer__item {
       justify-content: center;
     }
 
-    .site-footer__item--start {
+    .site-footer:not(.site-footer--cinematic) .site-footer__item--start {
       align-items: flex-start;
     }
 
-    .site-footer__social {
+    .site-footer:not(.site-footer--cinematic) .site-footer__social {
       justify-content: center;
     }
 
-    .site-footer__copyright--global {
+    .site-footer:not(.site-footer--cinematic) .site-footer__copyright--global {
       text-align: center;
       max-width: 24ch;
+    }
+  }
+
+  @media (max-width: 639px) {
+    .site-footer--cinematic .site-footer__item--pill {
+      justify-content: center;
+    }
+
+    .site-footer--cinematic .site-footer__logo-link {
+      margin-inline: auto;
     }
   }
 </style>

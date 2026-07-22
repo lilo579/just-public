@@ -31,6 +31,7 @@ import {
   resolveFooterLogoUrl,
 } from "@just/site-engine-authority"
 import { resolvePublicPresentationBinding } from "../lib/publicPresentationBinding.js"
+import "../styles/cinematic-f1.css"
 
 const requestUrl = new URL(Astro.request.url)
 /** Kill-switch: ?renderer=legacy is rejected when a canonical plan is present. */
@@ -288,6 +289,14 @@ const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : ""
           justSignatureBand={presentationChrome.justSignatureBand}
           footerSurface={presentationChrome.footerSurface}
           socialIconEmphasis={presentationChrome.footerSocialIconEmphasis}
+          layout={
+            presentationProfile === "f1.presentation.cinematic_v1"
+              ? "cinematic-editorial"
+              : "standard"
+          }
+          navItems={headerNavItems}
+          whatsappHref={whatsappHref}
+          headerCtaLabel={headerCtaLabel}
         />
         {whatsappHref && <WhatsAppFloat href={whatsappHref} />}
       </div>
@@ -295,12 +304,13 @@ const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : ""
   </body>
 </html>
 
-<style>
+<style is:global>
   /* Full-bleed sections: each block owns its container. Do not constrain the shell. */
   .page-shell {
     margin: 0;
     max-width: none;
     padding: 0;
     width: 100%;
+    overflow-x: clip;
   }
 </style>

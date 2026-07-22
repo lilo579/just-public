@@ -35,4 +35,13 @@ const inlineStyle = themeTokensToInlineStyle(tokens)
     font-family: var(--site-font-heading, system-ui, sans-serif);
     font-weight: var(--site-font-heading-weight, 700);
   }
+
+  /* Cinematic profile owns editorial weight via --site-font-heading-weight. */
+  .site-theme-root:has([data-f1-presentation="f1.presentation.cinematic_v1"]) :global(h1),
+  .site-theme-root:has([data-f1-presentation="f1.presentation.cinematic_v1"]) :global(h2),
+  .site-theme-root:has([data-f1-presentation="f1.presentation.cinematic_v1"]) :global(h3),
+  .site-theme-root:has([data-f1-presentation="f1.presentation.cinematic_v1"]) :global(h4) {
+    font-family: var(--site-font-editorial, var(--site-font-heading, Georgia, serif));
+    font-weight: var(--site-font-heading-weight, 500);
+  }
 </style>

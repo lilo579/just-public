@@ -2,6 +2,7 @@
 import LeadForm from "../LeadForm.astro";
 import TrackedCTA from "../TrackedCTA.astro";
 import WhatsAppIcon from "../icons/WhatsAppIcon.astro";
+import MessageCircleIcon from "../icons/MessageCircleIcon.astro";
 import CinematicSectionIcon from "../icons/CinematicSectionIcon.astro";
 
 const { block, layout = "standard" } = Astro.props as {
@@ -52,18 +53,18 @@ const isCinematic = layout === "cinematic-band";
                   <TrackedCTA
                     href={primaryCTA!.href!}
                     label={finalLabel!}
-                    class="cta__button cta__button--band"
+                    class="cta__button cta__button--band f1-cta f1-cta--band"
                     ctaId="cta-final-primary-cta"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <span class="cta__button-icon" aria-hidden="true">
-                      <WhatsAppIcon class="cta__button-svg" />
+                    <span class="f1-cta__icon cta__button-icon" aria-hidden="true">
+                      <MessageCircleIcon />
                     </span>
                     <span>{finalLabel}</span>
                   </TrackedCTA>
                 ) : showButton ? (
-                  <a href={primaryCTA!.href} class="cta__button cta__button--band">
+                  <a href={primaryCTA!.href} class="cta__button cta__button--band f1-cta f1-cta--band">
                     {finalLabel}
                   </a>
                 ) : null}
@@ -223,11 +224,14 @@ const isCinematic = layout === "cinematic-band";
 
   .cta--cinematic .cta__band-wrap {
     position: relative;
-    left: 50%;
     z-index: 10;
-    width: calc(100vw - 2.5rem);
+    width: 100%;
     max-width: 1360px;
-    transform: translateX(-50%);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    box-sizing: border-box;
   }
 
   .cta--cinematic .cta__band {
@@ -372,7 +376,8 @@ const isCinematic = layout === "cinematic-band";
     }
 
     .cta--cinematic .cta__band-wrap {
-      width: calc(100vw - 4rem);
+      padding-left: 2rem;
+      padding-right: 2rem;
     }
 
     .cta--cinematic .cta__band-grid {
