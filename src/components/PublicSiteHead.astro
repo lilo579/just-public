@@ -46,17 +46,28 @@ const isAstroScaffold =
 const brandFavicon = resolvedFavicon && !isAstroScaffold ? resolvedFavicon : ""
 const brandingPackMatch = brandFavicon.match(/^\/branding\/([^/]+)\//)
 const brandingPackSlug = brandingPackMatch?.[1] || ""
-const appleTouchIcon = brandingPackSlug
-  ? `/branding/${brandingPackSlug}/apple-touch-icon.png`
-  : ""
+/** Only emit when the pack ships the file (avoid co-tenant 404s). */
+const PACKS_WITH_APPLE_TOUCH = new Set([
+  "marcelo-borer",
+  "rossana-mendonca",
+  "soraya-barbosa",
+  "3d-jewish",
+  "just",
+])
+const PACKS_WITH_MANIFEST = new Set(["3d-jewish", "just"])
+const appleTouchIcon =
+  brandingPackSlug && PACKS_WITH_APPLE_TOUCH.has(brandingPackSlug)
+    ? `/branding/${brandingPackSlug}/apple-touch-icon.png`
+    : ""
 /** Only emit when the pack ships mask-icon.svg (avoid co-tenant 404s). */
 const maskIcon =
   brandingPackSlug === "3d-jewish"
     ? `/branding/${brandingPackSlug}/mask-icon.svg`
     : ""
-const webManifest = brandingPackSlug
-  ? `/branding/${brandingPackSlug}/site.webmanifest`
-  : ""
+const webManifest =
+  brandingPackSlug && PACKS_WITH_MANIFEST.has(brandingPackSlug)
+    ? `/branding/${brandingPackSlug}/site.webmanifest`
+    : ""
 ---
 
 <meta charset="utf-8" />

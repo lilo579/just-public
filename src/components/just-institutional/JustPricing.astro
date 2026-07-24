@@ -1,0 +1,77 @@
+---
+import { justPricing } from "../../lib/justInstitutionalFreeze.js"
+import JustIcon from "./JustIcon.astro"
+
+const groupIcons = ["wallet", "monitor", "bar-chart-3", "headphones"] as const
+const trustIcons = ["shield", "lock", "headphones"] as const
+---
+
+<section
+  id={justPricing.id}
+  class="just-pricing section-padding"
+  aria-labelledby="just-pricing-heading"
+>
+  <div class="section-container">
+    <header class="just-pricing__header">
+      <h2 id="just-pricing-heading" class="just-pricing__heading font-display">
+        {justPricing.headline}
+      </h2>
+      <p class="just-pricing__lead">{justPricing.lead}</p>
+      <p class="just-pricing__support">{justPricing.support}</p>
+    </header>
+
+    <div class="just-pricing__surface">
+      <p class="just-pricing__brand font-display">{justPricing.brand}</p>
+      <p class="just-pricing__price" aria-label="R$ 67 por mês">
+        <span class="just-pricing__currency" aria-hidden="true">{justPricing.currency}</span>
+        <span class="just-pricing__amount" aria-hidden="true">{justPricing.amount}</span>
+        <span class="just-pricing__period" aria-hidden="true">{justPricing.period}</span>
+      </p>
+      <div class="just-pricing__rule" aria-hidden="true"></div>
+      <div class="just-pricing__groups">
+        {justPricing.featureGroups.map((group, index) => (
+          <div class="just-pricing__group">
+            <div class="just-pricing__group-head">
+              <span class="just-pricing__group-icon" aria-hidden="true">
+                <JustIcon name={groupIcons[index]} />
+              </span>
+              <h3 class="just-pricing__group-title">{group.title}</h3>
+            </div>
+            <ul class="just-pricing__list">
+              {group.items.map((item) => (
+                <li class="just-pricing__item">
+                  <JustIcon
+                    name="check"
+                    class="just-pricing__check"
+                    strokeWidth={2.5}
+                  />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <a href={justPricing.ctaHref} class="premium-button just-pricing__cta">
+        {justPricing.ctaLabel}
+        <JustIcon name="arrow-right" class="premium-button__icon" />
+      </a>
+      <p class="just-pricing__micro">{justPricing.micro}</p>
+      <p class="just-pricing__micro-quiet">{justPricing.microQuiet}</p>
+    </div>
+
+    <ul class="just-pricing__trust">
+      {justPricing.trust.map((item, index) => (
+        <li class="just-pricing__trust-item">
+          <span class="just-pricing__trust-icon" aria-hidden="true">
+            <JustIcon name={trustIcons[index]} />
+          </span>
+          <div>
+            <p class="just-pricing__trust-title">{item.title}</p>
+            <p class="just-pricing__trust-detail">{item.detail}</p>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>

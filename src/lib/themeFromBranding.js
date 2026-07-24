@@ -47,6 +47,12 @@ const FONT_ALLOWLIST = {
     body: '"Lato", ui-sans-serif, system-ui, sans-serif',
     load: "/fonts/lato/lato.css",
   },
+  /** M5 JUST institutional — F3-owned self-hosted Geist + Inter. */
+  just_institutional: {
+    heading: '"Geist", "Inter", ui-sans-serif, system-ui, sans-serif',
+    body: '"Inter", ui-sans-serif, system-ui, sans-serif',
+    load: "/fonts/just/just-fonts.css",
+  },
 }
 
 const SHADOW_ALLOWLIST = {

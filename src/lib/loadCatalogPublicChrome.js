@@ -30,6 +30,7 @@ import {
   resolveShopNavItems,
   resolveShopSolidLogoUrl,
 } from "./resolveShopNavItems.js";
+import { resolvePublicSiteMode } from "./resolvePublicSiteMode.js";
 
 /**
  * @param {string} host
@@ -115,8 +116,10 @@ export async function loadCatalogPublicChrome(host, locals) {
     []
   ).filter((link) => typeof link?.url === "string" && link.url.trim());
 
+  const siteModeResolved = resolvePublicSiteMode(homepage);
   const deployEnv = resolveDeployEnv(locals);
-  const noindex = isLeadIntakeSafeMode(deployEnv);
+  const noindex =
+    isLeadIntakeSafeMode(deployEnv) || siteModeResolved.mode === "MAINTENANCE";
 
   const seoMeta =
     homepage?.source?.meta?.seo && typeof homepage.source.meta.seo === "object"
@@ -187,5 +190,8 @@ export async function loadCatalogPublicChrome(host, locals) {
     justSignatureBand: chrome.justSignatureBand !== false,
     footerSurface: chrome.footerSurface || "light",
     contact,
+    siteMode: siteModeResolved.mode,
+    siteModeConfig: siteModeResolved.config,
+    interstitial: siteModeResolved.interstitial,
   };
 }

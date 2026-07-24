@@ -1,0 +1,451 @@
+---
+/**
+ * Platform Coming Soon interstitial — tenant-branded via SiteTheme + props.
+ * No tenant hardcoding. Content from site.mode.config + branding fallbacks.
+ */
+import JustSignature from "../JustSignature.astro"
+import ComingSoonLeadForm from "./ComingSoonLeadForm.astro"
+
+interface SocialLink {
+  type?: string | null
+  url: string
+}
+
+interface LegalLink {
+  href: string
+  label: string
+}
+
+interface LeadFormCopy {
+  nameLabel?: string | null
+  whatsappLabel?: string | null
+  submitLabel?: string | null
+  successTitle?: string | null
+  successBody?: string | null
+}
+
+interface Props {
+  companyName: string
+  logoUrl?: string | null
+  headline?: string | null
+  subtitle?: string | null
+  description?: string | null
+  paragraphs?: string[] | null
+  ctaLabel?: string | null
+  ctaHref?: string | null
+  email?: string | null
+  socialLinks?: SocialLink[]
+  backgroundImageUrl?: string | null
+  heroImageUrl?: string | null
+  launchDate?: string | null
+  leadForm?: LeadFormCopy | null
+  legalLinks?: LegalLink[] | null
+  showJustSignature?: boolean | null
+  showEyebrow?: boolean | null
+}
+
+const {
+  companyName,
+  logoUrl = null,
+  headline = null,
+  subtitle = null,
+  description = null,
+  paragraphs = null,
+  ctaLabel = null,
+  ctaHref = null,
+  email = null,
+  socialLinks = [],
+  backgroundImageUrl = null,
+  heroImageUrl = null,
+  launchDate = null,
+  leadForm = null,
+  legalLinks = null,
+  showJustSignature = true,
+  showEyebrow = true,
+} = Astro.props
+
+const headlineLines = (headline && headline.trim() ? headline : companyName || "Em breve")
+  .split("\n")
+  .map((line) => line.trim())
+  .filter(Boolean)
+
+const bodyParagraphs = Array.isArray(paragraphs) && paragraphs.length > 0
+  ? paragraphs.map((p) => p.trim()).filter(Boolean)
+  : [
+      subtitle?.trim(),
+      ...(description
+        ? description
+            .split(/\n+/)
+            .map((p) => p.trim())
+            .filter(Boolean)
+        : []),
+    ].filter((p, index, arr): p is string => Boolean(p) && arr.indexOf(p) === index)
+
+const primaryLabel = (ctaLabel && ctaLabel.trim()) || (ctaHref ? "Fale conosco" : null)
+const links = Array.isArray(socialLinks) ? socialLinks.filter((l) => l?.url) : []
+const legal = Array.isArray(legalLinks) ? legalLinks.filter((l) => l?.href && l?.label) : []
+const showSignature = showJustSignature !== false
+const showLead = Boolean(leadForm && typeof leadForm === "object")
+const year = new Date().getFullYear()
+---
+
+<section
+  class="site-mode site-mode--coming-soon"
+  data-site-mode="COMING_SOON"
+  style={backgroundImageUrl
+    ? `--site-mode-bg: url(${JSON.stringify(backgroundImageUrl)})`
+    : undefined}
+>
+  <div class="site-mode__wash" aria-hidden="true"></div>
+  <div class="site-mode__inner">
+    <header class="site-mode__brand">
+      <a href="/" class="site-mode__brand-link" aria-label={`${companyName} — página inicial`}>
+        {logoUrl ? (
+          <img src={logoUrl} alt={companyName} class="site-mode__logo" width="784" height="254" />
+        ) : (
+          <p class="site-mode__wordmark">{companyName}</p>
+        )}
+      </a>
+    </header>
+
+    <div class="site-mode__body">
+      {showEyebrow !== false ? <p class="site-mode__eyebrow">Em breve</p> : null}
+      <h1 class="site-mode__headline">
+        {headlineLines.map((line) => (
+          <span class="site-mode__headline-line">{line}</span>
+        ))}
+      </h1>
+
+      {bodyParagraphs.length > 0 ? (
+        <div class="site-mode__copy">
+          {bodyParagraphs.map((paragraph) => (
+            <p class="site-mode__lead">{paragraph}</p>
+          ))}
+        </div>
+      ) : null}
+
+      {heroImageUrl ? (
+        <div class="site-mode__hero-media">
+          <img src={heroImageUrl} alt="" class="site-mode__hero-img" loading="eager" decoding="async" />
+        </div>
+      ) : null}
+
+      {showLead ? (
+        <div class="site-mode__form">
+          <ComingSoonLeadForm
+            nameLabel={leadForm?.nameLabel}
+            whatsappLabel={leadForm?.whatsappLabel}
+            submitLabel={leadForm?.submitLabel}
+            successTitle={leadForm?.successTitle}
+            successBody={leadForm?.successBody}
+          />
+        </div>
+      ) : null}
+
+      {launchDate ? <p class="site-mode__launch">{launchDate}</p> : null}
+
+      {primaryLabel && ctaHref ? (
+        <p class="site-mode__actions">
+          <a
+            class="site-mode__cta"
+            href={ctaHref}
+            target={ctaHref.startsWith("http") ? "_blank" : undefined}
+            rel={ctaHref.startsWith("http") ? "noopener noreferrer" : undefined}
+          >
+            {primaryLabel}
+          </a>
+        </p>
+      ) : null}
+
+      {(email || links.length > 0) && (
+        <div class="site-mode__meta">
+          {email ? (
+            <a class="site-mode__meta-link" href={`mailto:${email}`}>{email}</a>
+          ) : null}
+          {links.map((link) => (
+            <a class="site-mode__meta-link" href={link.url} target="_blank" rel="noopener noreferrer">
+              {link.type || "Link"}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <footer class="site-mode__footer">
+      {showSignature ? (
+        <JustSignature />
+      ) : (
+        <div class="site-mode__simple-footer">
+          <p class="site-mode__footer-brand">{companyName}</p>
+          <p class="site-mode__footer-copy">© {year}</p>
+          {legal.length > 0 ? (
+            <nav class="site-mode__footer-nav" aria-label="Informações legais">
+              {legal.map((link) => (
+                <a href={link.href}>{link.label}</a>
+              ))}
+            </nav>
+          ) : null}
+        </div>
+      )}
+    </footer>
+  </div>
+</section>
+
+<style>
+  .site-mode--coming-soon {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    color: var(--site-color-text, #0f172a);
+    background:
+      var(--site-mode-bg, none) center / cover no-repeat,
+      var(--site-color-background, #f8fafc);
+  }
+
+  .site-mode__wash {
+    display: none;
+  }
+
+  .site-mode__inner {
+    position: relative;
+    z-index: 1;
+    width: min(48rem, calc(100% - 3rem));
+    margin: 0 auto;
+    padding: 2.5rem 0 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    min-height: 100vh;
+    box-sizing: border-box;
+  }
+
+  .site-mode__brand {
+    display: flex;
+    justify-content: center;
+    padding-top: 0.5rem;
+  }
+
+  .site-mode__brand-link {
+    display: inline-block;
+    border-radius: 0.25rem;
+  }
+
+  .site-mode__brand-link:focus-visible {
+    outline: 2px solid var(--site-color-accent, #3b5bdb);
+    outline-offset: 4px;
+  }
+
+  .site-mode__logo {
+    height: 2.75rem;
+    width: auto;
+    max-width: 14rem;
+    object-fit: contain;
+  }
+
+  .site-mode__wordmark {
+    margin: 0;
+    font-family: var(--site-font-heading, ui-sans-serif, system-ui, sans-serif);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+  }
+
+  .site-mode__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .site-mode__eyebrow {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--site-color-text-muted, #64748b);
+  }
+
+  .site-mode__headline {
+    margin: 0;
+    font-family: var(--site-font-heading, ui-sans-serif, system-ui, sans-serif);
+    font-size: clamp(1.65rem, 4vw, 3.25rem);
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -0.055em;
+    max-width: 22ch;
+  }
+
+  .site-mode__headline-line {
+    display: block;
+  }
+
+  .site-mode__headline-line + .site-mode__headline-line {
+    margin-top: 0.35em;
+  }
+
+  .site-mode__copy {
+    display: grid;
+    gap: 1rem;
+    margin-top: 0.75rem;
+    width: min(100%, 40rem);
+    text-align: left;
+  }
+
+  .site-mode__lead,
+  .site-mode__launch {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--site-color-text-muted, #475569);
+  }
+
+  .site-mode__form {
+    width: 100%;
+    margin-top: 1.5rem;
+  }
+
+  .site-mode__launch {
+    margin-top: 0.75rem;
+    max-width: 28rem;
+    font-size: 0.8125rem;
+    text-align: center;
+  }
+
+  .site-mode__hero-media {
+    width: min(100%, 28rem);
+    margin-top: 0.75rem;
+    border-radius: var(--site-radius-image, 1rem);
+    overflow: hidden;
+  }
+
+  .site-mode__hero-img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .site-mode__actions {
+    margin: 0.75rem 0 0;
+  }
+
+  .site-mode__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.85rem;
+    padding: 0 1.35rem;
+    border-radius: 9999px;
+    background: var(--site-color-primary, #121212);
+    color: var(--site-color-text-inverse, #fff);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .site-mode__cta:focus-visible {
+    outline: 2px solid var(--site-color-accent, #3b5bdb);
+    outline-offset: 3px;
+  }
+
+  .site-mode__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+
+  .site-mode__meta-link {
+    color: var(--site-color-text-muted, #64748b);
+    font-size: 0.9rem;
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  .site-mode__footer {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 0.5rem;
+  }
+
+  .site-mode__simple-footer {
+    text-align: center;
+  }
+
+  .site-mode__footer-brand {
+    margin: 0;
+    font-family: var(--site-font-heading, ui-sans-serif, system-ui, sans-serif);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    color: color-mix(in srgb, var(--site-color-text, #121212) 80%, transparent);
+  }
+
+  .site-mode__footer-copy {
+    margin: 0.25rem 0 0;
+    font-size: 0.75rem;
+    color: var(--site-color-text-muted, #64748b);
+  }
+
+  .site-mode__footer-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+    justify-content: center;
+    margin-top: 0.75rem;
+  }
+
+  .site-mode__footer-nav a {
+    font-size: 0.75rem;
+    color: var(--site-color-text-muted, #64748b);
+    text-decoration: none;
+  }
+
+  .site-mode__footer-nav a:hover {
+    color: var(--site-color-text, #121212);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  @media (min-width: 640px) {
+    .site-mode__copy {
+      text-align: center;
+    }
+
+    .site-mode__logo {
+      height: 2.25rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .site-mode__inner {
+      padding-top: 4rem;
+      padding-bottom: 3rem;
+    }
+
+    .site-mode__logo {
+      height: 2.75rem;
+    }
+
+    .site-mode__lead {
+      font-size: 1.125rem;
+      line-height: 1.75;
+    }
+
+    .site-mode__launch {
+      font-size: 0.875rem;
+      line-height: 1.75;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-mode--coming-soon {
+      transition: none;
+    }
+  }
+</style>

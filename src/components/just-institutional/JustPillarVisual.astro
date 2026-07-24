@@ -1,0 +1,88 @@
+---
+/**
+ * Canonical pillar visuals from just-site-magic CompleteBusinessStructure (M4 restore).
+ */
+interface Props {
+  kind: "presence" | "clients" | "agenda" | "finance" | "operation" | "evolution"
+}
+
+const { kind } = Astro.props
+const stroke = "currentColor"
+---
+
+{
+  kind === "presence" && (
+    <svg viewBox="0 0 160 88" class="h-full w-full text-foreground/55" fill="none" aria-hidden="true">
+      <rect x="40" y="16" width="80" height="52" rx="2.5" stroke={stroke} stroke-width="1.25" />
+      <path d="M52 34 H108" stroke={stroke} stroke-width="1.2" stroke-linecap="round" />
+      <path d="M52 44 H96" stroke={stroke} stroke-width="1.15" stroke-linecap="round" opacity="0.55" />
+      <path d="M52 54 H84" stroke={stroke} stroke-width="1.15" stroke-linecap="round" opacity="0.35" />
+      <path d="M80 68 V78" stroke={stroke} stroke-width="1.25" stroke-linecap="round" />
+      <path d="M66 78 H94" stroke={stroke} stroke-width="1.25" stroke-linecap="round" />
+    </svg>
+  )
+}
+{
+  kind === "clients" && (
+    <svg viewBox="0 0 160 88" class="h-full w-full text-foreground/55" fill="none" aria-hidden="true">
+      <path d="M28 64 C48 40, 70 40, 80 52 C90 64, 112 64, 132 40" stroke={stroke} stroke-width="1.25" stroke-linecap="round" />
+      <circle cx="28" cy="64" r="4" stroke={stroke} stroke-width="1.25" />
+      <circle cx="80" cy="52" r="4" stroke={stroke} stroke-width="1.25" />
+      <circle cx="132" cy="40" r="4" stroke={stroke} stroke-width="1.25" />
+      <circle cx="28" cy="64" r="1.4" fill={stroke} />
+      <circle cx="80" cy="52" r="1.4" fill={stroke} />
+      <circle cx="132" cy="40" r="1.4" fill={stroke} />
+    </svg>
+  )
+}
+{
+  kind === "agenda" && (
+    <svg viewBox="0 0 160 88" class="h-full w-full text-foreground/55" fill="none" aria-hidden="true">
+      <path d="M24 44 H136" stroke={stroke} stroke-width="1.25" stroke-linecap="round" />
+      <path d="M40 36 V52" stroke={stroke} stroke-width="1.25" stroke-linecap="round" />
+      <path d="M64 36 V52" stroke={stroke} stroke-width="1.25" stroke-linecap="round" />
+      <path d="M88 36 V52" stroke={stroke} stroke-width="1.25" stroke-linecap="round" />
+      <path d="M112 36 V52" stroke={stroke} stroke-width="1.25" stroke-linecap="round" />
+      <rect x="48" y="28" width="20" height="10" rx="2" stroke={stroke} stroke-width="1.15" />
+      <rect x="96" y="50" width="28" height="10" rx="2" stroke={stroke} stroke-width="1.15" opacity="0.7" />
+    </svg>
+  )
+}
+{
+  kind === "finance" && (
+    <svg viewBox="0 0 160 88" class="h-full w-full text-foreground/55" fill="none" aria-hidden="true">
+      <path d="M28 30 C52 30, 52 58, 80 58 C108 58, 108 30, 132 30" stroke={stroke} stroke-width="1.25" stroke-linecap="round" />
+      <path d="M28 58 C52 58, 52 30, 80 30 C108 30, 108 58, 132 58" stroke={stroke} stroke-width="1.25" stroke-linecap="round" opacity="0.55" />
+      <circle cx="80" cy="44" r="3.5" stroke={stroke} stroke-width="1.25" />
+    </svg>
+  )
+}
+{
+  kind === "operation" && (
+    <svg viewBox="0 0 160 88" class="h-full w-full text-foreground/55" fill="none" aria-hidden="true">
+      <path d="M28 24 H68" stroke={stroke} stroke-width="1.2" stroke-linecap="round" />
+      <path d="M28 44 H60" stroke={stroke} stroke-width="1.2" stroke-linecap="round" opacity="0.7" />
+      <path d="M28 64 H64" stroke={stroke} stroke-width="1.2" stroke-linecap="round" opacity="0.45" />
+      <path d="M68 24 C86 24, 78 44, 96 44 H132" stroke={stroke} stroke-width="1.25" stroke-linecap="round" />
+      <path d="M60 44 H78" stroke={stroke} stroke-width="1.2" stroke-linecap="round" opacity="0.7" />
+      <path d="M64 64 C78 64, 82 44, 96 44" stroke={stroke} stroke-width="1.2" stroke-linecap="round" opacity="0.55" />
+      <circle cx="132" cy="44" r="3.5" stroke={stroke} stroke-width="1.25" />
+    </svg>
+  )
+}
+{
+  kind === "evolution" && (
+    <svg viewBox="0 0 160 88" class="h-full w-full text-foreground/55" fill="none" aria-hidden="true">
+      <rect x="24" y="30" width="36" height="28" rx="2.5" stroke={stroke} stroke-width="1.25" />
+      <rect x="60" y="24" width="36" height="40" rx="2.5" stroke={stroke} stroke-width="1.25" opacity="0.75" />
+      <rect x="96" y="18" width="40" height="52" rx="2.5" stroke={stroke} stroke-width="1.25" stroke-dasharray="3.5 3" opacity="0.55" />
+      <path d="M136 44 H148" stroke={stroke} stroke-width="1.2" stroke-linecap="round" opacity="0.45" />
+    </svg>
+  )
+}
+
+<style>
+  .h-full { height: 100%; }
+  .w-full { width: 100%; }
+  .text-foreground\/55 { color: color-mix(in srgb, var(--site-color-text, #121212) 55%, transparent); }
+</style>

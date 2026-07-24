@@ -1,0 +1,71 @@
+---
+/**
+ * Canonical stage art from just-site-magic BusinessEvolution (M4 restore).
+ */
+interface Props {
+  kind: "sprout" | "cards" | "team" | "commerce" | "growth"
+}
+
+const { kind } = Astro.props
+const fill = "currentColor"
+---
+
+{
+  kind === "sprout" && (
+    <svg viewBox="0 0 160 110" class="business-evolution__art-svg" fill="none" aria-hidden="true">
+      <rect x="52" y="78" width="56" height="10" rx="2" fill={fill} opacity="0.18" />
+      <rect x="62" y="68" width="36" height="12" rx="2" fill={fill} opacity="0.28" />
+      <ellipse cx="80" cy="62" rx="16" ry="8" fill={fill} opacity="0.35" />
+      <path d="M80 60 C80 48 72 40 64 36 C74 42 78 50 80 60 Z" fill={fill} opacity="0.45" />
+      <path d="M80 60 C80 46 90 38 98 34 C90 42 84 50 80 60 Z" fill={fill} opacity="0.32" />
+      <path d="M80 62 V48" stroke={fill} stroke-width="2" stroke-linecap="round" opacity="0.5" />
+    </svg>
+  )
+}
+{
+  kind === "cards" && (
+    <svg viewBox="0 0 160 110" class="business-evolution__art-svg" fill="none" aria-hidden="true">
+      <rect x="38" y="42" width="52" height="36" rx="4" fill={fill} opacity="0.16" />
+      <rect x="50" y="34" width="52" height="36" rx="4" fill={fill} opacity="0.28" />
+      <rect x="62" y="26" width="52" height="36" rx="4" fill={fill} opacity="0.42" />
+      <circle cx="74" cy="40" r="5" fill={fill} opacity="0.2" />
+      <path d="M70 50 H98" stroke={fill} stroke-width="2" stroke-linecap="round" opacity="0.28" />
+      <path d="M70 56 H90" stroke={fill} stroke-width="2" stroke-linecap="round" opacity="0.18" />
+    </svg>
+  )
+}
+{
+  kind === "team" && (
+    <svg viewBox="0 0 160 110" class="business-evolution__art-svg" fill="none" aria-hidden="true">
+      <rect x="36" y="30" width="88" height="58" rx="5" fill={fill} opacity="0.14" />
+      <rect x="42" y="36" width="76" height="40" rx="3" fill={fill} opacity="0.28" />
+      <circle cx="62" cy="52" r="7" fill={fill} opacity="0.4" />
+      <circle cx="80" cy="52" r="7" fill={fill} opacity="0.32" />
+      <circle cx="98" cy="52" r="7" fill={fill} opacity="0.24" />
+      <rect x="54" y="88" width="52" height="6" rx="2" fill={fill} opacity="0.22" />
+    </svg>
+  )
+}
+{
+  kind === "commerce" && (
+    <svg viewBox="0 0 160 110" class="business-evolution__art-svg" fill="none" aria-hidden="true">
+      <path d="M58 28 H78 V70 C78 78 70 84 62 84 C54 84 48 78 48 70 V40 C48 34 52 28 58 28 Z" fill={fill} opacity="0.28" />
+      <path d="M58 28 C64 34 72 34 78 28" stroke={fill} stroke-width="2" opacity="0.35" />
+      <circle cx="108" cy="58" r="18" fill={fill} opacity="0.16" />
+      <circle cx="108" cy="58" r="12" fill={fill} opacity="0.28" />
+      <path d="M102 58 H114 M108 52 V64" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity="0.85" />
+    </svg>
+  )
+}
+{
+  kind === "growth" && (
+    <svg viewBox="0 0 160 110" class="business-evolution__art-svg" fill="none" aria-hidden="true">
+      <rect x="44" y="88" width="72" height="8" rx="2" fill={fill} opacity="0.18" />
+      <rect x="52" y="58" width="14" height="30" rx="2" fill={fill} opacity="0.28" />
+      <rect x="73" y="44" width="14" height="44" rx="2" fill={fill} opacity="0.38" />
+      <rect x="94" y="30" width="14" height="58" rx="2" fill={fill} opacity="0.5" />
+      <path d="M48 72 L66 56 L86 48 L110 28" stroke={fill} stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.45" />
+      <circle cx="110" cy="28" r="3.5" fill={fill} opacity="0.55" />
+    </svg>
+  )
+}

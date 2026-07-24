@@ -317,7 +317,9 @@ test("workerd Static Assets: MIME, isolation, 404, traversal, no payload/leads I
   const missing = await fetchAsset(port, "/_astro/does-not-exist.js")
   assert.equal(missing.status, 404)
   // Controlled 404 page (Astro) is OK; must not be tenant homepage / SSR payload content.
-  assert.match(missing.body, /404|Not [Ff]ound/)
+  // Controlled 404 (Astro) — EN scaffold or pt-BR institutional/generic copy.
+  assert.match(missing.body, /404|Not [Ff]ound|não encontrada/i)
+  assert.doesNotMatch(missing.body, /data-just-institutional/)
   assert.doesNotMatch(missing.body, /Alpha Consulting|Beta Studio|data-renderer="canonical"/)
   assert.doesNotMatch(missing.body, /alpha@example\.test|beta@example\.test/)
   assert.doesNotMatch(missing.body, /--site-color-primary:#112233|--site-color-primary:#aa5500/)

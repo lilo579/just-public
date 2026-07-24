@@ -1,0 +1,141 @@
+---
+import { justHowTogether } from "../../lib/justInstitutionalFreeze.js"
+import JustIcon from "./JustIcon.astro"
+
+const stepIcons = [
+  "user",
+  "calendar-days",
+  "message-circle",
+  "wallet",
+  "users",
+  "bar-chart-3",
+] as const
+
+const outcomeIcons = [
+  "clock-3",
+  "check-circle-2",
+  "bar-chart-3",
+  "circle",
+] as const
+---
+
+<section
+  id={justHowTogether.id}
+  class="how-together section-padding how-together--motion"
+  data-how-together
+  aria-labelledby="how-together-heading"
+>
+  <div class="section-container">
+    <div class="how-together__main">
+      <div class="how-together__copy">
+        <h2 id="how-together-heading" class="how-together__heading font-display">
+          {justHowTogether.headline}
+        </h2>
+        <p class="how-together__lead">{justHowTogether.lead}</p>
+        <p class="how-together__tag">
+          <span class="how-together__tag-rule" aria-hidden="true"></span>
+          {justHowTogether.tag}
+        </p>
+      </div>
+
+      <div class="how-together__cycle" aria-label="Ciclo operacional da JUST">
+        <div class="how-together__orbit" aria-hidden="true">
+          <svg class="how-together__arrows" viewBox="0 0 400 400" fill="none">
+            <defs>
+              <marker
+                id="how-together-arrow"
+                markerWidth="6"
+                markerHeight="6"
+                refX="3"
+                refY="3"
+                orient="auto"
+              >
+                <path
+                  d="M1 1 L5 3 L1 5"
+                  fill="none"
+                  stroke="hsl(0 0% 7% / 0.32)"
+                  stroke-width="1.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </marker>
+            </defs>
+            <circle
+              cx="200"
+              cy="200"
+              r="118"
+              stroke="hsl(0 0% 7% / 0.16)"
+              stroke-width="1.25"
+              stroke-dasharray="3.5 5.5"
+              marker-start="url(#how-together-arrow)"
+              marker-mid="url(#how-together-arrow)"
+            />
+          </svg>
+        </div>
+        <div class="how-together__core">
+          <JustIcon name="refresh-cw" class="how-together__core-icon" strokeWidth={1.75} />
+          <p class="how-together__core-text">
+            {justHowTogether.coreLines.map((line, i) => (
+              <>
+                {i > 0 && <br />}
+                {line}
+              </>
+            ))}
+          </p>
+        </div>
+        <ol class="how-together__steps">
+          {justHowTogether.steps.map((step, index) => (
+            <li class="how-together__step">
+              <div class="how-together__step-inner">
+                <span class="how-together__step-icon" aria-hidden="true">
+                  <JustIcon name={stepIcons[index]} strokeWidth={1.75} />
+                </span>
+                <div class="how-together__step-body">
+                  <h3 class="how-together__step-title">
+                    {index + 1}. {step.title}
+                  </h3>
+                  <p class="how-together__step-text">{step.text}</p>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+
+    <ul class="how-together__outcomes">
+      {justHowTogether.outcomes.map((outcome, index) => (
+        <li class="how-together__outcome">
+          <span class="how-together__outcome-icon" aria-hidden="true">
+            <JustIcon name={outcomeIcons[index]} strokeWidth={1.75} />
+          </span>
+          <h3 class="how-together__outcome-title">{outcome.title}</h3>
+          <p class="how-together__outcome-text">{outcome.text}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<script>
+  const section = document.querySelector("[data-how-together]")
+  if (section instanceof HTMLElement) {
+    const reduce =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    if (reduce || typeof IntersectionObserver === "undefined") {
+      section.classList.add("how-together--in")
+    } else {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry?.isIntersecting) {
+            section.classList.add("how-together--in")
+            observer.disconnect()
+          }
+        },
+        { threshold: 0.22, rootMargin: "0px 0px -8% 0px" },
+      )
+      observer.observe(section)
+    }
+  }
+</script>

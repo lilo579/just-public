@@ -1,0 +1,96 @@
+---
+/**
+ * Platform Maintenance interstitial — architectural stub for MAINTENANCE mode.
+ * Tenant-branded; no tenant hardcoding.
+ */
+import JustSignature from "../JustSignature.astro"
+
+interface Props {
+  companyName: string
+  logoUrl?: string | null
+  headline?: string | null
+  description?: string | null
+}
+
+const {
+  companyName,
+  logoUrl = null,
+  headline = null,
+  description = null,
+} = Astro.props
+
+const title = (headline && headline.trim()) || "Em manutenção"
+const lead =
+  (description && description.trim()) ||
+  "Voltamos em breve. Obrigado pela compreensão."
+---
+
+<section class="site-mode site-mode--maintenance" data-site-mode="MAINTENANCE">
+  <div class="site-mode__inner">
+    <header class="site-mode__brand">
+      {logoUrl ? (
+        <img src={logoUrl} alt={companyName} class="site-mode__logo" />
+      ) : (
+        <p class="site-mode__wordmark">{companyName}</p>
+      )}
+    </header>
+    <div class="site-mode__body">
+      <h1 class="site-mode__headline">{title}</h1>
+      <p class="site-mode__lead">{lead}</p>
+    </div>
+    <footer class="site-mode__footer">
+      <JustSignature />
+    </footer>
+  </div>
+</section>
+
+<style>
+  .site-mode--maintenance {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    background: var(--site-color-background, #f8fafc);
+    color: var(--site-color-text, #0f172a);
+  }
+
+  .site-mode__inner {
+    width: min(36rem, 100%);
+    display: grid;
+    gap: 2rem;
+    text-align: center;
+  }
+
+  .site-mode__logo {
+    height: 2.5rem;
+    width: auto;
+    max-width: 12rem;
+    object-fit: contain;
+  }
+
+  .site-mode__wordmark {
+    margin: 0;
+    font-family: var(--site-font-heading, ui-sans-serif, system-ui, sans-serif);
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+
+  .site-mode__headline {
+    margin: 0 0 0.75rem;
+    font-family: var(--site-font-heading, ui-sans-serif, system-ui, sans-serif);
+    font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+    font-weight: 700;
+  }
+
+  .site-mode__lead {
+    margin: 0;
+    color: var(--site-color-text-muted, #64748b);
+    line-height: 1.55;
+  }
+
+  .site-mode__footer {
+    display: flex;
+    justify-content: center;
+  }
+</style>

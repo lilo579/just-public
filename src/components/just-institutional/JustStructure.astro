@@ -1,0 +1,81 @@
+---
+import { justStructure } from "../../lib/justInstitutionalFreeze.js"
+import JustPillarVisual from "./JustPillarVisual.astro"
+---
+
+<section
+  id={justStructure.id}
+  class="complete-structure section-padding"
+  aria-labelledby="complete-structure-heading"
+>
+  <div class="section-container">
+    <div class="mx-auto max-w-[44rem] text-center">
+      <h2
+        id="complete-structure-heading"
+        class="font-display text-[2rem] font-bold leading-[1.08] tracking-[-0.055em] sm:text-4xl md:text-[2.85rem] md:leading-[1.05] md:tracking-[-0.06em]"
+      >
+        {justStructure.headline}
+      </h2>
+      <p class="mx-auto mt-6 max-w-[36rem] text-base leading-7 text-muted-foreground md:mt-7 md:text-lg md:leading-8">
+        {justStructure.lead}
+      </p>
+    </div>
+
+    <div class="complete-structure__grid mt-14 md:mt-16 lg:mt-20">
+      {justStructure.pillars.map((pillar) => (
+        <article class={`complete-structure__item complete-structure__item--${pillar.prominence}`}>
+          <div class="complete-structure__visual" aria-hidden="true">
+            <JustPillarVisual kind={pillar.visual} />
+          </div>
+          <div class="complete-structure__copy">
+            <h3 class="font-display text-[1.0625rem] font-semibold tracking-[-0.03em] md:text-lg">
+              {pillar.title}
+            </h3>
+            <p class="mt-2.5 text-[0.9375rem] leading-6 text-muted-foreground md:mt-3 md:leading-7">
+              {pillar.description}
+            </p>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .mx-auto { margin-left: auto; margin-right: auto; }
+  .text-center { text-align: center; }
+  .max-w-\[44rem\] { max-width: 44rem; }
+  .max-w-\[36rem\] { max-width: 36rem; }
+  .mt-6 { margin-top: 1.5rem; }
+  .mt-2\.5 { margin-top: 0.625rem; }
+  .mt-14 { margin-top: 3.5rem; }
+  .text-\[2rem\] { font-size: 2rem; }
+  .text-base { font-size: 1rem; }
+  .text-\[1\.0625rem\] { font-size: 1.0625rem; }
+  .text-\[0\.9375rem\] { font-size: 0.9375rem; }
+  .font-bold { font-weight: 700; }
+  .font-semibold { font-weight: 600; }
+  .leading-\[1\.08\] { line-height: 1.08; }
+  .leading-6 { line-height: 1.5rem; }
+  .leading-7 { line-height: 1.75rem; }
+  .tracking-\[-0\.055em\] { letter-spacing: -0.055em; }
+  .tracking-\[-0\.03em\] { letter-spacing: -0.03em; }
+  .text-muted-foreground { color: var(--site-color-text-muted, #616161); }
+  @media (min-width: 640px) {
+    .sm\:text-4xl { font-size: 2.25rem; }
+  }
+  @media (min-width: 768px) {
+    .md\:text-\[2\.85rem\] { font-size: 2.85rem; }
+    .md\:leading-\[1\.05\] { line-height: 1.05; }
+    .md\:tracking-\[-0\.06em\] { letter-spacing: -0.06em; }
+    .md\:mt-7 { margin-top: 1.75rem; }
+    .md\:mt-3 { margin-top: 0.75rem; }
+    .md\:mt-16 { margin-top: 4rem; }
+    .md\:text-lg { font-size: 1.125rem; }
+    .md\:leading-7 { line-height: 1.75rem; }
+    .md\:leading-8 { line-height: 2rem; }
+  }
+  @media (min-width: 1024px) {
+    .lg\:mt-20 { margin-top: 5rem; }
+  }
+</style>

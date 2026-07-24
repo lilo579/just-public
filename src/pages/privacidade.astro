@@ -1,0 +1,30 @@
+---
+export const prerender = false
+
+import JustLegalLayout from "../components/just-institutional/JustLegalLayout.astro"
+import { loadJustInstitutionalChrome } from "../lib/loadJustInstitutionalChrome.js"
+
+const chrome = await loadJustInstitutionalChrome(Astro.request, Astro.locals)
+if (!chrome.ok) {
+  return new Response(`Page unavailable (${chrome.reason})`, {
+    status: chrome.status || 404,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  })
+}
+
+const page = chrome.packaged.legalPages.privacidade
+const canonicalUrl = `https://${chrome.host}/privacidade`
+---
+
+<JustLegalLayout
+  title={page.title}
+  body={page.body}
+  host={chrome.host}
+  branding={chrome.branding}
+  seoTitle={`${page.title} | JUST`}
+  seoDescription={chrome.seo.description}
+  canonicalUrl={canonicalUrl}
+  faviconUrl={chrome.seo.faviconUrl}
+  ogImage={chrome.seo.ogImage}
+  robots={chrome.seo.robots}
+/>

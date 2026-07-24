@@ -38,6 +38,9 @@ if (!chrome.ok) {
     headers: { "Content-Type": "text/plain; charset=utf-8" },
   });
 }
+if (chrome.interstitial) {
+  return Astro.redirect("/", 302);
+}
 
 const navItems = applyHostOverrideToNavItems(chrome.navItems, hostOverride);
 

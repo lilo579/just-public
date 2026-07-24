@@ -1,0 +1,26 @@
+{
+  "name": "JUST",
+  "short_name": "JUST",
+  "icons": [
+    {
+      "src": "/branding/just/favicon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/branding/just/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/branding/just/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "theme_color": "#121212",
+  "background_color": "#f7f5f0",
+  "display": "standalone"
+}

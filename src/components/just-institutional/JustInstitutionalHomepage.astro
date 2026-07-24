@@ -1,0 +1,32 @@
+---
+/**
+ * JUST institutional homepage — NORMAL mode paint (M1 freeze).
+ * Testimonials omitted while publish set is empty.
+ */
+import JustHeader from "./JustHeader.astro"
+import JustHero from "./JustHero.astro"
+import JustStructure from "./JustStructure.astro"
+import JustHowTogether from "./JustHowTogether.astro"
+import JustEvolution from "./JustEvolution.astro"
+import JustPricing from "./JustPricing.astro"
+import JustFinalCta from "./JustFinalCta.astro"
+import JustFooter from "./JustFooter.astro"
+---
+
+<div data-just-institutional data-renderer="just-institutional">
+  <JustHeader variant="homepage" showTestimonialsNav={false} />
+  <main class="pt-16">
+    <JustHero />
+    <JustStructure />
+    <JustHowTogether />
+    <JustEvolution />
+    {/* Testimonials: frozen empty — do not render landmark (M1). */}
+    <JustPricing />
+    <JustFinalCta />
+  </main>
+  <JustFooter />
+</div>
+
+<style>
+  .pt-16 { padding-top: 4rem; }
+</style>

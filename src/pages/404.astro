@@ -1,0 +1,133 @@
+---
+export const prerender = false
+
+import PublicSiteHead from "../components/PublicSiteHead.astro"
+import SiteTheme from "../components/SiteTheme.astro"
+import {
+  HostResolutionError,
+  resolveRequestHost,
+} from "../lib/publicHomepage"
+import { resolvePackagedInstitutionalSite } from "../lib/resolvePackagedInstitutionalSite.js"
+import { themeTokensFromBranding } from "../lib/themeFromBranding.js"
+import { resolveBrandFaviconUrl, toAbsolutePublicUrl } from "../lib/publicPageSeo.js"
+import justInstitutionalCssUrl from "../styles/just-institutional.css?url"
+const requestUrl = new URL(Astro.request.url)
+let host = "localhost"
+try {
+  host = resolveRequestHost(Astro.request, requestUrl.searchParams)
+} catch (err) {
+  if (!(err instanceof HostResolutionError)) {
+    /* keep localhost */
+  }
+}
+
+const packaged = resolvePackagedInstitutionalSite(host)
+/** JUST pack only — never leak JUST branding onto co-tenant / unknown hosts. */
+const copy = packaged
+  ? packaged.notFound
+  : {
+      eyebrow: "",
+      title: "Página não encontrada",
+      body: "Esta página não existe ou pode ter sido movida.",
+      ctaLabel: "Voltar para a página inicial",
+      ctaHref: "/",
+    }
+const branding = packaged ? packaged.themeBranding : null
+const tokens = themeTokensFromBranding(branding)
+const fontLoadUrl =
+  typeof tokens.__fontLoadUrl === "string" ? tokens.__fontLoadUrl : null
+const faviconUrl = resolveBrandFaviconUrl({
+  host,
+  favicon: packaged ? `/branding/${packaged.slug}/favicon.ico` : "",
+  preferIco: true,
+})
+const ogImage = packaged
+  ? toAbsolutePublicUrl(host, `/branding/${packaged.slug}/og-image.jpg`)
+  : ""
+const documentTitle = packaged ? `${copy.title} | JUST` : copy.title
+
+Astro.response.status = 404
+---
+
+<html lang="pt-BR">
+  <head>
+    <PublicSiteHead
+      title={documentTitle}
+      description={copy.body}
+      canonicalUrl={host ? `https://${host}${requestUrl.pathname}` : undefined}
+      faviconUrl={faviconUrl}
+      ogImage={ogImage}
+      robots="noindex, follow"
+      twitterCard="summary"
+      fontLoadUrl={fontLoadUrl}
+    />
+    {packaged ? <meta name="theme-color" content="#121212" /> : null}
+    {packaged ? <link rel="stylesheet" href={justInstitutionalCssUrl} /> : null}
+  </head>
+  <body>
+    <SiteTheme tokens={tokens}>
+      <div
+        class:list={[packaged && "data-just-wrap"]}
+        data-just-institutional={packaged ? "" : undefined}
+      >
+        <div class="not-found">
+          {copy.eyebrow ? <p class="eyebrow">{copy.eyebrow}</p> : null}
+          <h1 class="font-display not-found__title">{copy.title}</h1>
+          <p class="not-found__body">{copy.body}</p>
+          <a href={copy.ctaHref} class="premium-button not-found__cta">{copy.ctaLabel}</a>
+        </div>
+      </div>
+    </SiteTheme>
+  </body>
+</html>
+
+<style>
+  .not-found {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    text-align: center;
+    background: var(--site-color-background, #f7f5f0);
+    color: var(--site-color-text, #121212);
+  }
+  .eyebrow {
+    margin: 0 0 1.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--site-color-text-muted, #616161);
+  }
+  .not-found__title {
+    margin: 0;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 600;
+    letter-spacing: -0.045em;
+  }
+  .not-found__body {
+    margin: 1.25rem 0 0;
+    max-width: 28rem;
+    font-size: 1rem;
+    line-height: 1.75rem;
+    color: var(--site-color-text-muted, #616161);
+  }
+  .not-found__cta {
+    margin-top: 2.5rem;
+  }
+  .premium-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 2.75rem;
+    padding: 0 1.5rem;
+    border-radius: 9999px;
+    background: var(--site-color-primary, #121212);
+    color: var(--site-color-text-inverse, #fff);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+</style>

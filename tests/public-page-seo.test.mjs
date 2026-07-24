@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 import {
   buildPublicHomepageSeo,
   extractHeroSeoFields,
+  toAbsolutePublicUrl,
 } from "../src/lib/publicPageSeo.js"
 
 test("extractHeroSeoFields reads hero props from serializable plan", () => {
@@ -90,7 +91,32 @@ test("3D Jewish packaged OG used when CMS ogImage unset", () => {
     branding: {},
   })
   assert.equal(seo.faviconUrl, "/branding/3d-jewish/favicon.svg")
-  assert.equal(seo.ogImage, "/branding/3d-jewish/og-image.jpg")
+  assert.equal(
+    seo.ogImage,
+    "https://3djewish.com.br/branding/3d-jewish/og-image.jpg",
+  )
+})
+
+test("JUST packaged OG is absolute on www (D-001)", () => {
+  const seo = buildPublicHomepageSeo({
+    host: "www.justwebsites.com.br",
+    companyName: "JUST",
+    branding: {},
+    seo: {
+      ogImage: "/branding/just/og-image.jpg",
+      favicon: "/branding/just/favicon.ico",
+    },
+  })
+  assert.equal(seo.faviconUrl, "/branding/just/favicon.ico")
+  assert.equal(
+    seo.ogImage,
+    "https://www.justwebsites.com.br/branding/just/og-image.jpg",
+  )
+  assert.equal(seo.twitterCard, "summary_large_image")
+  assert.equal(
+    toAbsolutePublicUrl("www.justwebsites.com.br", "/branding/just/og-image.jpg"),
+    "https://www.justwebsites.com.br/branding/just/og-image.jpg",
+  )
 })
 
 test("favicon follows Golden Master: explicit → packaged/ogImage → logos", () => {

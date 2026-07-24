@@ -1,0 +1,28 @@
+---
+import { justFinalCta } from "../../lib/justInstitutionalFreeze.js"
+import JustIcon from "./JustIcon.astro"
+---
+
+<section
+  id={justFinalCta.id}
+  class="just-final-cta section-padding"
+  aria-labelledby="just-final-cta-heading"
+>
+  <div class="section-container">
+    <div class="just-final-cta__inner">
+      <h2 id="just-final-cta-heading" class="just-final-cta__heading font-display">
+        {justFinalCta.headline}
+      </h2>
+      <p class="just-final-cta__lead">{justFinalCta.lead}</p>
+      <a
+        href={justFinalCta.ctaHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="premium-button just-final-cta__button"
+      >
+        {justFinalCta.ctaLabel}
+        <JustIcon name="arrow-right" class="premium-button__icon" />
+      </a>
+    </div>
+  </div>
+</section>

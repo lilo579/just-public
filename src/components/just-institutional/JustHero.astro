@@ -1,0 +1,113 @@
+---
+import { justHero } from "../../lib/justInstitutionalFreeze.js"
+import JustIcon from "./JustIcon.astro"
+---
+
+<section class="relative overflow-hidden pt-28 md:pt-36 pb-16 md:pb-20">
+  <div class="hero-editorial-field" aria-hidden="true">
+    <div class="hero-editorial-field__depth"></div>
+    <div class="hero-editorial-field__grid"></div>
+    <div class="hero-editorial-field__columns">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="hero-editorial-field__rails">
+      <span class="hero-editorial-field__rail hero-editorial-field__rail--left"></span>
+      <span class="hero-editorial-field__rail hero-editorial-field__rail--right"></span>
+    </div>
+    <div class="hero-editorial-field__horizontals">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <div class="section-container relative z-10">
+    <div class="mx-auto max-w-[1080px] text-center">
+      <h1 class="hero-headline font-display font-extrabold tracking-[-0.065em]">
+        {justHero.headlineLines.map((line) => (
+          <span class="hero-headline__line">{line}</span>
+        ))}
+      </h1>
+      <p class="mx-auto mt-9 max-w-[30rem] text-base leading-7 text-muted-foreground md:mt-11 md:max-w-[32rem] md:text-[1.0625rem] md:leading-8">
+        {justHero.body}
+      </p>
+      <div class="mt-11 flex flex-col items-center justify-center gap-3 sm:mt-12 sm:flex-row">
+        <a class="premium-button" href={`#${justHero.primaryCta.targetId}`}>
+          {justHero.primaryCta.label}
+          <JustIcon name="arrow-right" class="premium-button__icon" />
+        </a>
+        <a class="subtle-button" href={`#${justHero.secondaryCta.targetId}`}>
+          {justHero.secondaryCta.label}
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-trust-band mx-auto mt-20 max-w-5xl md:mt-24">
+      <p class="sr-only">Negócios que operam com a JUST</p>
+      <ul class="flex flex-wrap items-center justify-center gap-x-10 gap-y-8 sm:gap-x-14 md:gap-x-16 lg:gap-x-20">
+        {justHero.trustNames.map((name) => (
+          <li>
+            <span class="hero-trust-mark" aria-hidden="true">{name}</span>
+            <span class="sr-only">{name}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .relative { position: relative; }
+  .overflow-hidden { overflow: hidden; }
+  .z-10 { position: relative; z-index: 10; }
+  .mx-auto { margin-left: auto; margin-right: auto; }
+  .text-center { text-align: center; }
+  .max-w-\[1080px\] { max-width: 1080px; }
+  .max-w-\[30rem\] { max-width: 30rem; }
+  .max-w-5xl { max-width: 64rem; }
+  .mt-9 { margin-top: 2.25rem; }
+  .mt-11 { margin-top: 2.75rem; }
+  .mt-20 { margin-top: 5rem; }
+  .pt-28 { padding-top: 7rem; }
+  .pb-16 { padding-bottom: 4rem; }
+  .text-base { font-size: 1rem; }
+  .leading-7 { line-height: 1.75rem; }
+  .font-extrabold { font-weight: 800; }
+  .tracking-\[-0\.065em\] { letter-spacing: -0.065em; }
+  .text-muted-foreground { color: var(--site-color-text-muted, #616161); }
+  .flex { display: flex; }
+  .flex-col { flex-direction: column; }
+  .flex-wrap { flex-wrap: wrap; }
+  .items-center { align-items: center; }
+  .justify-center { justify-content: center; }
+  .gap-3 { gap: 0.75rem; }
+  .gap-x-10 { column-gap: 2.5rem; }
+  .gap-y-8 { row-gap: 2rem; }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  @media (min-width: 640px) {
+    .sm\:flex-row { flex-direction: row; }
+    .sm\:mt-12 { margin-top: 3rem; }
+    .sm\:gap-x-14 { column-gap: 3.5rem; }
+  }
+  @media (min-width: 768px) {
+    .md\:pt-36 { padding-top: 9rem; }
+    .md\:pb-20 { padding-bottom: 5rem; }
+    .md\:mt-11 { margin-top: 2.75rem; }
+    .md\:mt-24 { margin-top: 6rem; }
+    .md\:max-w-\[32rem\] { max-width: 32rem; }
+    .md\:text-\[1\.0625rem\] { font-size: 1.0625rem; }
+    .md\:leading-8 { line-height: 2rem; }
+    .md\:gap-x-16 { column-gap: 4rem; }
+  }
+  @media (min-width: 1024px) {
+    .lg\:gap-x-20 { column-gap: 5rem; }
+  }
+</style>

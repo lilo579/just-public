@@ -43,6 +43,15 @@ import {
   resolveShopNavItems,
   resolveShopSolidLogoUrl,
 } from "../lib/resolveShopNavItems.js"
+import { resolvePublicSiteMode } from "../lib/resolvePublicSiteMode.js"
+import ComingSoonPage from "../components/site-modes/ComingSoonPage.astro"
+import MaintenancePage from "../components/site-modes/MaintenancePage.astro"
+import JustInstitutionalHomepage from "../components/just-institutional/JustInstitutionalHomepage.astro"
+import justInstitutionalCssUrl from "../styles/just-institutional.css?url"
+import {
+  mergeComingSoonConfig,
+  resolvePackagedInstitutionalSite,
+} from "../lib/resolvePackagedInstitutionalSite.js"
 
 const requestUrl = new URL(Astro.request.url)
 /** Kill-switch: ?renderer=legacy is rejected when a canonical plan is present. */
@@ -166,6 +175,17 @@ if (choice.mode === "error") {
     headers: { "Content-Type": "text/plain; charset=utf-8" },
   })
 }
+
+const siteModeResolved = resolvePublicSiteMode(homepageWithSource)
+const siteMode = siteModeResolved.mode
+const packagedInstitutional = resolvePackagedInstitutionalSite(host)
+const siteModeConfig = mergeComingSoonConfig(
+  siteModeResolved.config,
+  packagedInstitutional?.comingSoonConfig || null,
+)
+const isInterstitialMode = siteModeResolved.interstitial
+const isJustInstitutionalNormal =
+  !isInterstitialMode && Boolean(packagedInstitutional)
 
 const presentationBinding = resolvePublicPresentationBinding(homepageWithSource, choice)
 const presentationProfile = presentationBinding.profile
@@ -328,29 +348,105 @@ const brandCrest =
 const footerLogoForRender = isPtDarkAtmosphere
   ? brandCrest || footerLogoUrl
   : footerLogoUrl
-const tokens = themeTokensFromBranding(homepageWithSource.source?.meta?.branding ?? null)
+const tokens = isJustInstitutionalNormal || (isInterstitialMode && packagedInstitutional)
+  ? themeTokensFromBranding({
+      ...packagedInstitutional.themeBranding,
+      ...(homepageWithSource.source?.meta?.branding || {}),
+      typography:
+        homepageWithSource.source?.meta?.branding?.typography ||
+        packagedInstitutional.themeBranding.typography,
+      logoHorizontalUrl:
+        homepageWithSource.source?.meta?.branding?.logoHorizontalUrl ||
+        packagedInstitutional.themeBranding.logoHorizontalUrl,
+      logoUrl:
+        homepageWithSource.source?.meta?.branding?.logoUrl ||
+        packagedInstitutional.themeBranding.logoUrl,
+      primaryColor:
+        homepageWithSource.source?.meta?.branding?.primaryColor ||
+        packagedInstitutional.themeBranding.primaryColor,
+      secondaryColor:
+        homepageWithSource.source?.meta?.branding?.secondaryColor ||
+        packagedInstitutional.themeBranding.secondaryColor,
+      accentColor:
+        homepageWithSource.source?.meta?.branding?.accentColor ||
+        packagedInstitutional.themeBranding.accentColor,
+    })
+  : themeTokensFromBranding(homepageWithSource.source?.meta?.branding ?? null)
 const fontLoadUrl =
   typeof tokens.__fontLoadUrl === "string" ? tokens.__fontLoadUrl : null
 
 const deployEnv = resolveDeployEnv(Astro.locals)
-const noindex = isLeadIntakeSafeMode(deployEnv)
+const noindex = isLeadIntakeSafeMode(deployEnv) || siteMode === "MAINTENANCE"
 const planForSeo =
   choice.mode === "canonical" ? choice.plan : homepageWithSource.serializablePlan
+
+const justSeo = packagedInstitutional?.comingSoonSeo || null
+const seoExplicit =
+  homepageWithSource.source?.meta?.seo &&
+  typeof homepageWithSource.source.meta.seo === "object"
+    ? homepageWithSource.source.meta.seo
+    : justSeo
+      ? {
+          title: justSeo.title,
+          description: justSeo.description,
+          ogTitle: justSeo.ogTitle,
+          ogDescription: justSeo.ogDescription,
+          ogImage: `/branding/${packagedInstitutional.slug}/og-image.jpg`,
+          favicon: `/branding/${packagedInstitutional.slug}/favicon.ico`,
+        }
+      : null
+
 const seo = buildPublicHomepageSeo({
   host,
-  companyName: brandingName,
-  branding: homepageWithSource.source?.meta?.branding ?? null,
+  companyName: brandingName === "Site" && packagedInstitutional ? "JUST" : brandingName,
+  branding: homepageWithSource.source?.meta?.branding ?? packagedInstitutional?.themeBranding ?? null,
   contact: homepageWithSource.source?.contact ?? null,
-  plan: planForSeo,
+  plan: isJustInstitutionalNormal || isInterstitialMode ? null : planForSeo,
   footerTagline: footer.tagline,
-  seo: homepageWithSource.source?.meta?.seo ?? null,
+  seo: seoExplicit,
   noindex,
 })
+/** M1: do not invent JSON-LD for JUST Coming Soon / institutional until OD. */
+if (packagedInstitutional) {
+  /** @type {any} */ (seo).jsonLd = undefined
+}
 
 const whatsappDigits = String(
-  homepageWithSource.source?.contact?.whatsappNumber ?? footer.whatsappNumber ?? "",
+  siteModeConfig.whatsappNumber ??
+    (!isInterstitialMode
+      ? homepageWithSource.source?.contact?.whatsappNumber ?? footer.whatsappNumber ?? ""
+      : "") ??
+    "",
 ).replace(/\D/g, "")
 const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : ""
+
+const modeCtaHref =
+  (typeof siteModeConfig.ctaHref === "string" && siteModeConfig.ctaHref.trim()) ||
+  (typeof siteModeConfig.email === "string" && siteModeConfig.email.trim()
+    ? `mailto:${siteModeConfig.email.trim()}`
+    : "")
+const modeLogo =
+  (packagedInstitutional
+    ? `/branding/${packagedInstitutional.slug}/logo-horizontal.png`
+    : null) ||
+  brandingLogo ||
+  homepageWithSource.source?.meta?.branding?.logoHorizontalUrl ||
+  homepageWithSource.source?.meta?.branding?.logoUrl ||
+  null
+const modeSocial =
+  (Array.isArray(siteModeConfig.socialLinks) && siteModeConfig.socialLinks.length > 0
+    ? siteModeConfig.socialLinks
+    : []) || []
+const modeParagraphs = Array.isArray(siteModeConfig.paragraphs)
+  ? siteModeConfig.paragraphs
+  : null
+const modeLeadForm =
+  siteModeConfig.leadForm && typeof siteModeConfig.leadForm === "object"
+    ? siteModeConfig.leadForm
+    : null
+const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
+  ? siteModeConfig.legalLinks
+  : null
 ---
 
 <html lang="pt-BR">
@@ -370,38 +466,48 @@ const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : ""
     />
     {isCinematicPresentation && <link rel="stylesheet" href={cinematicF1CssUrl} />}
     {isF3Presentation && <link rel="stylesheet" href={catalogF3CssUrl} />}
+    {(isJustInstitutionalNormal || (isInterstitialMode && packagedInstitutional)) && (
+      <link rel="stylesheet" href={justInstitutionalCssUrl} />
+    )}
+    {packagedInstitutional ? <meta name="theme-color" content="#121212" /> : null}
   </head>
   <body>
     <SiteTheme tokens={tokens}>
-      <div
-        data-f1-presentation={!isF3Presentation ? presentationProfile : undefined}
-        data-f3-presentation={isF3Presentation ? presentationProfile : undefined}
-        {...(isCinematicPresentation
-          ? {
-              "data-f1-atmosphere": cinematicAtmosphere,
-              "data-f1-typography": cinematicTypography,
-            }
-          : {})}
-      >
-        <Header
-          siteTitle={brandingName}
-          logoUrl={brandingLogo}
-          logoOverHeroUrl={brandingLogoOverHero}
-          logoAlt={brandingName}
-          whatsappHref={whatsappHref}
-          pillChrome={presentationChrome.headerPillChrome !== false && !isF3Presentation}
-          overHero={headerOverHero}
-          ctaLabel={headerCtaLabel}
-          navItems={headerNavItems}
-          ctaVariant={headerCtaVariant}
-          navReveal={headerNavReveal}
-          chrome={isF3Presentation ? "shop" : "default"}
-          showCta={!isF3Presentation}
-        />
-
-        <main
-          class:list={["page-shell", isF3Presentation && "page-shell--shop"]}
-          data-renderer={choice.mode}
+      {isInterstitialMode ? (
+        <div data-site-mode={siteMode} data-renderer="site-mode">
+          {siteMode === "MAINTENANCE" ? (
+            <MaintenancePage
+              companyName={brandingName}
+              logoUrl={modeLogo}
+              headline={siteModeConfig.headline}
+              description={siteModeConfig.description || siteModeConfig.subtitle}
+            />
+          ) : (
+            <ComingSoonPage
+              companyName={packagedInstitutional ? "JUST" : brandingName}
+              logoUrl={modeLogo}
+              headline={siteModeConfig.headline}
+              subtitle={siteModeConfig.subtitle}
+              description={siteModeConfig.description}
+              paragraphs={modeParagraphs}
+              ctaLabel={siteModeConfig.ctaLabel}
+              ctaHref={modeCtaHref || null}
+              email={siteModeConfig.email}
+              socialLinks={modeSocial}
+              backgroundImageUrl={siteModeConfig.backgroundImageUrl}
+              heroImageUrl={siteModeConfig.heroImageUrl}
+              launchDate={siteModeConfig.launchDate}
+              leadForm={modeLeadForm}
+              legalLinks={modeLegalLinks}
+              showJustSignature={siteModeConfig.showJustSignature}
+              showEyebrow={siteModeConfig.showEyebrow}
+            />
+          )}
+        </div>
+      ) : isJustInstitutionalNormal ? (
+        <JustInstitutionalHomepage />
+      ) : (
+        <div
           data-f1-presentation={!isF3Presentation ? presentationProfile : undefined}
           data-f3-presentation={isF3Presentation ? presentationProfile : undefined}
           {...(isCinematicPresentation
@@ -411,62 +517,91 @@ const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : ""
               }
             : {})}
         >
-          {isF3Presentation && choice.mode === "canonical" ? (
-            <CatalogShopHomepage
-              host={host}
-              hostOverride={hostOverride}
-              inscription={homeInscription}
-              heroCtaLabel={
-                typeof catalogHero?.primaryCtaLabel === "string"
-                  ? catalogHero.primaryCtaLabel
-                  : "Ver catálogo"
-              }
-              heroImageUrl={
-                typeof catalogHero?.imageUrl === "string" ? catalogHero.imageUrl : null
-              }
-              featuredItems={catalogFeatured}
-              categories={catalogCategories}
-            />
-          ) : choice.mode === "canonical" ? (
-            <CanonicalHomepageRenderer
-              plan={choice.plan}
-              presentationChrome={presentationChrome}
-            />
-          ) : (
-            <div data-legacy-runtime={choice.reason}>
-              <HomepageRenderer homepage={homepageWithSource} />
-            </div>
-          )}
-        </main>
+          <Header
+            siteTitle={brandingName}
+            logoUrl={brandingLogo}
+            logoOverHeroUrl={brandingLogoOverHero}
+            logoAlt={brandingName}
+            whatsappHref={whatsappHref}
+            pillChrome={presentationChrome.headerPillChrome !== false && !isF3Presentation}
+            overHero={headerOverHero}
+            ctaLabel={headerCtaLabel}
+            navItems={headerNavItems}
+            ctaVariant={headerCtaVariant}
+            navReveal={headerNavReveal}
+            chrome={isF3Presentation ? "shop" : "default"}
+            showCta={!isF3Presentation}
+          />
 
-        <Footer
-          footer={{
-            ...footer,
-            companyName: brandingName,
-            logoUrl: footerLogoForRender,
-          }}
-          justSignatureBand={presentationChrome.justSignatureBand !== false}
-          footerSurface={presentationChrome.footerSurface || "light"}
-          socialIconEmphasis={
-            "footerSocialIconEmphasis" in presentationChrome
-              ? presentationChrome.footerSocialIconEmphasis
-              : undefined
-          }
-          layout={
-            isF3Presentation
-              ? "shop"
-              : isPtDarkAtmosphere
-                ? "cinematic-pt"
-                : isCinematicPresentation
-                  ? "cinematic-editorial"
-                  : "standard"
-          }
-          navItems={headerNavItems}
-          whatsappHref={whatsappHref}
-          headerCtaLabel={headerCtaLabel}
-        />
-        {whatsappHref && <WhatsAppFloat href={whatsappHref} />}
-      </div>
+          <main
+            class:list={["page-shell", isF3Presentation && "page-shell--shop"]}
+            data-renderer={choice.mode}
+            data-f1-presentation={!isF3Presentation ? presentationProfile : undefined}
+            data-f3-presentation={isF3Presentation ? presentationProfile : undefined}
+            {...(isCinematicPresentation
+              ? {
+                  "data-f1-atmosphere": cinematicAtmosphere,
+                  "data-f1-typography": cinematicTypography,
+                }
+              : {})}
+          >
+            {isF3Presentation && choice.mode === "canonical" ? (
+              <CatalogShopHomepage
+                host={host}
+                hostOverride={hostOverride}
+                inscription={homeInscription}
+                heroCtaLabel={
+                  typeof catalogHero?.primaryCtaLabel === "string"
+                    ? catalogHero.primaryCtaLabel
+                    : "Ver catálogo"
+                }
+                heroImageUrl={
+                  typeof catalogHero?.imageUrl === "string" ? catalogHero.imageUrl : null
+                }
+                featuredItems={catalogFeatured}
+                categories={catalogCategories}
+              />
+            ) : choice.mode === "canonical" ? (
+              <CanonicalHomepageRenderer
+                plan={choice.plan}
+                presentationChrome={presentationChrome}
+              />
+            ) : (
+              <div data-legacy-runtime={choice.reason}>
+                <HomepageRenderer homepage={homepageWithSource} />
+              </div>
+            )}
+          </main>
+
+          <Footer
+            footer={{
+              ...footer,
+              companyName: brandingName,
+              logoUrl: footerLogoForRender,
+            }}
+            justSignatureBand={presentationChrome.justSignatureBand !== false}
+            footerSurface={presentationChrome.footerSurface || "light"}
+            socialIconEmphasis={
+              "footerSocialIconEmphasis" in presentationChrome
+                ? presentationChrome.footerSocialIconEmphasis
+                : undefined
+            }
+            layout={
+              isF3Presentation
+                ? "shop"
+                : isPtDarkAtmosphere
+                  ? "cinematic-pt"
+                  : isCinematicPresentation
+                    ? "cinematic-editorial"
+                    : "standard"
+            }
+            navItems={headerNavItems}
+            whatsappHref={whatsappHref}
+            headerCtaLabel={headerCtaLabel}
+          />
+          {whatsappHref && <WhatsAppFloat href={whatsappHref} />}
+        </div>
+      )}
     </SiteTheme>
   </body>
 </html>

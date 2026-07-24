@@ -295,11 +295,83 @@ export const FIXTURE_ALPHA = buildTenantFixture(TENANT_ALPHA)
 export const FIXTURE_BETA = buildTenantFixture(TENANT_BETA)
 export const FIXTURE_GAMMA = buildTenantFixture(TENANT_GAMMA)
 
+/**
+ * JUST institutional POC fixture — Coming Soon by default (M1 cutover SoT).
+ * Flip meta.siteMode to NORMAL to exercise institutional homepage locally.
+ */
+function buildJustInstitutionalFixture(host, siteMode = "COMING_SOON") {
+  const contact = {
+    companyName: "JUST",
+    email: null,
+    whatsappNumber: "5511956480018",
+    whatsappVisible: true,
+  }
+  const nodes = [
+    {
+      id: "just-hero",
+      componentKey: "hero.v1",
+      props: {
+        hero: {
+          title: "JUST",
+          subtitle:
+            "Plataforma para pequenos negócios reunirem gestão, site, agenda, financeiro e marketing em um único lugar.",
+          eyebrow: "JUST",
+        },
+      },
+    },
+  ]
+  return Object.freeze({
+    source: Object.freeze({
+      contact: Object.freeze({ ...contact }),
+      meta: Object.freeze({
+        siteMode,
+        siteModeConfig: Object.freeze({}),
+        branding: Object.freeze({
+          primaryColor: "#121212",
+          secondaryColor: "#f7f5f0",
+          accentColor: "#3b5bdb",
+          typography: "just_institutional",
+          logoUrl: "/branding/just/logo-horizontal.png",
+          logoHorizontalUrl: "/branding/just/logo-horizontal.png",
+        }),
+        seo: Object.freeze({
+          title: "JUST",
+          description:
+            "Plataforma para pequenos negócios reunirem gestão, site, agenda, financeiro e marketing em um único lugar.",
+          ogTitle: "JUST",
+          ogDescription:
+            "Estamos finalizando a primeira versão pública da JUST. Plataforma para pequenos negócios reunirem gestão, site, agenda, financeiro e marketing em um único lugar.",
+          ogImage: "/branding/just/og-image.jpg",
+          favicon: "/branding/just/favicon.ico",
+        }),
+      }),
+    }),
+    footer: Object.freeze({
+      companyName: "JUST",
+      tagline: "O sistema operacional para pequenos negócios.",
+      whatsappNumber: "5511956480018",
+      socialLinks: [],
+    }),
+    serializablePlan: buildPlan("just", nodes),
+  })
+}
+
+export const FIXTURE_JUST_COMING_SOON = buildJustInstitutionalFixture(
+  "www.justwebsites.com.br",
+  "COMING_SOON",
+)
+export const FIXTURE_JUST_NORMAL = buildJustInstitutionalFixture(
+  "www.justwebsites.com.br",
+  "NORMAL",
+)
+
 /** Host → fixture map. Unknown hosts are intentionally omitted (caller returns 404). */
 export const POC_FIXTURES_BY_HOST = Object.freeze({
   [TENANT_ALPHA.host]: FIXTURE_ALPHA,
   [TENANT_BETA.host]: FIXTURE_BETA,
   [TENANT_GAMMA.host]: FIXTURE_GAMMA,
+  "www.justwebsites.com.br": FIXTURE_JUST_COMING_SOON,
+  "justwebsites.com.br": FIXTURE_JUST_COMING_SOON,
 })
 
 /**

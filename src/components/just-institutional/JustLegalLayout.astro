@@ -1,0 +1,106 @@
+---
+/**
+ * Shared JUST legal page shell — accessible under COMING_SOON and NORMAL (M1).
+ */
+import PublicSiteHead from "../PublicSiteHead.astro"
+import SiteTheme from "../SiteTheme.astro"
+import JustHeader from "./JustHeader.astro"
+import JustFooter from "./JustFooter.astro"
+import justInstitutionalCssUrl from "../../styles/just-institutional.css?url"
+import { themeTokensFromBranding } from "../../lib/themeFromBranding.js"
+
+interface Props {
+  title: string
+  body: string[]
+  host: string
+  branding: Record<string, unknown>
+  seoTitle: string
+  seoDescription: string
+  canonicalUrl: string
+  faviconUrl: string
+  ogImage: string
+  robots: string
+}
+
+const {
+  title,
+  body,
+  branding,
+  seoTitle,
+  seoDescription,
+  canonicalUrl,
+  faviconUrl,
+  ogImage,
+  robots,
+} = Astro.props
+
+const tokens = themeTokensFromBranding(branding)
+const fontLoadUrl =
+  typeof tokens.__fontLoadUrl === "string" ? tokens.__fontLoadUrl : null
+---
+
+<html lang="pt-BR">
+  <head>
+    <PublicSiteHead
+      title={seoTitle}
+      description={seoDescription}
+      ogTitle={seoTitle}
+      ogDescription={seoDescription}
+      canonicalUrl={canonicalUrl}
+      ogImage={ogImage}
+      faviconUrl={faviconUrl}
+      robots={robots}
+      twitterCard="summary_large_image"
+      fontLoadUrl={fontLoadUrl}
+    />
+    <meta name="theme-color" content="#121212" />
+    <link rel="stylesheet" href={justInstitutionalCssUrl} />
+  </head>
+  <body>
+    <SiteTheme tokens={tokens}>
+      <div data-just-institutional>
+        <JustHeader variant="institutional" />
+        <main class="section-container section-padding pt-28">
+          <p class="eyebrow mb-5">JUST</p>
+          <h1 class="font-display text-4xl font-semibold tracking-[-0.045em] md:text-5xl">
+            {title}
+          </h1>
+          <div class="mt-8 max-w-2xl space-y-4 text-base leading-7 legal-body">
+            {body.map((paragraph) => (
+              <p>{paragraph}</p>
+            ))}
+          </div>
+          <p class="mt-10">
+            <a href="/" class="legal-back">Voltar para a homepage</a>
+          </p>
+        </main>
+        <JustFooter />
+      </div>
+    </SiteTheme>
+  </body>
+</html>
+
+<style>
+  .pt-28 { padding-top: 7rem; }
+  .mb-5 { margin-bottom: 1.25rem; }
+  .mt-8 { margin-top: 2rem; }
+  .mt-10 { margin-top: 2.5rem; }
+  .max-w-2xl { max-width: 42rem; }
+  .space-y-4 > * + * { margin-top: 1rem; }
+  .text-4xl { font-size: 2.25rem; }
+  .font-semibold { font-weight: 600; }
+  .tracking-\[-0\.045em\] { letter-spacing: -0.045em; }
+  .text-base { font-size: 1rem; }
+  .leading-7 { line-height: 1.75rem; }
+  .legal-body { color: var(--site-color-text-muted, #616161); }
+  .legal-back {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--site-color-text, #121212);
+    text-underline-offset: 4px;
+  }
+  .legal-back:hover { text-decoration: underline; }
+  @media (min-width: 768px) {
+    .md\:text-5xl { font-size: 3rem; }
+  }
+</style>

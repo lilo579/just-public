@@ -1,0 +1,29 @@
+---
+import { justFooter } from "../../lib/justInstitutionalFreeze.js"
+---
+
+<footer class="just-footer">
+  <div class="section-container just-footer__inner">
+    <div class="just-footer__top">
+      <div class="just-footer__brand">
+        <p class="just-footer__mark font-display">{justFooter.mark}</p>
+        <p class="just-footer__tagline">{justFooter.tagline}</p>
+      </div>
+      <nav class="just-footer__nav" aria-label="Institucional">
+        {justFooter.legalLinks.map((link) => (
+          <a href={link.href} class="just-footer__link">{link.label}</a>
+        ))}
+        <a
+          href={justFooter.supportHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="just-footer__link"
+        >
+          {justFooter.supportLabel}
+        </a>
+      </nav>
+    </div>
+    <div class="just-footer__rule" aria-hidden="true"></div>
+    <p class="just-footer__copy">{justFooter.copyright}</p>
+  </div>
+</footer>

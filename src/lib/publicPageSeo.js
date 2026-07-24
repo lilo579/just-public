@@ -66,8 +66,12 @@ const PACKAGED_FAVICON_SLUG_BY_HOST = Object.freeze({
   "sorayabarbosa.com.br": "soraya-barbosa",
   "www.3djewish.com.br": "3d-jewish",
   "3djewish.com.br": "3d-jewish",
+  "www.justwebsites.com.br": "just",
+  "justwebsites.com.br": "just",
 })
 
+/** Packs that ship favicon.ico only (no favicon.svg). */
+const PACKAGED_FAVICON_ICO_ONLY = new Set(["just"])
 /**
  * @param {string} host
  * @returns {string}
@@ -80,6 +84,23 @@ function normalizeHost(host) {
 }
 
 /**
+ * Absolute https URL for SEO assets (OG/Twitter/JSON-LD image).
+ * Relative pack paths become `https://{host}{path}` when host is known.
+ * @param {string} host
+ * @param {string | null | undefined} pathOrUrl
+ * @returns {string}
+ */
+export function toAbsolutePublicUrl(host, pathOrUrl) {
+  const value = asTrimmed(pathOrUrl)
+  if (!value) return ""
+  if (/^https?:\/\//i.test(value)) return value
+  const h = normalizeHost(host)
+  if (!h) return value
+  const path = value.startsWith("/") ? value : `/${value}`
+  return `https://${h}${path}`
+}
+
+/**
  * @param {string} host
  * @param {{ preferIco?: boolean }} [opts]
  * @returns {string} site-relative path or ""
@@ -87,7 +108,8 @@ function normalizeHost(host) {
 export function resolvePackagedTenantFaviconPath(host, opts = {}) {
   const slug = PACKAGED_FAVICON_SLUG_BY_HOST[normalizeHost(host)]
   if (!slug) return ""
-  return opts.preferIco
+  const preferIco = opts.preferIco === true || PACKAGED_FAVICON_ICO_ONLY.has(slug)
+  return preferIco
     ? `/branding/${slug}/favicon.ico`
     : `/branding/${slug}/favicon.svg`
 }
@@ -179,17 +201,26 @@ export function buildPublicHomepageSeo(input) {
   const packagedOgImage = packagedSlug ? `/branding/${packagedSlug}/og-image.jpg` : ""
   // Prefer CMS OG → Hub logos → packaged OG (only hosts with a shipped og-image.jpg).
   const derivedOgImage = logoHorizontalUrl || logoUrl || packagedOgImage || ""
-  const ogImage = asTrimmed(explicit?.ogImage) || derivedOgImage
+  const ogImageRelative = asTrimmed(explicit?.ogImage) || derivedOgImage
+  /** D-001 / M5: OG + Twitter images are absolute when host is known. */
+  const ogImage = toAbsolutePublicUrl(host, ogImageRelative)
   /**
    * Favicon: explicit CMS → packaged tenant mark (not logo) → ogImage → logos.
    * Do not use Astro scaffold (/favicon.svg|/favicon.ico) as a customer icon.
    */
   const faviconUrl = resolveBrandFaviconUrl({
     host,
-    favicon: explicit?.favicon || (packagedSlug ? `/branding/${packagedSlug}/favicon.svg` : ""),
-    ogImage,
+    favicon:
+      explicit?.favicon ||
+      (packagedSlug
+        ? PACKAGED_FAVICON_ICO_ONLY.has(packagedSlug)
+          ? `/branding/${packagedSlug}/favicon.ico`
+          : `/branding/${packagedSlug}/favicon.svg`
+        : ""),
+    ogImage: ogImageRelative,
     logoHorizontalUrl,
     logoUrl,
+    preferIco: PACKAGED_FAVICON_ICO_ONLY.has(packagedSlug),
   })
 
   const jsonLdType = asTrimmed(explicit?.jsonLdType) || "ProfessionalService"

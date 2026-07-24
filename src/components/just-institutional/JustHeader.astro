@@ -1,0 +1,147 @@
+---
+/**
+ * JUST institutional header — frozen IA; M4 sheet/icon presentation parity.
+ */
+import {
+  JUST_SIGN_IN_URL,
+  justInstitutionalNav,
+} from "../../lib/justInstitutionalFreeze.js"
+import JustIcon from "./JustIcon.astro"
+
+interface Props {
+  variant?: "homepage" | "institutional"
+  showTestimonialsNav?: boolean
+}
+
+const { variant = "homepage", showTestimonialsNav = false } = Astro.props
+const isHomepage = variant === "homepage"
+const navItems = isHomepage
+  ? justInstitutionalNav.filter(
+      (item) => item.hash !== "depoimentos" || showTestimonialsNav,
+    )
+  : [{ href: "/", label: "Início", hash: "" }]
+---
+
+<header class="just-header" data-just-header data-variant={variant}>
+  <div class="section-container">
+    <div class="just-header__row">
+      <div class="just-header__brand">
+        <a href="/" class="just-header__logo font-display">JUST</a>
+      </div>
+
+      <nav
+        class:list={["just-header__nav", !isHomepage && "just-header__nav--institutional"]}
+        aria-label={isHomepage ? "Navegação principal" : "Navegação institucional"}
+      >
+        {navItems.map((item) => (
+          <a href={item.href} class="just-header__nav-link">{item.label}</a>
+        ))}
+      </nav>
+
+      <div class="just-header__actions">
+        <a href={JUST_SIGN_IN_URL} class="just-header__signin just-header__signin--desktop">
+          Entrar
+        </a>
+        <a href="/#cta-final" class="premium-button">
+          Começar agora
+          <JustIcon name="arrow-right" class="premium-button__icon" />
+        </a>
+        <button
+          type="button"
+          class="just-header__menu-trigger"
+          data-just-menu-trigger
+          aria-expanded="false"
+          aria-controls="just-header-sheet"
+          aria-label="Abrir menu"
+        >
+          <JustIcon name="menu" class="just-header__menu-icon" />
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="just-header__backdrop"
+    data-just-menu-backdrop
+    hidden
+    aria-hidden="true"
+  ></div>
+
+  <div
+    id="just-header-sheet"
+    class="just-header__sheet"
+    data-just-menu-sheet
+    hidden
+    role="dialog"
+    aria-modal="true"
+    aria-label="Menu de navegação e ações da JUST"
+  >
+    <div class="just-header__sheet-header">
+      <p class="just-header__sheet-title">JUST</p>
+      <button
+        type="button"
+        class="just-header__sheet-close"
+        data-just-menu-close
+        aria-label="Fechar menu"
+      >
+        <span aria-hidden="true">×</span>
+      </button>
+    </div>
+    <div class="just-header__sheet-body">
+      <nav class="just-header__sheet-nav" aria-label="Navegação principal">
+        {navItems.map((item) => (
+          <a href={item.href} class="just-header__sheet-link" data-just-menu-close>
+            {item.label}
+          </a>
+        ))}
+      </nav>
+      <div class="just-header__sheet-actions">
+        <a href={JUST_SIGN_IN_URL} class="just-header__sheet-signin" data-just-menu-close>
+          Entrar
+        </a>
+        <a href="/#cta-final" class="premium-button just-header__sheet-cta" data-just-menu-close>
+          Começar agora
+          <JustIcon name="arrow-right" class="premium-button__icon" />
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  const header = document.querySelector("[data-just-header]")
+  if (header instanceof HTMLElement) {
+    const onScroll = () => {
+      const scrolled = window.scrollY > 40
+      header.classList.toggle("just-header--scrolled", scrolled)
+      header.dataset.scrolled = scrolled ? "true" : "false"
+    }
+    onScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+
+    const trigger = header.querySelector("[data-just-menu-trigger]")
+    const sheet = header.querySelector("[data-just-menu-sheet]")
+    const backdrop = header.querySelector("[data-just-menu-backdrop]")
+    if (
+      trigger instanceof HTMLButtonElement &&
+      sheet instanceof HTMLElement &&
+      backdrop instanceof HTMLElement
+    ) {
+      const setOpen = (open) => {
+        sheet.hidden = !open
+        backdrop.hidden = !open
+        trigger.setAttribute("aria-expanded", open ? "true" : "false")
+        trigger.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu")
+        document.documentElement.classList.toggle("just-menu-open", open)
+      }
+      trigger.addEventListener("click", () => setOpen(sheet.hidden))
+      backdrop.addEventListener("click", () => setOpen(false))
+      sheet.querySelectorAll("[data-just-menu-close]").forEach((el) => {
+        el.addEventListener("click", () => setOpen(false))
+      })
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !sheet.hidden) setOpen(false)
+      })
+    }
+  }
+</script>
