@@ -9,9 +9,16 @@ type TestimonialItem = {
   tag?: string | null;
   quote?: string | null;
   result?: string | null;
+  videoUrl?: string | null;
+  posterUrl?: string | null;
 };
 
-const { block } = Astro.props as {
+const {
+  block,
+  layout = "standard",
+  sectionId = "depoimentos",
+  sectionTitleFallback = null,
+} = Astro.props as {
   block: {
     type: "testimonials";
     content: {
@@ -21,54 +28,169 @@ const { block } = Astro.props as {
       images?: SocialProofImage[];
     };
   };
+  layout?: "standard" | "cinematic-video";
+  sectionId?: string;
+  sectionTitleFallback?: string | null;
 };
 
-const title = block.content?.title;
+const title = block.content?.title || sectionTitleFallback;
 const subtitle = block.content?.subtitle;
 const images = (block.content?.images ?? []).filter((img) => img?.url);
 const items = (block.content?.items ?? []).filter(
-  (item) => item?.company || item?.tag || item?.quote || item?.result
+  (item) => item?.company || item?.tag || item?.quote || item?.result || item?.videoUrl,
 );
+const isVideo = layout === "cinematic-video";
 const showSection = items.length > 0 || images.length > 0;
 ---
 
 {showSection && (
-  <section class="testimonials">
+  <section
+    class:list={["testimonials", isVideo && "testimonials--cinematic-video"]}
+    id={sectionId}
+    data-f1-testimonials={isVideo ? "true" : undefined}
+  >
     <div class="testimonials__inner">
-      {(title || subtitle) && (
-        <header class="testimonials__header">
-          {title && <h2>{title}</h2>}
-          {subtitle && <p class="testimonials__subtitle">{subtitle}</p>}
-        </header>
-      )}
-
-      {items.length > 0 && (
-        <div class="testimonials__quotes">
-          {items.map((item) => (
-            <article class="testimonials__quote">
-              {item.tag && <p class="testimonials__tag">{item.tag}</p>}
-              {item.quote && <p class="testimonials__text">{item.quote}</p>}
-              {(item.company || item.result) && (
-                <footer class="testimonials__meta">
-                  {[item.company, item.result].filter(Boolean).join(" · ")}
-                </footer>
+      {isVideo ? (
+        <>
+          {(title || subtitle) && (
+            <header class="testimonials__header testimonials__header--split">
+              <div class="testimonials__header-title">
+                {title && <h2>{title}</h2>}
+              </div>
+              {subtitle && (
+                <div class="testimonials__header-sub">
+                  <p class="testimonials__subtitle">{subtitle}</p>
+                </div>
               )}
-            </article>
-          ))}
-        </div>
-      )}
+            </header>
+          )}
+          <div class="testimonials__rule" aria-hidden="true"></div>
 
-      {images.length > 0 && (
-        <div class="testimonials__grid">
-          {images.map((img) => (
-            <figure class="testimonials__item">
-              <img src={img.url} alt={img.alt || "Depoimento"} loading="lazy" />
-            </figure>
-          ))}
-        </div>
+          {items.length > 0 && (
+            <div class="testimonials__videos">
+              {items.map((item) => (
+                <article class="testimonials__video-card">
+                  <div class="testimonials__video-stage">
+                    {item.posterUrl && (
+                      <img
+                        src={item.posterUrl}
+                        alt=""
+                        class="testimonials__video-poster"
+                        aria-hidden="true"
+                        data-f1-testimonial-poster
+                      />
+                    )}
+                    {item.videoUrl && (
+                      <video
+                        src={item.videoUrl}
+                        class="testimonials__video"
+                        controls
+                        playsinline
+                        preload="auto"
+                        poster={item.posterUrl || undefined}
+                        data-f1-testimonial-video
+                      />
+                    )}
+                    <button
+                      type="button"
+                      class="testimonials__play"
+                      aria-label={`Reproduzir vídeo de ${item.company || "aluno"}`}
+                      data-f1-testimonial-play
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" />
+                      </svg>
+                    </button>
+                    <div class="testimonials__video-wash" aria-hidden="true"></div>
+                    <div class="testimonials__video-sheen" aria-hidden="true"></div>
+                    <div class="testimonials__video-copy">
+                      {item.quote && <p class="testimonials__text">{item.quote}</p>}
+                      <div class="testimonials__meta-block">
+                        {item.company && <p class="testimonials__name">{item.company}</p>}
+                        {item.tag && <p class="testimonials__tag">{item.tag}</p>}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {(title || subtitle) && (
+            <header class="testimonials__header">
+              {title && <h2>{title}</h2>}
+              {subtitle && <p class="testimonials__subtitle">{subtitle}</p>}
+            </header>
+          )}
+
+          {items.length > 0 && (
+            <div class="testimonials__quotes">
+              {items.map((item) => (
+                <article class="testimonials__quote">
+                  {item.tag && <p class="testimonials__tag">{item.tag}</p>}
+                  {item.quote && <p class="testimonials__text">{item.quote}</p>}
+                  {(item.company || item.result) && (
+                    <footer class="testimonials__meta">
+                      {[item.company, item.result].filter(Boolean).join(" · ")}
+                    </footer>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+
+          {images.length > 0 && (
+            <div class="testimonials__grid">
+              {images.map((img) => (
+                <figure class="testimonials__item">
+                  <img src={img.url} alt={img.alt || "Depoimento"} loading="lazy" />
+                </figure>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   </section>
+)}
+
+{isVideo && (
+  <script is:inline>
+    (function () {
+      var section = document.querySelector("[data-f1-testimonials='true']");
+      if (!section) return;
+
+      section.querySelectorAll("[data-f1-testimonial-play]").forEach(function (btn) {
+        btn.addEventListener("click", function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          var stage = btn.closest(".testimonials__video-stage");
+          var video = stage && stage.querySelector("video");
+          if (!video) return;
+          if (video.paused) {
+            video.play().catch(function () {});
+            stage.setAttribute("data-playing", "true");
+          } else {
+            video.pause();
+            stage.removeAttribute("data-playing");
+          }
+        });
+      });
+
+      section.querySelectorAll("[data-f1-testimonial-video]").forEach(function (video) {
+        video.addEventListener("play", function () {
+          var stage = video.closest(".testimonials__video-stage");
+          if (stage) stage.setAttribute("data-playing", "true");
+        });
+        video.addEventListener("pause", function () {
+          var stage = video.closest(".testimonials__video-stage");
+          if (stage) stage.removeAttribute("data-playing");
+        });
+      });
+    })();
+  </script>
 )}
 
 <style>
@@ -79,113 +201,385 @@ const showSection = items.length > 0 || images.length > 0;
   .testimonials__inner {
     max-width: 980px;
     margin: 0 auto;
-    display: grid;
-    gap: 1.5rem;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
+    padding: 0 1.25rem;
   }
 
   .testimonials__header {
+    margin-bottom: 2rem;
     text-align: center;
   }
 
-  .testimonials h2 {
+  .testimonials__header h2 {
     margin: 0;
-    color: hsl(220 15% 15%);
-    font-family: var(--site-font-heading, system-ui, sans-serif);
-    font-size: clamp(1.8rem, 3vw, 2.4rem);
-    line-height: 1.12;
-    letter-spacing: -0.025em;
-    font-weight: 700;
   }
 
   .testimonials__subtitle {
-    margin: 0.75rem 0 0;
-    color: hsl(220 10% 35%);
-    font-size: 1.05rem;
-    line-height: 1.5;
+    margin: 0.75rem auto 0;
+    max-width: 36ch;
+    color: color-mix(in srgb, var(--site-color-foreground, #111) 68%, transparent);
   }
 
   .testimonials__quotes {
     display: grid;
-    gap: 1rem;
+    gap: 1.25rem;
   }
 
   .testimonials__quote {
-    padding: 1.25rem 1.35rem;
-    border-radius: 1.25rem;
-    border: 1px solid #e5e7eb;
-    background: #fff;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+    padding: 1.25rem 1.4rem;
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--site-color-primary, #0a0) 8%, white);
   }
 
   .testimonials__tag {
-    margin: 0;
+    margin: 0 0 0.5rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    font-size: 0.75rem;
-    color: hsl(220 10% 40%);
+    opacity: 0.7;
   }
 
   .testimonials__text {
-    margin: 0.75rem 0 0;
-    font-size: 1.1rem;
-    line-height: 1.55;
-    color: hsl(220 15% 15%);
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.45;
   }
 
   .testimonials__meta {
     margin-top: 0.85rem;
-    font-size: 0.92rem;
-    color: hsl(220 10% 40%);
+    font-size: 0.9rem;
+    opacity: 0.7;
   }
 
   .testimonials__grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1.5rem;
   }
 
   .testimonials__item {
     margin: 0;
-    border-radius: 18px;
     overflow: hidden;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+    border-radius: 0.75rem;
   }
 
   .testimonials__item img {
-    display: block;
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    aspect-ratio: 1;
+  }
+
+  /* —— cinematic video (PT Golden Master) —— */
+  .testimonials--cinematic-video {
+    background: var(--f1-surface-deep, #0b1020);
+    color: rgba(255, 255, 255, 0.92);
+    padding: 4rem 0 5rem;
+  }
+
+  .testimonials--cinematic-video .testimonials__inner {
+    max-width: none;
+    padding: 0 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .testimonials--cinematic-video .testimonials__inner {
+      padding: 0 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .testimonials--cinematic-video {
+      padding: 6rem 0;
+    }
+
+    .testimonials--cinematic-video .testimonials__inner {
+      padding: 0 2rem;
+    }
+  }
+
+  .testimonials__header--split {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 0;
+    text-align: left;
+  }
+
+  @media (min-width: 1024px) {
+    .testimonials__header--split {
+      grid-template-columns: 1.25fr 0.75fr;
+      align-items: end;
+      gap: 1.5rem;
+    }
+  }
+
+  .testimonials__header-title {
+    max-width: 22rem;
+  }
+
+  .testimonials--cinematic-video .testimonials__header h2 {
+    margin: 0;
+    font-size: clamp(1.875rem, 4vw, 3.5rem);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1.02;
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  .testimonials__header-sub {
+    max-width: 22rem;
+  }
+
+  @media (min-width: 1024px) {
+    .testimonials__header-sub {
+      justify-self: end;
+    }
+  }
+
+  .testimonials--cinematic-video .testimonials__subtitle {
+    margin: 0;
+    max-width: none;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: left;
+  }
+
+  @media (min-width: 1024px) {
+    .testimonials--cinematic-video .testimonials__subtitle {
+      font-size: 1.01rem;
+    }
+  }
+
+  .testimonials__rule {
+    margin-top: 2rem;
+    height: 1px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  @media (min-width: 1024px) {
+    .testimonials__rule {
+      margin-top: 2.5rem;
+    }
+  }
+
+  .testimonials__videos {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-top: 1.75rem;
   }
 
   @media (min-width: 768px) {
-    .testimonials__quotes {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .testimonials__grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    .testimonials__videos {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.5rem;
     }
   }
 
-  @media (max-width: 720px) {
-    .testimonials {
-      padding: 3rem 0 4rem;
+  @media (min-width: 1024px) {
+    .testimonials__videos {
+      gap: 1.25rem;
+    }
+  }
+
+  .testimonials__video-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.6rem;
+    background: #0f1529;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
+    transition:
+      transform 500ms ease,
+      box-shadow 500ms ease;
+  }
+
+  .testimonials__video-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 24px 60px rgba(0, 0, 0, 0.35);
+  }
+
+  .testimonials__video-stage {
+    position: relative;
+    height: 540px;
+    overflow: hidden;
+  }
+
+  @media (min-width: 1024px) {
+    .testimonials__video-stage {
+      height: 670px;
+    }
+  }
+
+  .testimonials__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background: #050608;
+  }
+
+  /* Mobile-only still layer: iOS often shows black until play without a visible poster. */
+  .testimonials__video-poster {
+    display: none;
+  }
+
+  @media (max-width: 1023px) {
+    .testimonials__video-poster {
+      display: block;
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
     }
 
-    .testimonials__header {
-      text-align: left;
+    .testimonials__video-stage[data-playing="true"] .testimonials__video-poster {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+
+  .testimonials__play {
+    display: none;
+    position: absolute;
+    z-index: 3;
+    inset: 0;
+    margin: auto;
+    width: 4rem;
+    height: 4rem;
+    border: none;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .testimonials__play svg {
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-left: 0.15rem;
+  }
+
+  @media (max-width: 1023px) {
+    .testimonials__play {
+      display: flex;
     }
 
-    .testimonials h2 {
-      font-size: 1.6rem;
+    .testimonials__video-stage[data-playing="true"] .testimonials__play {
+      inset: auto;
+      top: 1rem;
+      right: 1rem;
+      margin: 0;
+      width: 2.75rem;
+      height: 2.75rem;
     }
 
-    .testimonials__item {
-      border-radius: 16px;
+    .testimonials__video-stage[data-playing="true"] .testimonials__play svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      margin-left: 0;
+    }
+  }
+
+  .testimonials__video-wash {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: linear-gradient(
+      to top,
+      rgba(11, 16, 32, 0.98) 0%,
+      rgba(11, 16, 32, 0.85) 22%,
+      rgba(11, 16, 32, 0.45) 42%,
+      rgba(11, 16, 32, 0.12) 62%,
+      transparent 78%
+    );
+  }
+
+  .testimonials__video-sheen {
+    pointer-events: none;
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    z-index: 2;
+    height: 6rem;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.06), transparent);
+  }
+
+  .testimonials__video-copy {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1.25rem;
+    z-index: 2;
+  }
+
+  @media (min-width: 1024px) {
+    .testimonials__video-copy {
+      padding: 1.5rem;
+    }
+  }
+
+  .testimonials--cinematic-video .testimonials__text {
+    margin: 0 0 1.5rem;
+    max-width: 32ch;
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.15;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  @media (min-width: 1024px) {
+    .testimonials--cinematic-video .testimonials__text {
+      font-size: 1.15rem;
+    }
+  }
+
+  .testimonials__name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: #fff;
+  }
+
+  @media (min-width: 1024px) {
+    .testimonials__name {
+      font-size: 1.05rem;
+    }
+  }
+
+  .testimonials--cinematic-video .testimonials__tag {
+    margin: 0.25rem 0 0;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.42);
+    opacity: 1;
+  }
+
+  @media (min-width: 1024px) {
+    .testimonials--cinematic-video .testimonials__tag {
+      font-size: 1rem;
     }
   }
 </style>

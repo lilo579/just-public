@@ -1,0 +1,263 @@
+---
+/**
+ * Reusable F3 shop homepage — Golden Master composition for catalog tenants.
+ * Media hero → inscription → category rail → home tiles → product rail → featured tabs.
+ * Data from public RPCs + HomepageSource catalog content (no tenant fork).
+ */
+import CatalogProductCard from "./CatalogProductCard.astro";
+import CatalogCategoryCard from "./CatalogCategoryCard.astro";
+import CatalogFeaturedTabs from "./CatalogFeaturedTabs.astro";
+import { createPublicSupabaseClient } from "../../lib/publicSupabase.js";
+import { buildCatalogHref } from "../../lib/catalogBrowse.js";
+import {
+  F3_3D_JEWISH_MEDIA_ROOT,
+  resolveCanonicalShopHeroUrl,
+  resolveOwnedShopMediaUrl,
+  resolveF3ShopMediaRoot,
+} from "../../lib/f3ShopMedia.js";
+
+const {
+  host,
+  hostOverride = "",
+  inscription = "tradição impressa em cada detalhe",
+  heroCtaLabel = "Ver catálogo",
+  heroImageUrl = null,
+  featuredItems = [],
+  categories = [],
+} = Astro.props as {
+  host: string;
+  hostOverride?: string;
+  inscription?: string | null;
+  heroCtaLabel?: string | null;
+  heroImageUrl?: string | null;
+  featuredItems?: Array<{
+    id?: string | null;
+    title?: string | null;
+    imageUrl?: string | null;
+    description?: string | null;
+  }>;
+  categories?: Array<{
+    id?: string | null;
+    label?: string | null;
+    imageUrl?: string | null;
+  }>;
+};
+
+const mediaRoot = resolveF3ShopMediaRoot(host) || F3_3D_JEWISH_MEDIA_ROOT;
+
+/** @param {string | null | undefined} href */
+function withHost(href) {
+  const value = typeof href === "string" ? href.trim() : "";
+  if (!value) return value;
+  if (value.startsWith("http://") || value.startsWith("https://") || value.startsWith("//")) {
+    return value;
+  }
+  return buildCatalogHref(hostOverride, value);
+}
+
+const supabase = createPublicSupabaseClient(Astro.locals);
+const [{ data: taxonomyRows }, { data: editorialRows }, { data: productRows }] = supabase
+  ? await Promise.all([
+      supabase.rpc("public_get_catalog_taxonomy_by_host", { p_host: host }),
+      supabase.rpc("public_get_editorial_blocks_by_host", { p_host: host }),
+      supabase.rpc("public_get_products_by_host", { p_host: host }),
+    ])
+  : [{ data: null }, { data: null }, { data: null }];
+
+const taxonomy = Array.isArray(taxonomyRows) ? taxonomyRows : [];
+const editorial = Array.isArray(editorialRows) ? editorialRows : [];
+const products = Array.isArray(productRows) ? productRows : [];
+
+const collectionSlugs = new Set(
+  taxonomy.filter((row) => row.kind === "collection").map((row) => row.slug),
+);
+
+const homeTiles = taxonomy
+  .filter((row) => row.kind === "line" && row.show_on_home)
+  .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+  .map((line) => {
+    const rawImage = typeof line.image_url === "string" ? line.image_url.trim() : "";
+    const fallback = line.slug ? `${mediaRoot}/lines/${line.slug}.jpg` : null;
+    const image =
+      resolveOwnedShopMediaUrl(rawImage, host) ||
+      resolveOwnedShopMediaUrl(fallback, host);
+    return {
+      id: line.id,
+      title: line.name,
+      image,
+      badge: line.home_badge_label || "COLEÇÃO",
+      href: withHost(
+        line.slug && collectionSlugs.has(line.slug)
+          ? `/catalogo?colecao=${encodeURIComponent(line.slug)}`
+          : `/catalogo?line=${encodeURIComponent(line.id)}`,
+      ),
+    };
+  });
+
+const heroBlock =
+  editorial.find((b) => b.slot === "hero" || b.slot === "hero_banner") || null;
+const resolvedHeroImage = resolveCanonicalShopHeroUrl({
+  host,
+  catalogHeroUrl: heroImageUrl,
+  editorialHeroUrl:
+    typeof heroBlock?.image_url === "string" ? heroBlock.image_url : null,
+});
+const resolvedHeroCta =
+  (typeof heroBlock?.title === "string" && heroBlock.title.trim()) ||
+  heroCtaLabel ||
+  "Ver catálogo";
+const resolvedHeroHref = withHost(
+  (typeof heroBlock?.link_url === "string" && heroBlock.link_url.trim()) || "/catalogo",
+);
+
+const categoryCards =
+  categories.length > 0
+    ? categories.map((cat) => {
+        const slug = typeof cat.id === "string" ? cat.id : "";
+        const fallback = slug ? `${mediaRoot}/categories/${slug}.jpg` : null;
+        return {
+          ...cat,
+          imageUrl:
+            resolveOwnedShopMediaUrl(cat.imageUrl, host) ||
+            resolveOwnedShopMediaUrl(fallback, host),
+        };
+      })
+    : taxonomy
+        .filter((row) => row.kind === "category")
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+        .map((row) => ({
+          id: row.slug || row.id,
+          label: row.name,
+          imageUrl: resolveOwnedShopMediaUrl(
+            `${mediaRoot}/categories/${row.slug}.jpg`,
+            host,
+          ),
+        }));
+
+const railProducts =
+  featuredItems.length > 0
+    ? featuredItems.map((item) => ({
+        slug: item.id,
+        name: item.title,
+        image_url: resolveOwnedShopMediaUrl(item.imageUrl, host),
+        price: null as number | null,
+        line_name: null as string | null,
+      }))
+    : products.filter((p) => p.featured).slice(0, 18);
+
+const featuredTabs = editorial
+  .filter((b) => b.slot === "featured_tab")
+  .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+const featuredSlides = editorial
+  .filter((b) => b.slot === "featured_slide")
+  .map((slide) => ({
+    ...slide,
+    link_url:
+      typeof slide.link_url === "string" && slide.link_url.trim()
+        ? withHost(slide.link_url)
+        : slide.link_url,
+  }));
+---
+
+<div class="shop-home" data-f3-shop-home="true">
+  <section class="shop-hero" aria-label="Destaque">
+    <div class="shop-hero__media">
+      <img src={resolvedHeroImage} alt="" class="shop-hero__img" loading="eager" decoding="async" />
+      <div class="shop-hero__wash" aria-hidden="true"></div>
+    </div>
+    {resolvedHeroCta ? (
+      <div class="shop-hero__cta-wrap">
+        <a class="shop-hero__cta" href={resolvedHeroHref}>{resolvedHeroCta}</a>
+      </div>
+    ) : null}
+  </section>
+
+  {inscription ? (
+    <section class="shop-inscription" aria-label="Inscrição">
+      <p class="shop-inscription__text">{inscription}</p>
+      <div class="shop-inscription__rule" aria-hidden="true"></div>
+    </section>
+  ) : null}
+
+  {categoryCards.length > 0 && (
+    <section class="shop-rail shop-rail--categories" aria-label="Categorias">
+      <div class="shop-rail__track">
+        {categoryCards.map((cat) => {
+          const slug = typeof cat.id === "string" ? cat.id : "";
+          const rawHref = slug
+            ? `/catalogo?category=${encodeURIComponent(
+                // Prefer UUID when taxonomy has matching slug
+                taxonomy.find((t) => t.kind === "category" && (t.slug === slug || t.id === slug))
+                  ?.id || slug,
+              )}`
+            : "/catalogo";
+          const href = withHost(rawHref);
+          return (
+            <div class="shop-rail__item shop-rail__item--category">
+              <CatalogCategoryCard
+                href={href}
+                label={cat.label || slug}
+                imageUrl={cat.imageUrl ?? null}
+                variant="overlay"
+              />
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  )}
+
+  <div class="shop-divider" aria-hidden="true"><span></span></div>
+
+  {homeTiles.length > 0 && (
+    <section class="shop-tiles" aria-label="Coleções em destaque">
+      <div class="shop-tiles__grid">
+        {homeTiles.map((tile) => (
+          <a class="shop-tile" href={tile.href}>
+            <div class="shop-tile__media">
+              {tile.image ? (
+                <img src={tile.image} alt={tile.title} loading="lazy" decoding="async" />
+              ) : (
+                <div class="shop-tile__placeholder" aria-hidden="true" />
+              )}
+              <div class="shop-tile__wash" aria-hidden="true"></div>
+            </div>
+            <div class="shop-tile__body">
+              <p class="shop-tile__badge">{tile.badge}</p>
+              <h3 class="shop-tile__title">{tile.title}</h3>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <div class="shop-divider" aria-hidden="true"><span></span></div>
+
+  {railProducts.length > 0 && (
+    <section class="shop-rail shop-rail--products" aria-label="Produtos em destaque">
+      <div class="shop-rail__track">
+        {railProducts.map((product, index) => (
+          <div class="shop-rail__item shop-rail__item--product">
+            <CatalogProductCard
+              href={withHost(`/p/${encodeURIComponent(product.slug || "")}`)}
+              title={product.name || "Produto"}
+              subtitle={product.line_name || null}
+              imageUrl={product.image_url ?? null}
+              price={product.price ?? null}
+              aspect="portrait"
+              loading={index < 4 ? "eager" : "lazy"}
+            />
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {featuredTabs.length > 0 && (
+    <>
+      <div class="shop-divider" aria-hidden="true"><span></span></div>
+      <CatalogFeaturedTabs tabs={featuredTabs} slides={featuredSlides} />
+    </>
+  )}
+</div>

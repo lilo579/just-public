@@ -1,0 +1,125 @@
+---
+/**
+ * Reusable F3 horizontal product rail (Golden Master Embla-style scroll).
+ * Configuration-driven; no tenant fork. Keyboard + touch scroll safe.
+ */
+import CatalogProductCard from "./CatalogProductCard.astro";
+import { buildCatalogHref } from "../../lib/catalogBrowse.js";
+
+const {
+  title = null,
+  countLabel = null,
+  products = [],
+  hostOverride = "",
+  aspect = "card",
+  railId = "",
+} = Astro.props as {
+  title?: string | null;
+  countLabel?: string | null;
+  products?: Array<{
+    slug?: string | null;
+    name?: string | null;
+    image_url?: string | null;
+    price?: number | null;
+    line_name?: string | null;
+    category_name?: string | null;
+  }>;
+  hostOverride?: string;
+  aspect?: "square" | "portrait" | "card";
+  railId?: string;
+};
+
+const id = railId || `rail-${Math.random().toString(36).slice(2, 9)}`;
+---
+
+{
+  products.length > 0 && (
+    <section class="shop-line-rail" data-shop-line-rail={id} aria-label={title || "Produtos"}>
+      {(title || countLabel) && (
+        <div class="shop-line-rail__head">
+          <div class="shop-line-rail__titles">
+            {title ? <h2 class="shop-line-rail__title">{title}</h2> : null}
+            {countLabel ? <p class="shop-line-rail__count">{countLabel}</p> : null}
+          </div>
+          <div class="shop-line-rail__rule" aria-hidden="true" />
+        </div>
+      )}
+
+      <div class="shop-line-rail__viewport">
+        <button
+          type="button"
+          class="shop-line-rail__nav shop-line-rail__nav--prev"
+          aria-label="Anterior"
+          data-rail-prev
+          hidden
+        >
+          ‹
+        </button>
+        <div class="shop-line-rail__track" data-rail-track tabindex="0">
+          {products.map((product, index) => {
+            const slug = product.slug || "";
+            const href = buildCatalogHref(
+              hostOverride,
+              `/p/${encodeURIComponent(slug)}`,
+            );
+            return (
+              <div class="shop-line-rail__item">
+                <CatalogProductCard
+                  href={href}
+                  title={product.name || "Produto"}
+                  subtitle={product.line_name || product.category_name || null}
+                  imageUrl={product.image_url ?? null}
+                  price={product.price ?? null}
+                  aspect={aspect}
+                  loading={index < 3 ? "eager" : "lazy"}
+                />
+              </div>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          class="shop-line-rail__nav shop-line-rail__nav--next"
+          aria-label="Próximo"
+          data-rail-next
+          hidden
+        >
+          ›
+        </button>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  function initRail(root) {
+    const track = root.querySelector("[data-rail-track]");
+    const prev = root.querySelector("[data-rail-prev]");
+    const next = root.querySelector("[data-rail-next]");
+    if (!track || !prev || !next) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function update() {
+      const max = track.scrollWidth - track.clientWidth;
+      const canScroll = max > 8;
+      prev.hidden = !canScroll;
+      next.hidden = !canScroll;
+      prev.disabled = track.scrollLeft <= 4;
+      next.disabled = track.scrollLeft >= max - 4;
+    }
+
+    function scrollByDir(dir) {
+      const amount = Math.max(240, Math.floor(track.clientWidth * 0.75)) * dir;
+      track.scrollBy({ left: amount, behavior: reduceMotion ? "auto" : "smooth" });
+    }
+
+    prev.addEventListener("click", () => scrollByDir(-1));
+    next.addEventListener("click", () => scrollByDir(1));
+    track.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    update();
+  }
+
+  document.querySelectorAll("[data-shop-line-rail]").forEach(initRail);
+</script>

@@ -21,5 +21,11 @@ pnpm-debug.log*
 # macOS-specific files
 .DS_Store
 
+# local audit / scratch artifacts
+.tmp-*.png
+.tmp-*.jpg
+.tmp-*.jpeg
+.tmp-*.webp
+
 # jetbrains setting folder
 .idea/

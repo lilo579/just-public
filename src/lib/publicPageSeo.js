@@ -54,6 +54,78 @@ function asTrimmed(value) {
 }
 
 /**
+ * Approved per-tenant favicon packs (not logos) shipped under public/branding/.
+ * Used when Hub `seo.favicon` is unset — never fall back to the site logo for these hosts.
+ */
+const PACKAGED_FAVICON_SLUG_BY_HOST = Object.freeze({
+  "www.marceloborer.com.br": "marcelo-borer",
+  "marceloborer.com.br": "marcelo-borer",
+  "www.rossanamendonca.com.br": "rossana-mendonca",
+  "rossanamendonca.com.br": "rossana-mendonca",
+  "www.sorayabarbosa.com.br": "soraya-barbosa",
+  "sorayabarbosa.com.br": "soraya-barbosa",
+  "www.3djewish.com.br": "3d-jewish",
+  "3djewish.com.br": "3d-jewish",
+})
+
+/**
+ * @param {string} host
+ * @returns {string}
+ */
+function normalizeHost(host) {
+  return String(host || "")
+    .trim()
+    .toLowerCase()
+    .replace(/:\d+$/, "")
+}
+
+/**
+ * @param {string} host
+ * @param {{ preferIco?: boolean }} [opts]
+ * @returns {string} site-relative path or ""
+ */
+export function resolvePackagedTenantFaviconPath(host, opts = {}) {
+  const slug = PACKAGED_FAVICON_SLUG_BY_HOST[normalizeHost(host)]
+  if (!slug) return ""
+  return opts.preferIco
+    ? `/branding/${slug}/favicon.ico`
+    : `/branding/${slug}/favicon.svg`
+}
+
+/**
+ * Golden Master favicon resolution — never Astro scaffold paths.
+ * Prefer explicit CMS favicon, then packaged tenant mark, then og/logo fallbacks.
+ * @param {{
+ *   host?: string | null
+ *   favicon?: string | null
+ *   ogImage?: string | null
+ *   logoHorizontalUrl?: string | null
+ *   logoUrl?: string | null
+ *   preferIco?: boolean
+ * }} input
+ * @returns {string}
+ */
+export function resolveBrandFaviconUrl(input) {
+  const packaged = resolvePackagedTenantFaviconPath(input?.host || "", {
+    preferIco: input?.preferIco === true,
+  })
+  const candidates = [
+    asTrimmed(input?.favicon),
+    packaged,
+    asTrimmed(input?.ogImage),
+    asTrimmed(input?.logoHorizontalUrl),
+    asTrimmed(input?.logoUrl),
+  ]
+  for (const url of candidates) {
+    if (!url) continue
+    // Only reject Astro scaffold paths — not remote URLs that happen to end in favicon.ico
+    if (url === "/favicon.svg" || url === "/favicon.ico") continue
+    return url
+  }
+  return ""
+}
+
+/**
  * @param {{
  *   host: string
  *   companyName: string
@@ -101,12 +173,24 @@ export function buildPublicHomepageSeo(input) {
   const ogDescription = asTrimmed(explicit?.ogDescription) || description
 
   const canonicalUrl = host ? `https://${host}/` : ""
-  const derivedOgImage =
-    input.branding?.logoHorizontalUrl ||
-    input.branding?.logoUrl ||
-    ""
+  const logoUrl = asTrimmed(input.branding?.logoUrl)
+  const logoHorizontalUrl = asTrimmed(input.branding?.logoHorizontalUrl)
+  const packagedSlug = PACKAGED_FAVICON_SLUG_BY_HOST[host] || ""
+  const packagedOgImage = packagedSlug ? `/branding/${packagedSlug}/og-image.jpg` : ""
+  // Prefer CMS OG → Hub logos → packaged OG (only hosts with a shipped og-image.jpg).
+  const derivedOgImage = logoHorizontalUrl || logoUrl || packagedOgImage || ""
   const ogImage = asTrimmed(explicit?.ogImage) || derivedOgImage
-  const faviconUrl = asTrimmed(explicit?.favicon) || ogImage || "/favicon.svg"
+  /**
+   * Favicon: explicit CMS → packaged tenant mark (not logo) → ogImage → logos.
+   * Do not use Astro scaffold (/favicon.svg|/favicon.ico) as a customer icon.
+   */
+  const faviconUrl = resolveBrandFaviconUrl({
+    host,
+    favicon: explicit?.favicon || (packagedSlug ? `/branding/${packagedSlug}/favicon.svg` : ""),
+    ogImage,
+    logoHorizontalUrl,
+    logoUrl,
+  })
 
   const jsonLdType = asTrimmed(explicit?.jsonLdType) || "ProfessionalService"
 

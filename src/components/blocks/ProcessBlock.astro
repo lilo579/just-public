@@ -15,6 +15,7 @@ const {
   badgeEmphasis = "accent",
   layout = "standard",
   sectionId,
+  videoUrl = null,
 } = Astro.props as {
   block: {
     type: "process";
@@ -24,22 +25,28 @@ const {
       body?: string | null;
       steps?: Step[];
       imageUrl?: string | null;
+      videoUrl?: string | null;
       closingPullQuote?: string | null;
     };
   };
   indexIcons?: boolean;
   badgeEmphasis?: "primary" | "accent";
-  layout?: "standard" | "cinematic-journey";
+  layout?: "standard" | "cinematic-journey" | "cinematic-method";
   sectionId?: string;
+  videoUrl?: string | null;
 };
 
 const kicker = block.content?.kicker;
 const title = block.content?.title;
 const body = block.content?.body;
 const imageUrl = block.content?.imageUrl;
+const resolvedVideoUrl =
+  (typeof videoUrl === "string" && videoUrl.trim()) ||
+  (typeof block.content?.videoUrl === "string" ? block.content.videoUrl : null);
 const closingPullQuote = block.content?.closingPullQuote;
 const steps = (block.content?.steps ?? []).filter((step) => step?.title);
-const isCinematic = layout === "cinematic-journey";
+const isMethod = layout === "cinematic-method";
+const isCinematic = layout === "cinematic-journey" || isMethod;
 
 const journeyIcons: JourneyIcon[] = [
   "handshake",
@@ -62,17 +69,72 @@ function padStep(n: number, index: number) {
 }
 ---
 
-{(steps.length > 0 || kicker || title || body || (isCinematic && (imageUrl || closingPullQuote))) && (
+{(steps.length > 0 || kicker || title || body || (isCinematic && (imageUrl || resolvedVideoUrl || closingPullQuote))) && (
   <section
-    class:list={["process", isCinematic && "process--cinematic"]}
+    class:list={[
+      "process",
+      isCinematic && "process--cinematic",
+      isMethod && "process--method",
+    ]}
     data-index-icons={indexIcons ? "true" : "false"}
     data-badge={badgeEmphasis}
-    id={isCinematic ? sectionId : undefined}
+    data-f1-method={isMethod ? "true" : undefined}
+    id={sectionId || (isCinematic ? "process" : undefined)}
   >
-    {isCinematic && <div class="process__glow" aria-hidden="true"></div>}
+    {isCinematic && !isMethod && <div class="process__glow" aria-hidden="true"></div>}
 
     <div class="process__container">
-      {isCinematic ? (
+      {isMethod ? (
+        <div class="process__method" data-f1-method-root>
+          <div class="process__method-copy">
+            <div class="process__method-rule" aria-hidden="true"></div>
+            {kicker && <p class="process__method-kicker">{kicker}</p>}
+            {title && <h2 class="process__method-title">{title}</h2>}
+            {body && <p class="process__method-body">{body}</p>}
+            {steps.length > 0 && (
+              <div class="process__method-steps">
+                {steps.map((step, index) => (
+                  <button
+                    type="button"
+                    class="process__method-step"
+                    data-f1-method-step
+                    data-index={index}
+                    data-active={index === 0 ? "true" : "false"}
+                  >
+                    <h3>{step.title}</h3>
+                    <div class="process__method-progress" aria-hidden="true">
+                      <div class="process__method-progress-fill" data-f1-method-fill></div>
+                    </div>
+                    {step.description && (
+                      <div class="process__method-desc">
+                        <p>{step.description}</p>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {(resolvedVideoUrl || imageUrl) && (
+            <div class="process__method-media">
+              {resolvedVideoUrl ? (
+                <video
+                  src={resolvedVideoUrl}
+                  class="process__method-video"
+                  autoplay
+                  muted
+                  loop
+                  playsinline
+                  poster={imageUrl || undefined}
+                />
+              ) : (
+                <img src={imageUrl!} alt="" class="process__method-video" loading="lazy" />
+              )}
+              <div class="process__method-media-fade" aria-hidden="true"></div>
+            </div>
+          )}
+        </div>
+      ) : isCinematic ? (
         <>
           <div class="process__intro">
             <div class="process__intro-copy">
@@ -82,16 +144,30 @@ function padStep(n: number, index: number) {
               {body && <p class="process__body">{body}</p>}
             </div>
 
-            {imageUrl && (
+            {(resolvedVideoUrl || imageUrl) && (
               <div class="process__intro-media">
                 <div class="process__blob-ring" aria-hidden="true"></div>
                 <div class="process__frame">
-                  <img src={imageUrl} alt="" class="process__image" loading="lazy" />
+                  {resolvedVideoUrl ? (
+                    <video
+                      src={resolvedVideoUrl}
+                      class="process__image"
+                      autoplay
+                      muted
+                      loop
+                      playsinline
+                      poster={imageUrl || undefined}
+                    />
+                  ) : (
+                    <img src={imageUrl!} alt="" class="process__image" loading="lazy" />
+                  )}
                   <div class="process__image-wash" aria-hidden="true"></div>
                 </div>
-                <div class="process__sprout" aria-hidden="true">
-                  <CinematicSectionIcon name="sprout" class="process__sprout-icon" />
-                </div>
+                {!resolvedVideoUrl && (
+                  <div class="process__sprout" aria-hidden="true">
+                    <CinematicSectionIcon name="sprout" class="process__sprout-icon" />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -756,4 +832,260 @@ function padStep(n: number, index: number) {
       font-size: 1.8rem;
     }
   }
+
+  /* Reusable cinematic-method layout (trainer / PT storytelling) */
+  .process--method {
+    background: var(--f1-surface-deep, #0b1020);
+    color: rgba(255, 255, 255, 0.92);
+    padding: 4rem 0 5rem;
+  }
+
+  .process--method .process__container {
+    max-width: none;
+    width: 100%;
+    padding: 0;
+  }
+
+  .process__method {
+    width: min(1400px, calc(100% - 2rem));
+    margin: 0 auto;
+    display: grid;
+    gap: 3rem;
+  }
+
+  .process__method-rule {
+    width: 3rem;
+    height: 2px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--site-color-primary, #dc2626) 80%, transparent);
+    margin-bottom: 1.25rem;
+  }
+
+  .process__method-kicker {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .process__method-title {
+    margin: 1rem 0 0;
+    max-width: 15ch;
+    font-size: clamp(1.85rem, 4vw, 3.5rem);
+    font-weight: 600;
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+  }
+
+  .process__method-body {
+    margin: 1.5rem 0 0;
+    max-width: 46ch;
+    font-size: clamp(1rem, 1.4vw, 1.18rem);
+    line-height: 1.72;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .process__method-steps {
+    margin-top: 3.5rem;
+    display: grid;
+    gap: 2.5rem;
+  }
+
+  .process__method-step {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .process__method-step h3 {
+    margin: 0;
+    font-size: clamp(1.1rem, 1.5vw, 1.3rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: rgba(255, 255, 255, 0.18);
+    transition: color 0.3s ease, letter-spacing 0.3s ease;
+  }
+
+  .process__method-step[data-active="true"] h3 {
+    color: #fff;
+    letter-spacing: -0.025em;
+  }
+
+  .process__method-step:hover h3 {
+    color: rgba(255, 255, 255, 0.44);
+  }
+
+  .process__method-step[data-active="true"]:hover h3 {
+    color: #fff;
+  }
+
+  .process__method-progress {
+    position: relative;
+    margin: 1rem 0;
+    width: min(220px, 100%);
+    height: 1.5px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .process__method-progress-fill {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    height: 4px;
+    width: 0%;
+    transform: translateY(-50%);
+    border-radius: 999px;
+    background: var(--site-color-primary, #dc2626);
+  }
+
+  .process__method-desc {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition: grid-template-rows 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s ease;
+  }
+
+  .process__method-step[data-active="true"] .process__method-desc {
+    grid-template-rows: 1fr;
+    opacity: 0.8;
+  }
+
+  .process__method-desc > p {
+    margin: 0;
+    overflow: hidden;
+    max-width: 44ch;
+    font-size: 0.98rem;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.64);
+  }
+
+  .process__method-media {
+    position: relative;
+    overflow: hidden;
+    min-height: 420px;
+  }
+
+  .process__method-video {
+    width: 100%;
+    height: 100%;
+    min-height: 420px;
+    object-fit: cover;
+    display: block;
+    opacity: 0.94;
+  }
+
+  .process__method-media-fade {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to right, var(--f1-surface-deep, #0b1020) 0%, rgba(11, 16, 32, 0.22) 18%, transparent 40%),
+      linear-gradient(to left, var(--f1-surface-deep, #0b1020) 0%, rgba(11, 16, 32, 0.18) 12%, transparent 32%);
+  }
+
+  @media (min-width: 1024px) {
+    .process--method {
+      padding: 6rem 0 7rem;
+    }
+
+    .process__method {
+      grid-template-columns: 1.1fr 0.9fr;
+      align-items: center;
+      gap: 3.5rem;
+      width: min(1400px, calc(100% - 6rem));
+    }
+
+    .process__method-media {
+      min-height: 620px;
+    }
+
+    .process__method-video {
+      min-height: 620px;
+    }
+
+    .process__method-media-fade {
+      background:
+        linear-gradient(to right, var(--f1-surface-deep, #0b1020) 0%, rgba(11, 16, 32, 0.62) 10%, rgba(11, 16, 32, 0.14) 28%, transparent 42%),
+        linear-gradient(to left, var(--f1-surface-deep, #0b1020) 0%, rgba(11, 16, 32, 0.62) 10%, rgba(11, 16, 32, 0.14) 28%, transparent 42%),
+        linear-gradient(to bottom, var(--f1-surface-deep, #0b1020) 0%, rgba(11, 16, 32, 0.38) 8%, transparent 18%),
+        linear-gradient(to top, var(--f1-surface-deep, #0b1020) 0%, rgba(11, 16, 32, 0.38) 8%, transparent 18%);
+    }
+  }
 </style>
+
+<script>
+  function initMethod(root) {
+    if (!(root instanceof HTMLElement) || root.dataset.bound === "1") return
+    root.dataset.bound = "1"
+    const steps = [...root.querySelectorAll("[data-f1-method-step]")]
+    if (!steps.length) return
+    let active = 0
+    let progress = 0
+    let raf = 0
+    let last = 0
+    const duration = 5500
+    let visible = false
+
+    const paint = () => {
+      steps.forEach((step, index) => {
+        step.dataset.active = index === active ? "true" : "false"
+        const fill = step.querySelector("[data-f1-method-fill]")
+        if (fill instanceof HTMLElement) {
+          fill.style.width = index === active ? `${Math.max(0, Math.min(progress, 1)) * 100}%` : "0%"
+        }
+      })
+    }
+
+    const tick = (ts) => {
+      if (!visible) {
+        raf = requestAnimationFrame(tick)
+        return
+      }
+      if (!last) last = ts
+      progress += (ts - last) / duration
+      last = ts
+      if (progress >= 1) {
+        progress = 0
+        active = (active + 1) % steps.length
+      }
+      paint()
+      raf = requestAnimationFrame(tick)
+    }
+
+    steps.forEach((step, index) => {
+      step.addEventListener("click", () => {
+        active = index
+        progress = 0
+        last = 0
+        paint()
+      })
+    })
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        visible = Boolean(entry?.isIntersecting)
+        if (visible) last = 0
+      },
+      { threshold: 0.15 },
+    )
+    io.observe(root)
+    paint()
+    raf = requestAnimationFrame(tick)
+  }
+
+  function bootMethod() {
+    document.querySelectorAll("[data-f1-method-root]").forEach(initMethod)
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootMethod, { once: true })
+  else bootMethod()
+  document.addEventListener("astro:page-load", bootMethod)
+</script>

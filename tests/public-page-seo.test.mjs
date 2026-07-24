@@ -56,8 +56,61 @@ test("buildPublicHomepageSeo emits production SEO fields", () => {
   assert.match(seo.description, /psicanálise/i)
   assert.equal(seo.canonicalUrl, "https://marceloborer.com.br/")
   assert.equal(seo.ogImage, "https://cdn.example/logo.png")
-  assert.equal(seo.faviconUrl, "https://cdn.example/logo.png")
+  assert.equal(seo.faviconUrl, "/branding/marcelo-borer/favicon.svg")
   assert.equal(seo.robots, "index, follow")
   assert.equal(seo.jsonLd["@type"], "ProfessionalService")
   assert.equal(seo.twitterCard, "summary_large_image")
+})
+
+test("favicon prefers packaged tenant mark over logo for Marcelo/Rossana/Soraya", () => {
+  for (const [host, path] of [
+    ["www.marceloborer.com.br", "/branding/marcelo-borer/favicon.svg"],
+    ["www.rossanamendonca.com.br", "/branding/rossana-mendonca/favicon.svg"],
+    ["www.sorayabarbosa.com.br", "/branding/soraya-barbosa/favicon.svg"],
+    ["3djewish.com.br", "/branding/3d-jewish/favicon.svg"],
+  ]) {
+    const seo = buildPublicHomepageSeo({
+      host,
+      companyName: "Tenant",
+      branding: {
+        logoUrl: "https://cdn.example/logo.png",
+        logoHorizontalUrl: "https://cdn.example/logo-h.png",
+      },
+      seo: { ogImage: "https://cdn.example/social-og.webp" },
+    })
+    assert.equal(seo.faviconUrl, path, host)
+    assert.equal(seo.ogImage, "https://cdn.example/social-og.webp")
+  }
+})
+
+test("3D Jewish packaged OG used when CMS ogImage unset", () => {
+  const seo = buildPublicHomepageSeo({
+    host: "3djewish.com.br",
+    companyName: "3D Jewish",
+    branding: {},
+  })
+  assert.equal(seo.faviconUrl, "/branding/3d-jewish/favicon.svg")
+  assert.equal(seo.ogImage, "/branding/3d-jewish/og-image.jpg")
+})
+
+test("favicon follows Golden Master: explicit → packaged/ogImage → logos", () => {
+  const withOg = buildPublicHomepageSeo({
+    host: "celinapiresdorio.com.br",
+    companyName: "Celina",
+    branding: { logoUrl: "https://cdn.example/logo.png" },
+    seo: { ogImage: "https://cdn.example/social-og.webp" },
+  })
+  assert.equal(withOg.faviconUrl, "https://cdn.example/social-og.webp")
+  assert.equal(withOg.ogImage, "https://cdn.example/social-og.webp")
+
+  const explicit = buildPublicHomepageSeo({
+    host: "celinapiresdorio.com.br",
+    companyName: "Celina",
+    branding: { logoUrl: "https://cdn.example/logo.png" },
+    seo: {
+      ogImage: "https://cdn.example/social-og.webp",
+      favicon: "https://cdn.example/favicon.ico",
+    },
+  })
+  assert.equal(explicit.faviconUrl, "https://cdn.example/favicon.ico")
 })

@@ -1,6 +1,7 @@
 ---
 import TrackedCTA from "./TrackedCTA.astro"
 import MessageCircleIcon from "./icons/MessageCircleIcon.astro"
+import WhatsAppIcon from "./icons/WhatsAppIcon.astro"
 
 const {
   siteTitle = "Site",
@@ -12,6 +13,19 @@ const {
   overHero = false,
   ctaLabel = "WhatsApp",
   navItems = [],
+  /** outline-on-dark = Celina editorial; solid = PT dark (Golden Master). */
+  ctaVariant = "outline-on-dark",
+  /** on-scroll = reveal after scroll; always = visible on hero (PT). */
+  navReveal = "on-scroll",
+  /**
+   * shop = F3 catalog Golden Master chrome (full-width rectangular, no Celina pill).
+   * default = shared / F1 behavior.
+   */
+  chrome = "default",
+  /** When false, hide the header WhatsApp CTA (3D Jewish GM has none). */
+  showCta = true,
+  /** Homepage href for the brand/logo mark. */
+  homeHref = "",
 } = Astro.props as {
   siteTitle?: string
   logoUrl?: string
@@ -21,23 +35,131 @@ const {
   pillChrome?: boolean
   overHero?: boolean
   ctaLabel?: string
-  navItems?: Array<{ label: string; href: string }>
+  navItems?: Array<{ label: string; href: string; separatorBefore?: boolean }>
+  ctaVariant?: "outline-on-dark" | "solid"
+  navReveal?: "on-scroll" | "always"
+  chrome?: "default" | "shop"
+  showCta?: boolean
+  homeHref?: string
 }
 
-const hasNav = overHero && Array.isArray(navItems) && navItems.length > 0
+const isShopChrome = chrome === "shop"
+const hasNav = Array.isArray(navItems) && navItems.length > 0
 const resolvedOverHeroLogo = logoOverHeroUrl || logoUrl
-const ctaClass = overHero ? "site-header__cta f1-cta f1-cta--outline-on-dark" : "site-header__cta"
+const overHeroCtaClass =
+  ctaVariant === "solid"
+    ? "site-header__cta f1-cta f1-cta--solid"
+    : "site-header__cta f1-cta f1-cta--outline-on-dark"
+const ctaClass = overHero ? overHeroCtaClass : "site-header__cta"
+const renderCta = showCta && !isShopChrome && Boolean(whatsappHref || !overHero)
+
+/** Keep Workers preview `?host=` when returning to the homepage. */
+const hostParam = (Astro.url.searchParams.get("host") || "").trim()
+const resolvedHomeHref =
+  (typeof homeHref === "string" && homeHref.trim()) ||
+  (hostParam ? `/?host=${encodeURIComponent(hostParam)}` : "/")
+
+/** Active nav matching — Golden Master Header.tsx */
+const currentPath = Astro.url.pathname
+const currentSearch = Astro.url.searchParams
+const currentLine = (currentSearch.get("line") || "").trim()
+const currentColecao = (
+  currentSearch.get("colecao") ||
+  currentSearch.get("collection") ||
+  ""
+).trim()
+const isCatalogPath = currentPath === "/catalogo" || currentPath.startsWith("/catalogo/")
+
+function isNavItemActive(href: string, label: string) {
+  let itemPath = href
+  let itemSearch = ""
+  try {
+    const u = new URL(href, "https://example.local")
+    itemPath = u.pathname
+    itemSearch = u.search
+  } catch {
+    /* keep raw */
+  }
+  const params = new URLSearchParams(itemSearch.startsWith("?") ? itemSearch.slice(1) : itemSearch)
+  const itemLine = (params.get("line") || "").trim()
+  const itemColecao = (params.get("colecao") || params.get("collection") || "").trim()
+
+  if (label === "Catálogo" || (itemPath === "/catalogo" && !itemLine && !itemColecao)) {
+    return isCatalogPath && !currentLine && !currentColecao
+  }
+  if (itemColecao) return isCatalogPath && currentColecao === itemColecao
+  if (itemLine) return isCatalogPath && currentLine === itemLine
+  return currentPath === itemPath || (itemPath !== "/" && currentPath.startsWith(itemPath))
+}
+
+function withHostPath(path: string) {
+  if (!hostParam) return path
+  const join = path.includes("?") ? "&" : "?"
+  return `${path}${join}host=${encodeURIComponent(hostParam)}`
+}
+
+const shopExploreItems = isShopChrome
+  ? navItems.filter(
+      (item) =>
+        item.label !== "Catálogo" &&
+        item.label !== "Sobre" &&
+        item.label !== "Contato",
+    )
+  : []
+
+const shopInstitutionalItems = isShopChrome
+  ? [
+      { label: "Catálogo completo", href: withHostPath("/catalogo"), icon: "book" as const },
+      { label: "Sobre", href: withHostPath("/sobre"), icon: "sparkles" as const },
+      { label: "Contato", href: withHostPath("/contato"), icon: "phone" as const },
+    ]
+  : []
+
+const shopSheetId = "shop-nav-sheet"
+const shopMenuBtnId = "shop-menu-open"
 ---
 
 <header
-  class:list={["site-header", overHero && "site-header--over-hero"]}
-  data-pill-chrome={pillChrome ? "true" : "false"}
+  class:list={[
+    "site-header",
+    overHero && "site-header--over-hero",
+    hasNav && !overHero && "site-header--with-nav",
+    isShopChrome && "site-header--shop",
+  ]}
+  data-pill-chrome={isShopChrome ? "false" : pillChrome ? "true" : "false"}
   data-over-hero={overHero ? "true" : "false"}
+  data-nav-reveal={overHero ? navReveal : undefined}
+  data-cta-variant={overHero ? ctaVariant : undefined}
+  data-chrome={isShopChrome ? "shop" : "default"}
   id="site-header"
 >
   <div class="site-header__shell">
+    {isShopChrome && overHero ? (
+      <div class="site-header__wash" aria-hidden="true"></div>
+    ) : null}
     <nav class="site-header__inner" aria-label="Principal">
-      <a href="/" class="site-header__brand" aria-label={siteTitle}>
+      {isShopChrome ? (
+        <button
+          type="button"
+          class="site-header__menu-btn"
+          id={shopMenuBtnId}
+          aria-label="Abrir menu"
+          aria-expanded="false"
+          aria-controls={shopSheetId}
+        >
+          <svg class="site-header__menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+      ) : null}
+
+      <a href={resolvedHomeHref} class="site-header__brand" aria-label={siteTitle}>
         {overHero && resolvedOverHeroLogo ? (
           <>
             <img
@@ -61,41 +183,210 @@ const ctaClass = overHero ? "site-header__cta f1-cta f1-cta--outline-on-dark" : 
         )}
       </a>
 
+      {isShopChrome ? <span class="site-header__menu-spacer" aria-hidden="true"></span> : null}
+
       {hasNav && (
         <div class="site-header__nav">
           {navItems.map((item) => (
-            <a href={item.href} class="site-header__nav-link">
-              {item.label}
-            </a>
+            <>
+              {isShopChrome && item.separatorBefore ? (
+                <span class="site-header__nav-sep" aria-hidden="true" />
+              ) : null}
+              <a
+                href={item.href}
+                class:list={[
+                  "site-header__nav-link",
+                  isShopChrome && isNavItemActive(item.href, item.label) && "is-active",
+                ]}
+                aria-current={
+                  isShopChrome && isNavItemActive(item.href, item.label) ? "page" : undefined
+                }
+              >
+                {item.label}
+                {isShopChrome ? <span class="site-header__nav-underline" aria-hidden="true" /> : null}
+              </a>
+            </>
           ))}
         </div>
       )}
 
-      {whatsappHref ? (
-        <TrackedCTA
-          href={whatsappHref}
-          label={ctaLabel}
-          class={ctaClass}
-          ctaId="header-whatsapp-cta"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span class="f1-cta__icon site-header__cta-icon" aria-hidden="true">
-            <MessageCircleIcon />
-          </span>
-          <span>{ctaLabel}</span>
-        </TrackedCTA>
-      ) : (
-        <a href={overHero ? "#contato" : "#cta-final"} class={ctaClass}>
-          <span class="f1-cta__icon site-header__cta-icon" aria-hidden="true">
-            <MessageCircleIcon />
-          </span>
-          <span>{ctaLabel}</span>
-        </a>
-      )}
+      {renderCta ? (
+        whatsappHref ? (
+          <TrackedCTA
+            href={whatsappHref}
+            label={ctaLabel}
+            class={ctaClass}
+            ctaId="header-whatsapp-cta"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {overHero ? (
+              <span class="f1-cta__icon site-header__cta-icon" aria-hidden="true">
+                <MessageCircleIcon />
+              </span>
+            ) : (
+              <span class="site-header__cta-icon" aria-hidden="true">
+                <WhatsAppIcon class="site-header__cta-svg" />
+              </span>
+            )}
+            <span>{ctaLabel}</span>
+          </TrackedCTA>
+        ) : (
+          <a href={overHero ? "#contato" : "#cta-final"} class={ctaClass}>
+            {overHero ? (
+              <span class="f1-cta__icon site-header__cta-icon" aria-hidden="true">
+                <MessageCircleIcon />
+              </span>
+            ) : (
+              <span class="site-header__cta-icon" aria-hidden="true">
+                <WhatsAppIcon class="site-header__cta-svg" />
+              </span>
+            )}
+            <span>{ctaLabel}</span>
+          </a>
+        )
+      ) : null}
     </nav>
   </div>
 </header>
+
+{isShopChrome && (
+  <div class="shop-sheet" id={shopSheetId} hidden data-shop-sheet>
+    <button
+      type="button"
+      class="shop-sheet__backdrop"
+      tabindex="-1"
+      aria-label="Fechar menu"
+      data-shop-sheet-close
+    ></button>
+    <div
+      class="shop-sheet__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="shop-sheet-title"
+      id="shop-nav-panel"
+    >
+      <div class="shop-sheet__top">
+        <h2 class="shop-sheet__title" id="shop-sheet-title">Menu</h2>
+        <button
+          type="button"
+          class="shop-sheet__close"
+          aria-label="Fechar menu"
+          data-shop-sheet-close
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path
+              d="M6 6l12 12M18 6 6 18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <nav class="shop-sheet__body" aria-label="Menu mobile">
+        {shopExploreItems.length > 0 && (
+          <div class="shop-sheet__block">
+            <p class="shop-sheet__label">Explorar</p>
+            <ul class="shop-sheet__list">
+              {shopExploreItems.map((item) => (
+                <li>
+                  <a
+                    href={item.href}
+                    class:list={[
+                      "shop-sheet__link",
+                      isNavItemActive(item.href, item.label) && "is-active",
+                    ]}
+                    data-shop-sheet-link
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {shopExploreItems.length > 0 ? <div class="shop-sheet__rule" aria-hidden="true"></div> : null}
+
+        <div class="shop-sheet__block">
+          <p class="shop-sheet__label">Institucional</p>
+          <ul class="shop-sheet__list">
+            {shopInstitutionalItems.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  class:list={[
+                    "shop-sheet__link",
+                    "shop-sheet__link--icon",
+                    isNavItemActive(item.href, item.label === "Catálogo completo" ? "Catálogo" : item.label) &&
+                      "is-active",
+                  ]}
+                  data-shop-sheet-link
+                >
+                  {item.icon === "book" && (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M5 4.5h11.5A2.5 2.5 0 0 1 19 7v12.5H7.5A2.5 2.5 0 0 0 5 22"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                        stroke-linejoin="round"
+                      />
+                      <path d="M5 4.5V22" fill="none" stroke="currentColor" stroke-width="1.6" />
+                    </svg>
+                  )}
+                  {item.icon === "sparkles" && (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="m12 3 1.6 4.8L18.5 9.5 13.6 11.5 12 16.4 10.4 11.5 5.5 9.5l4.9-1.7L12 3Z"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  )}
+                  {item.icon === "phone" && (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M7.5 4.5h3l1.2 3-1.8 1.2a11 11 0 0 0 5.4 5.4l1.2-1.8 3 1.2v3A2 2 0 0 1 17.5 18 13.5 13.5 0 0 1 4 4.5a2 2 0 0 1 2-2Z"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  )}
+                  <span>{item.label}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {whatsappHref ? (
+          <>
+            <div class="shop-sheet__rule" aria-hidden="true"></div>
+            <div class="shop-sheet__cta">
+              <a
+                href={whatsappHref}
+                class="shop-sheet__wa"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-shop-sheet-link
+              >
+                Conversar no WhatsApp
+              </a>
+            </div>
+          </>
+        ) : null}
+      </nav>
+    </div>
+  </div>
+)}
 
 {overHero && (
   <script is:inline>
@@ -113,7 +404,123 @@ const ctaClass = overHero ? "site-header__cta f1-cta f1-cta--outline-on-dark" : 
   </script>
 )}
 
+{isShopChrome && (
+  <script is:inline>
+    (function () {
+      var header = document.getElementById("site-header");
+      if (!header || header.getAttribute("data-chrome") !== "shop") return;
+      var sheet = document.getElementById("shop-nav-sheet");
+      var openBtn = document.getElementById("shop-menu-open");
+      var panel = document.getElementById("shop-nav-panel");
+      if (!sheet || !openBtn || !panel) return;
+
+      var lastFocus = null;
+      var reduceMotion =
+        window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      function focusable() {
+        return Array.prototype.slice.call(
+          panel.querySelectorAll(
+            'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ),
+        );
+      }
+
+      function setOpen(next) {
+        var open = !!next;
+        if (open) {
+          lastFocus = document.activeElement;
+          sheet.hidden = false;
+          openBtn.setAttribute("aria-expanded", "true");
+          document.documentElement.setAttribute("data-shop-sheet-open", "true");
+          document.body.style.overflow = "hidden";
+          window.requestAnimationFrame(function () {
+            sheet.setAttribute("data-open", "true");
+            var nodes = focusable();
+            var target = nodes[0] || panel;
+            try {
+              target.focus();
+            } catch (e) {}
+          });
+        } else {
+          sheet.removeAttribute("data-open");
+          openBtn.setAttribute("aria-expanded", "false");
+          document.documentElement.removeAttribute("data-shop-sheet-open");
+          document.body.style.overflow = "";
+          var closeDelay = reduceMotion ? 0 : 200;
+          window.setTimeout(function () {
+            if (sheet.getAttribute("data-open") === "true") return;
+            sheet.hidden = true;
+          }, closeDelay);
+          if (lastFocus && typeof lastFocus.focus === "function") {
+            try {
+              lastFocus.focus();
+            } catch (e) {}
+          } else {
+            openBtn.focus();
+          }
+        }
+      }
+
+      openBtn.addEventListener("click", function () {
+        setOpen(true);
+      });
+
+      sheet.querySelectorAll("[data-shop-sheet-close]").forEach(function (el) {
+        el.addEventListener("click", function () {
+          setOpen(false);
+        });
+      });
+
+      sheet.querySelectorAll("[data-shop-sheet-link]").forEach(function (el) {
+        el.addEventListener("click", function () {
+          setOpen(false);
+        });
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (sheet.getAttribute("data-open") !== "true") return;
+        if (event.key === "Escape") {
+          event.preventDefault();
+          setOpen(false);
+          return;
+        }
+        if (event.key !== "Tab") return;
+        var nodes = focusable();
+        if (!nodes.length) return;
+        var first = nodes[0];
+        var last = nodes[nodes.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      });
+    })();
+  </script>
+)}
+
 <style>
+  .site-header--with-nav .site-header__nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .site-header--with-nav .site-header__nav-link {
+    color: #222;
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 500;
+  }
+
+  .site-header--with-nav .site-header__nav-link:hover {
+    opacity: 0.7;
+  }
+
   .site-header {
     position: sticky;
     top: 0;
@@ -161,7 +568,7 @@ const ctaClass = overHero ? "site-header__cta f1-cta f1-cta--outline-on-dark" : 
   .site-header--over-hero[data-scrolled="true"] .site-header__shell {
     border-radius: 999px;
     border-color: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 16%, transparent);
-    background: #fffaf3;
+    background: var(--f1-header-scrolled-bg, #fffaf3);
     box-shadow: 0 24px 90px -70px hsl(220 15% 15% / 0.45);
   }
 
@@ -169,7 +576,7 @@ const ctaClass = overHero ? "site-header__cta f1-cta f1-cta--outline-on-dark" : 
     box-sizing: border-box;
     max-width: 1280px;
     margin: 0 auto;
-    padding: 0.85rem 1.5rem;
+    padding: 1rem 1.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -198,6 +605,8 @@ const ctaClass = overHero ? "site-header__cta f1-cta f1-cta--outline-on-dark" : 
     min-width: 0;
     flex: 0 1 auto;
     position: relative;
+    z-index: 2;
+    cursor: pointer;
   }
 
   .site-header__brand span {
@@ -208,8 +617,8 @@ const ctaClass = overHero ? "site-header__cta f1-cta f1-cta--outline-on-dark" : 
 
   .site-header__logo {
     display: block;
-    height: 2.75rem;
-    max-width: 10.5rem;
+    height: 3.15rem;
+    max-width: 11rem;
     width: auto;
     object-fit: contain;
   }
@@ -261,7 +670,8 @@ const ctaClass = overHero ? "site-header__cta f1-cta f1-cta--outline-on-dark" : 
     pointer-events: none;
   }
 
-  .site-header--over-hero[data-scrolled="true"] .site-header__nav {
+  .site-header--over-hero[data-scrolled="true"] .site-header__nav,
+  .site-header--over-hero[data-nav-reveal="always"] .site-header__nav {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
@@ -279,14 +689,24 @@ const ctaClass = overHero ? "site-header__cta f1-cta f1-cta--outline-on-dark" : 
     color: var(--site-color-primary, hsl(145 63% 42%));
   }
 
+  /* Over-hero nav reads on dark media — white, never brand-red. */
+  .site-header--over-hero .site-header__nav-link {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1.05rem;
+  }
+
+  .site-header--over-hero .site-header__nav-link:hover {
+    color: rgba(255, 255, 255, 0.98);
+  }
+
   .site-header :global(a.site-header__cta) {
     box-sizing: border-box;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.45rem;
-    min-height: 2.25rem;
-    padding: 0.4rem 1.15rem;
+    min-height: 2rem;
+    padding: 0.28rem 0.95rem;
     border-radius: 999px;
     border: 1.5px solid var(--site-color-primary, hsl(145 63% 42%));
     background: transparent;
@@ -297,6 +717,31 @@ const ctaClass = overHero ? "site-header__cta f1-cta f1-cta--outline-on-dark" : 
     line-height: 1;
     white-space: nowrap;
     flex: 0 0 auto;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease,
+      border-color 160ms ease,
+      transform 160ms ease;
+  }
+
+  .site-header[data-pill-chrome="false"] :global(a.site-header__cta:not(.f1-cta)) {
+    border-radius: var(--site-radius-button, 0.5rem);
+    min-height: 2.35rem;
+    padding: 0.4rem 1.1rem;
+    font-weight: 600;
+  }
+
+  .site-header:not(.site-header--over-hero) :global(a.site-header__cta:hover) {
+    background: color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 10%, white);
+  }
+
+  .site-header:not(.site-header--over-hero) :global(a.site-header__cta:active) {
+    transform: translateY(1px);
+  }
+
+  .site-header:not(.site-header--over-hero) :global(a.site-header__cta:focus-visible) {
+    outline: 3px solid color-mix(in srgb, var(--site-color-primary, hsl(145 63% 42%)) 40%, white);
+    outline-offset: 2px;
   }
 
   .site-header--over-hero :global(a.site-header__cta.f1-cta) {
@@ -307,6 +752,28 @@ const ctaClass = overHero ? "site-header__cta f1-cta f1-cta--outline-on-dark" : 
     font-size: 0.9rem;
     font-weight: 500;
     line-height: 1.5;
+  }
+
+  /* PT solid header CTA (Golden Master) — soft radius, primary fill */
+  .site-header--over-hero[data-cta-variant="solid"] :global(a.site-header__cta.f1-cta--solid) {
+    height: 2.5rem;
+    min-height: 2.5rem;
+    padding: 0 1.1rem;
+    border: none;
+    border-radius: 0.6rem;
+    background: color-mix(in srgb, var(--site-color-primary, hsl(355 82% 44%)) 85%, transparent);
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.85rem;
+    font-weight: 500;
+    box-shadow: none;
+  }
+
+  .site-header--over-hero[data-cta-variant="solid"] :global(a.site-header__cta.f1-cta--solid:hover),
+  .site-header--over-hero[data-cta-variant="solid"] :global(a.site-header__cta.f1-cta--solid:focus-visible) {
+    background: var(--site-color-primary, hsl(355 82% 44%));
+    color: #fff;
+    transform: none;
+    outline: none;
   }
 
   /* Pre-scroll: white outline on hero — must beat primary .site-header__cta rules */
@@ -327,10 +794,6 @@ const ctaClass = overHero ? "site-header__cta f1-cta f1-cta--outline-on-dark" : 
     color: hsl(220 15% 15%);
     border-color: #fff;
     outline: none;
-  }
-
-  .site-header[data-pill-chrome="false"] :global(a.site-header__cta:not(.f1-cta)) {
-    border-radius: var(--site-radius-button, 0.5rem);
   }
 
   .site-header--over-hero :global(a.site-header__cta) {
@@ -364,13 +827,18 @@ const ctaClass = overHero ? "site-header__cta f1-cta f1-cta--outline-on-dark" : 
   }
 
   .site-header :global(.site-header__cta-icon) {
-    width: 1.15rem;
-    height: 1.15rem;
+    width: 1.05rem;
+    height: 1.05rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     color: inherit;
     flex: 0 0 auto;
+  }
+
+  .site-header :global(.site-header__cta-svg) {
+    width: 1.05rem;
+    height: 1.05rem;
   }
 
   @media (min-width: 640px) {
@@ -417,13 +885,52 @@ const ctaClass = overHero ? "site-header__cta f1-cta f1-cta--outline-on-dark" : 
 
   @media (max-width: 720px) {
     .site-header__inner {
-      padding: 0.75rem 1rem;
+      padding: 0.95rem 1rem;
       gap: 0.75rem;
     }
 
+    /* F3 / shop chrome: keep logo + CTA on row 1; nav wraps below (no overlap). */
+    .site-header--with-nav .site-header__inner {
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .site-header--with-nav .site-header__brand {
+      flex: 1 1 auto;
+      max-width: calc(100% - 7.5rem);
+    }
+
+    .site-header--with-nav .site-header__nav {
+      order: 3;
+      flex: 1 1 100%;
+      width: 100%;
+      justify-content: flex-start;
+      gap: 0.85rem;
+      padding-top: 0.1rem;
+    }
+
+    .site-header--with-nav :global(a.site-header__cta),
+    .site-header--with-nav .site-header__cta {
+      order: 2;
+      margin-left: auto;
+      flex: 0 0 auto;
+    }
+
     .site-header__logo {
-      height: 2.5rem;
-      max-width: 8.5rem;
+      height: 3rem;
+      max-width: 8.8rem;
+    }
+
+    .site-header:not(.site-header--over-hero) :global(a.site-header__cta) {
+      min-height: 1.9rem;
+      padding: 0.24rem 0.85rem;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+    }
+
+    .site-header :global(.site-header__cta-svg) {
+      width: 1rem;
+      height: 1rem;
     }
 
     .site-header--over-hero {
@@ -445,6 +952,537 @@ const ctaClass = overHero ? "site-header__cta f1-cta f1-cta--outline-on-dark" : 
 
     .site-header--over-hero[data-scrolled="true"] .site-header__logo--solid {
       height: 2.8rem;
+    }
+  }
+
+  /* ============================================================
+     F3 shop chrome — 3D Jewish Golden Master (not Celina pill)
+     ============================================================ */
+  .site-header--shop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    background: #fff;
+    border-bottom: 1px solid hsl(220 13% 91%);
+    box-shadow: 0 1px 2px hsl(220 15% 15% / 0.04);
+    backdrop-filter: none;
+  }
+
+  .site-header--shop.site-header--over-hero {
+    position: fixed;
+    background: transparent;
+    border-bottom-color: transparent;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .site-header--shop .site-header__nav-sep {
+    display: none;
+    width: 1px;
+    height: 1.25rem;
+    margin: 0 0.5rem;
+    background: hsl(220 13% 91%);
+    flex-shrink: 0;
+    align-self: center;
+  }
+
+  .site-header--shop.site-header--over-hero:not([data-scrolled="true"]) .site-header__nav-sep {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  .site-header--shop .site-header__nav-link.is-active {
+    color: hsl(220 15% 15%);
+  }
+
+  .site-header--shop .site-header__nav-link.is-active .site-header__nav-underline {
+    opacity: 1;
+  }
+
+  .site-header--shop.site-header--over-hero:not([data-scrolled="true"])
+    .site-header__nav-link.is-active {
+    color: #fff;
+  }
+
+  .site-header--shop .site-header__shell {
+    position: relative;
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    overflow: visible;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transition:
+      background-color 200ms ease,
+      border-color 200ms ease,
+      box-shadow 200ms ease;
+  }
+
+  .site-header--shop.site-header--over-hero[data-scrolled="true"] .site-header__shell,
+  .site-header--shop:not(.site-header--over-hero) .site-header__shell {
+    border-radius: 0;
+    border: none;
+    background: #fff;
+    box-shadow: none;
+  }
+
+  .site-header--shop.site-header--over-hero[data-scrolled="true"] {
+    background: #fff;
+    border-bottom: 1px solid hsl(220 13% 91%);
+    box-shadow: 0 1px 2px hsl(220 15% 15% / 0.06);
+  }
+
+  .site-header--shop .site-header__wash {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.7) 0%,
+      rgba(0, 0, 0, 0.3) 55%,
+      transparent 100%
+    );
+    opacity: 1;
+    transition: opacity 200ms ease;
+  }
+
+  .site-header--shop.site-header--over-hero[data-scrolled="true"] .site-header__wash {
+    opacity: 0;
+  }
+
+  .site-header--shop .site-header__inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    height: 68px;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    position: relative;
+    z-index: 1;
+    transition: height 200ms ease;
+  }
+
+  .site-header--shop.site-header--over-hero .site-header__inner,
+  .site-header--shop.site-header--over-hero[data-scrolled="true"] .site-header__inner {
+    height: 68px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .site-header--shop .site-header__logo,
+  .site-header--shop .site-header__logo--over,
+  .site-header--shop .site-header__logo--solid {
+    height: 2.5rem; /* h-10 */
+    max-width: 11rem;
+  }
+
+  .site-header--shop.site-header--over-hero .site-header__logo--over {
+    height: 2.75rem; /* h-11 */
+    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.55));
+  }
+
+  .site-header--shop.site-header--over-hero[data-scrolled="true"] .site-header__logo--solid {
+    height: 2.5rem;
+  }
+
+  .site-header--shop .site-header__nav {
+    display: none;
+    align-items: center;
+    gap: 0.25rem;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .site-header--shop.site-header--over-hero .site-header__nav {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .site-header--shop .site-header__nav-link {
+    position: relative;
+    padding: 0.5rem 0.75rem;
+    font-size: 14.5px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: hsl(220 10% 46%);
+    transition: color 200ms ease;
+  }
+
+  .site-header--shop .site-header__nav-link:hover {
+    color: hsl(220 15% 15%);
+  }
+
+  .site-header--shop.site-header--over-hero:not([data-scrolled="true"]) .site-header__nav-link {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .site-header--shop.site-header--over-hero:not([data-scrolled="true"]) .site-header__nav-link:hover {
+    color: #fff;
+  }
+
+  .site-header--shop .site-header__nav-underline {
+    position: absolute;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: -5px;
+    height: 1.5px;
+    border-radius: 999px;
+    background: var(--site-color-primary, #2563eb);
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+
+  .site-header--shop.site-header--over-hero:not([data-scrolled="true"]) .site-header__nav-underline {
+    background: #fff;
+  }
+
+  .site-header--shop .site-header__nav-link:hover .site-header__nav-underline {
+    opacity: 0.6;
+  }
+
+  .site-header--shop .site-header__nav-link:focus-visible {
+    outline: 2px solid var(--site-color-primary, #2563eb);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+
+  .site-header--shop .site-header__menu-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: hsl(220 15% 15%);
+    cursor: pointer;
+  }
+
+  .site-header--shop .site-header__menu-btn:focus-visible {
+    outline: 2px solid var(--site-color-primary, #2563eb);
+    outline-offset: 2px;
+  }
+
+  .site-header--shop .site-header__menu-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    display: block;
+  }
+
+  .site-header--shop .site-header__menu-spacer {
+    display: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: 0 0 auto;
+  }
+
+  .site-header--shop.site-header--over-hero:not([data-scrolled="true"]) .site-header__menu-btn {
+    color: #fff;
+  }
+
+  @media (min-width: 1024px) {
+    .site-header--shop .site-header__inner,
+    .site-header--shop.site-header--over-hero .site-header__inner,
+    .site-header--shop.site-header--over-hero[data-scrolled="true"] .site-header__inner {
+      height: 84px;
+      padding-left: 2.5rem;
+      padding-right: 2.5rem;
+    }
+
+    .site-header--shop .site-header__nav {
+      display: flex;
+    }
+
+    .site-header--shop .site-header__nav-sep {
+      display: inline-block;
+    }
+
+    .site-header--shop.site-header--over-hero {
+      padding: 0;
+    }
+
+    .site-header--shop .site-header__menu-btn,
+    .site-header--shop .site-header__menu-spacer {
+      display: none !important;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .site-header--shop .site-header__inner,
+    .site-header--shop.site-header--with-nav .site-header__inner,
+    .site-header--shop.site-header--over-hero .site-header__inner {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: nowrap;
+      height: 68px;
+      min-height: 68px;
+      padding: 0 1rem;
+    }
+
+    .site-header--shop .site-header__menu-btn {
+      display: inline-flex;
+      position: relative;
+      z-index: 2;
+    }
+
+    .site-header--shop .site-header__menu-spacer {
+      display: block;
+    }
+
+    .site-header--shop .site-header__brand {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+    }
+
+    .site-header--shop .site-header__nav,
+    .site-header--shop.site-header--with-nav .site-header__nav {
+      display: none !important;
+    }
+
+    .site-header--shop .site-header__logo,
+    .site-header--shop .site-header__logo--solid {
+      height: 2.25rem;
+    }
+
+    .site-header--shop.site-header--over-hero:not([data-scrolled="true"])
+      .site-header__logo--over {
+      height: 2.5rem;
+    }
+  }
+
+  /* Shop mobile Sheet — Golden Master MobileMenu.tsx */
+  .shop-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    pointer-events: none;
+  }
+
+  .shop-sheet[data-open="true"] {
+    pointer-events: auto;
+  }
+
+  .shop-sheet__backdrop {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background: rgba(0, 0, 0, 0.8);
+    opacity: 0;
+    transition: opacity 200ms ease;
+    cursor: pointer;
+  }
+
+  .shop-sheet[data-open="true"] .shop-sheet__backdrop {
+    opacity: 1;
+  }
+
+  .shop-sheet__panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    box-sizing: border-box;
+    width: min(280px, 100vw);
+    background: #fcfcfc;
+    color: hsl(220 15% 15%);
+    box-shadow: -12px 0 40px rgba(15, 23, 42, 0.18);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transform: translateX(100%);
+    transition: transform 300ms ease;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (min-width: 640px) {
+    .shop-sheet__panel {
+      width: 320px;
+    }
+  }
+
+  .shop-sheet[data-open="true"] .shop-sheet__panel {
+    transform: translateX(0);
+  }
+
+  .shop-sheet__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .shop-sheet__title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    text-align: left;
+  }
+
+  .shop-sheet__close {
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 0.375rem;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.7;
+  }
+
+  .shop-sheet__close:hover {
+    opacity: 1;
+  }
+
+  .shop-sheet__close:focus-visible {
+    outline: 2px solid var(--site-color-primary, #2563eb);
+    outline-offset: 2px;
+  }
+
+  .shop-sheet__close svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .shop-sheet__body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .shop-sheet__block {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .shop-sheet__label {
+    margin: 0;
+    padding: 0 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: hsl(220 10% 46%);
+  }
+
+  .shop-sheet__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .shop-sheet__link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: hsl(220 15% 15%);
+    text-decoration: none;
+  }
+
+  .shop-sheet__link:hover {
+    background: hsl(220 14% 96%);
+  }
+
+  .shop-sheet__link.is-active {
+    background: hsl(220 14% 96%);
+  }
+
+  .shop-sheet__link:focus-visible {
+    outline: 2px solid var(--site-color-primary, #2563eb);
+    outline-offset: 2px;
+  }
+
+  .shop-sheet__link svg {
+    width: 1rem;
+    height: 1rem;
+    color: hsl(220 10% 46%);
+    flex: 0 0 auto;
+  }
+
+  .shop-sheet__rule {
+    height: 1px;
+    background: hsl(220 13% 91%);
+  }
+
+  .shop-sheet__cta {
+    padding: 0 0.5rem;
+  }
+
+  .shop-sheet__wa {
+    display: inline-flex;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    border-radius: 0.75rem;
+    background: var(--site-color-primary, #6b8fad);
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .shop-sheet__wa:focus-visible {
+    outline: 2px solid var(--site-color-primary, #6b8fad);
+    outline-offset: 2px;
+  }
+
+  html[data-shop-sheet-open="true"] {
+    overflow: hidden;
+  }
+
+  @media (min-width: 1024px) {
+    .shop-sheet {
+      display: none !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shop-sheet__backdrop,
+    .shop-sheet__panel {
+      transition: none !important;
+    }
+
+    .site-header--shop,
+    .site-header--shop .site-header__shell,
+    .site-header--shop .site-header__wash,
+    .site-header--shop .site-header__inner,
+    .site-header--shop .site-header__logo,
+    .site-header--shop .site-header__nav-underline,
+    .site-header--shop .site-header__nav-link {
+      transition: none !important;
     }
   }
 </style>

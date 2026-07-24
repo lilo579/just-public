@@ -1,16 +1,51 @@
 ---
-/** Bind-only F3 category navigation (paint.category_nav). */
-const { block } = Astro.props as {
+/** F3 category navigation — grid of category cards linking to /catalogo. */
+import CatalogCategoryCard from "../catalog/CatalogCategoryCard.astro";
+
+const { block, layout = {} } = Astro.props as {
   block: { type: string; content: Record<string, unknown> };
+  layout?: { categoryNavStyle?: string; cardDensity?: string };
 };
+
 const categories = Array.isArray(block.content.categories)
-  ? (block.content.categories as Array<{ label?: string | null }>)
+  ? (block.content.categories as Array<{
+      id?: string | null;
+      label?: string | null;
+      imageUrl?: string | null;
+      itemIds?: string[];
+    }>)
   : [];
+
+const style = layout.categoryNavStyle === "stacked" ? "stacked" : "rail";
+const density = layout.cardDensity === "comfortable" ? "comfortable" : "compact";
 ---
-<section class="catalog-category-nav" aria-label="Categories">
-  <ul>
-    {categories.map((category) => (
-      <li>{category.label ?? ""}</li>
-    ))}
-  </ul>
-</section>
+
+{
+  categories.length > 0 && (
+    <section
+      class:list={[
+        "catalog-category-nav",
+        `catalog-category-nav--${style}`,
+        `catalog-category-nav--${density}`,
+      ]}
+      aria-label="Categorias"
+    >
+      <div class="catalog-category-nav__grid">
+        {categories.map((category) => {
+          const slug = typeof category.id === "string" ? category.id : "";
+          const label = category.label || slug;
+          const href = slug ? `/catalogo?category=${encodeURIComponent(slug)}` : "/catalogo";
+          const count = Array.isArray(category.itemIds) ? category.itemIds.length : null;
+          return (
+            <CatalogCategoryCard
+              href={href}
+              label={label}
+              imageUrl={category.imageUrl ?? null}
+              count={count && count > 0 ? count : null}
+            />
+          );
+        })}
+      </div>
+    </section>
+  )
+}

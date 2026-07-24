@@ -28,6 +28,13 @@ const inlineStyle = themeTokensToInlineStyle(tokens)
     font-weight: var(--site-font-body-weight, 400);
   }
 
+  /* F3 shop page wash — match published SPA hsl(0 0% 99%).
+     Homepage puts data-f3 on descendants; catalog routes put it on <html>. */
+  .site-theme-root:has([data-f3-presentation]) {
+    --site-color-background: hsl(0 0% 99%);
+    background: hsl(0 0% 99%);
+  }
+
   .site-theme-root :global(h1),
   .site-theme-root :global(h2),
   .site-theme-root :global(h3),

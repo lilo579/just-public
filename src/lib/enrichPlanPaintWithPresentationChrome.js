@@ -12,6 +12,13 @@ export function enrichPlanPaintWithPresentationChrome(plan, chrome) {
   const editorial = chrome.cinematicEditorial;
   if (!editorial) return plan;
 
+  const problemNode = plan.nodes.find(
+    (node) => node.paint?.component === "problem" || node.paint?.component === "rich_text",
+  );
+  const problemParagraphs = Array.isArray(problemNode?.paint?.block?.content?.paragraphs)
+    ? problemNode.paint.block.content.paragraphs.filter((p) => typeof p === "string" && p.trim())
+    : [];
+
   const nodes = plan.nodes.map((node) => {
     const paint = node.paint;
     if (!paint?.block?.content) return node;
@@ -21,6 +28,7 @@ export function enrichPlanPaintWithPresentationChrome(plan, chrome) {
     switch (paint.component) {
       case "hero":
         content.imageUrl = content.imageUrl || editorial.heroImageUrl;
+        if (editorial.heroVideoUrl) content.videoUrl = editorial.heroVideoUrl;
         layout.heroLayout = "cinematic";
         break;
       case "problem":
@@ -38,41 +46,94 @@ export function enrichPlanPaintWithPresentationChrome(plan, chrome) {
         content.kicker = content.kicker || editorial.situationsKicker;
         content.body = content.body || editorial.situationsSupport;
         layout.servicesLayout = "cinematic-signs";
-        layout.sectionId = layout.sectionId || "para-quem";
+        layout.sectionId =
+          layout.sectionId ||
+          (editorial.composition === "pt_trainer"
+            ? editorial.sectionIds?.method || "metodo"
+            : "para-quem");
         break;
       }
-      case "features":
+      case "features": {
         content.kicker = content.kicker || editorial.principlesKicker;
-        content.imageUrl = content.imageUrl || editorial.principlesImageUrl;
-        layout.benefitsLayout = "cinematic-principles";
+        if (editorial.composition !== "pt_trainer") {
+          content.imageUrl = content.imageUrl || editorial.principlesImageUrl;
+          layout.benefitsLayout = "cinematic-principles";
+        } else {
+          content.imageUrl = null;
+          layout.benefitsLayout = "cinematic-outcomes";
+          const items = Array.isArray(content.items) ? content.items : [];
+          content.outcomeImageUrls = items.map((_, index) => {
+            const n = String(index + 1).padStart(2, "0");
+            return `/presentation/cinematic_v1/pt/benefits-${n}.jpeg`;
+          });
+        }
+        if (
+          editorial.composition === "pt_trainer" &&
+          problemParagraphs.length > 0 &&
+          Array.isArray(content.items)
+        ) {
+          content.items = content.items.map((item, index) => ({
+            ...item,
+            description: item.description || problemParagraphs[index] || null,
+          }));
+        }
+        layout.sectionId =
+          layout.sectionId ||
+          (editorial.composition === "pt_trainer"
+            ? editorial.sectionIds?.benefits || "beneficios"
+            : undefined);
         break;
+      }
       case "process": {
         const existing = Array.isArray(content.steps) ? content.steps : [];
-        const hasSupplemental = existing.length >= 5;
-        if (!hasSupplemental) {
+        const supplemental = Array.isArray(editorial.processSupplementalSteps)
+          ? editorial.processSupplementalSteps
+          : [];
+        const hasSupplemental = existing.length >= 3 + supplemental.length;
+        if (!hasSupplemental && supplemental.length > 0) {
           const start = existing.length;
-          const supplemental = editorial.processSupplementalSteps.map((step, i) => ({
-            number: start + i + 1,
-            title: step.title,
-            description: step.description,
-          }));
-          content.steps = [...existing, ...supplemental];
+          content.steps = [
+            ...existing,
+            ...supplemental.map((step, i) => ({
+              number: start + i + 1,
+              title: step.title,
+              description: step.description,
+            })),
+          ];
         }
         content.kicker = content.kicker || editorial.processKicker;
         content.body = content.body || editorial.processSupport;
         content.imageUrl = content.imageUrl || editorial.processImageUrl;
-        // Closing quote renders after CTA band (SPA order) — strip if present on process.
+        if (editorial.processVideoUrl) content.videoUrl = editorial.processVideoUrl;
         delete content.closingPullQuote;
-        layout.processLayout = "cinematic-journey";
-        layout.sectionId = layout.sectionId || "como-funciona";
+        if (editorial.composition === "pt_trainer") {
+          layout.processLayout = "cinematic-method";
+          layout.sectionId = editorial.sectionIds?.method || "metodo";
+        } else {
+          layout.processLayout = "cinematic-journey";
+          layout.sectionId = layout.sectionId || "como-funciona";
+        }
         break;
       }
       case "cta_final":
         content.microcopy = content.microcopy || editorial.ctaMicrocopy;
         content.closingPullQuote =
           content.closingPullQuote || editorial.closingPullQuote;
+        if (Array.isArray(editorial.manifestoGhost)) {
+          content.manifestoGhost = editorial.manifestoGhost;
+        }
+        if (Array.isArray(editorial.manifestoStatement)) {
+          content.manifestoStatement = editorial.manifestoStatement;
+        }
+        if (editorial.composition === "pt_trainer") {
+          content.manifestoImageUrl =
+            content.manifestoImageUrl ||
+            "/presentation/cinematic_v1/pt/manifesto-portrait.png";
+          layout.sectionId = editorial.sectionIds?.manifesto || "manifesto-final";
+        } else {
+          layout.sectionId = layout.sectionId || "contato";
+        }
         layout.ctaLayout = "cinematic-band";
-        layout.sectionId = layout.sectionId || "contato";
         break;
       default:
         break;

@@ -1,0 +1,675 @@
+---
+/**
+ * Reusable cinematic proof morph — presentation chrome only.
+ * Desktop: scroll-pinned crossfade (published SPA rhythm).
+ * Mobile: snap carousel with timed before/after frames.
+ */
+type ProofFrame = {
+  label: string
+  mediaType: "image" | "video"
+  mediaUrl: string
+  caption?: string
+}
+
+type ProofCase = {
+  name: string
+  caption: string
+  leftLabel: string
+  rightLabel: string
+  leftMediaType: "image" | "video"
+  rightMediaType: "image" | "video"
+  leftMediaUrl: string
+  rightMediaUrl: string
+  mobileFrames?: ProofFrame[]
+}
+
+const { cases = [], sectionId = "resultados" } = Astro.props as {
+  cases?: ProofCase[]
+  sectionId?: string
+}
+
+const visible = (cases ?? []).filter(
+  (item) => item?.name && (item.leftMediaUrl || item.rightMediaUrl),
+)
+
+/** Case-level morph slogans must not render under the morph (Golden Master). */
+const MORPH_SLOGAN_CAPTIONS = new Set([
+  "Resultado construído com método",
+  "Mudança real, sem atalhos",
+  "Evolução guiada por método, não por tentativa e erro",
+])
+
+function mobileFrameCaption(
+  raw: unknown,
+  caseCaption: unknown,
+): string {
+  const caption = typeof raw === "string" ? raw.trim() : ""
+  if (!caption) return ""
+  const slogan =
+    typeof caseCaption === "string" ? caseCaption.trim() : ""
+  if (slogan && caption === slogan) return ""
+  if (MORPH_SLOGAN_CAPTIONS.has(caption)) return ""
+  return caption
+}
+
+const casesJson = JSON.stringify(
+  visible.map((item) => ({
+    ...item,
+    // Keep case.caption out of mobile frame paint (desktop morph no longer shows it).
+    mobileFrames: (item.mobileFrames ?? []).map((frame) => ({
+      ...frame,
+      caption: mobileFrameCaption(frame.caption, item.caption),
+    })),
+  })),
+)
+const trackVh = Math.max(visible.length - 1, 0) * 42
+---
+
+{
+  visible.length > 0 && (
+    <section
+      class="f1-proof-morph"
+      id={sectionId}
+      data-f1-proof-morph
+      data-case-count={visible.length}
+      style={`--f1-proof-track-extra: ${trackVh}vh`}
+    >
+      <script type="application/json" data-f1-proof-cases set:html={casesJson} />
+
+      {/* Mobile snap carousel */}
+      <div class="f1-proof-morph__mobile">
+        <div class="f1-proof-morph__mobile-scroller" data-f1-proof-mobile-scroller>
+          {
+            visible.map((item, index) => {
+              const frames =
+                item.mobileFrames && item.mobileFrames.length > 0
+                  ? item.mobileFrames.map((frame) => ({
+                      ...frame,
+                      caption: mobileFrameCaption(frame.caption, item.caption),
+                    }))
+                  : [
+                      {
+                        label: item.leftLabel,
+                        mediaType: item.leftMediaType,
+                        mediaUrl: item.leftMediaUrl,
+                        caption: "",
+                      },
+                      {
+                        label: item.rightLabel,
+                        mediaType: item.rightMediaType,
+                        mediaUrl: item.rightMediaUrl,
+                        caption: "",
+                      },
+                    ]
+              const firstCaption = frames[0]?.caption || ""
+              return (
+                <article class="f1-proof-morph__mobile-card" data-f1-proof-mobile-card data-index={index}>
+                  <div class="f1-proof-morph__mobile-media">
+                    {
+                      frames.map((frame, frameIndex) => (
+                        <div
+                          class="f1-proof-morph__mobile-frame"
+                          data-frame-index={frameIndex}
+                          style={frameIndex === 0 ? "opacity:1" : "opacity:0"}
+                        >
+                          {frame.mediaType === "video" ? (
+                            <video src={frame.mediaUrl} muted playsinline loop autoplay class="f1-proof-morph__media" />
+                          ) : (
+                            <img
+                              src={frame.mediaUrl}
+                              alt={`${item.name} — ${frame.label}`}
+                              class="f1-proof-morph__media"
+                              loading="lazy"
+                            />
+                          )}
+                        </div>
+                      ))
+                    }
+                    <div class="f1-proof-morph__mobile-meta">
+                      <p class="f1-proof-morph__mobile-kicker">
+                        {item.name} · <span data-f1-proof-mobile-label>{frames[0]?.label}</span>
+                      </p>
+                      <p
+                        class="f1-proof-morph__mobile-caption"
+                        data-f1-proof-mobile-caption
+                        hidden={!firstCaption}
+                      >
+                        {firstCaption}
+                      </p>
+                      <div class="f1-proof-morph__mobile-progress" aria-hidden="true">
+                        {
+                          frames.map((_, frameIndex) => (
+                            <div class="f1-proof-morph__mobile-bar">
+                              <div
+                                class="f1-proof-morph__mobile-bar-fill"
+                                data-frame-bar={frameIndex}
+                                style={frameIndex === 0 ? "width:0%" : "width:0%"}
+                              />
+                            </div>
+                          ))
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              )
+            })
+          }
+        </div>
+      </div>
+
+      {/* Desktop scroll-pinned morph */}
+      <div class="f1-proof-morph__desktop">
+        <div class="f1-proof-morph__track">
+          <div class="f1-proof-morph__stage" data-f1-proof-stage data-phase="before">
+            <div class="f1-proof-morph__grid">
+              <div class="f1-proof-morph__col f1-proof-morph__col--left">
+                <p class="f1-proof-morph__side-label" data-f1-proof-left-label>
+                  {visible[0]?.leftLabel}
+                </p>
+                <div class="f1-proof-morph__frame">
+                  {
+                    visible.map((item, index) => (
+                      <div
+                        class="f1-proof-morph__layer"
+                        data-f1-proof-left-layer
+                        data-index={index}
+                        style={index === 0 ? "opacity:1" : "opacity:0"}
+                      >
+                        {item.leftMediaType === "video" ? (
+                          <video src={item.leftMediaUrl} muted playsinline loop autoplay class="f1-proof-morph__media" />
+                        ) : (
+                          <img
+                            src={item.leftMediaUrl}
+                            alt={`${item.name} — ${item.leftLabel}`}
+                            class="f1-proof-morph__media"
+                            loading={index === 0 ? "eager" : "lazy"}
+                          />
+                        )}
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+
+              <div class="f1-proof-morph__col f1-proof-morph__col--center">
+                <div class="f1-proof-morph__names" data-f1-proof-names>
+                  {
+                    visible.map((item) => (
+                      <div class="f1-proof-morph__name-slot">
+                        <p class="f1-proof-morph__name">{item.name}</p>
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+
+              <div class="f1-proof-morph__col f1-proof-morph__col--right">
+                <p class="f1-proof-morph__side-label" data-f1-proof-right-label>
+                  {visible[0]?.rightLabel}
+                </p>
+                <div class="f1-proof-morph__frame f1-proof-morph__frame--glow">
+                  {
+                    visible.map((item, index) => (
+                      <div
+                        class="f1-proof-morph__layer"
+                        data-f1-proof-right-layer
+                        data-index={index}
+                        style={index === 0 ? "opacity:1" : "opacity:0"}
+                      >
+                        {item.rightMediaType === "video" ? (
+                          <video src={item.rightMediaUrl} muted playsinline loop autoplay class="f1-proof-morph__media" />
+                        ) : (
+                          <img
+                            src={item.rightMediaUrl}
+                            alt={`${item.name} — ${item.rightLabel}`}
+                            class="f1-proof-morph__media"
+                            loading={index === 0 ? "eager" : "lazy"}
+                          />
+                        )}
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  function initProofMorph(root) {
+    if (!(root instanceof HTMLElement) || root.dataset.f1ProofBound === "1") return
+    root.dataset.f1ProofBound = "1"
+
+    const caseCount = Number(root.dataset.caseCount || "1")
+    const casesEl = root.querySelector("[data-f1-proof-cases]")
+    let cases = []
+    try {
+      cases = JSON.parse(casesEl?.textContent || "[]")
+    } catch {
+      cases = []
+    }
+
+    const stage = root.querySelector("[data-f1-proof-stage]")
+    const names = root.querySelector("[data-f1-proof-names]")
+    const leftLayers = [...root.querySelectorAll("[data-f1-proof-left-layer]")]
+    const rightLayers = [...root.querySelectorAll("[data-f1-proof-right-layer]")]
+    const leftLabel = root.querySelector("[data-f1-proof-left-label]")
+    const rightLabel = root.querySelector("[data-f1-proof-right-label]")
+    const track = root.querySelector(".f1-proof-morph__track")
+
+    const applyDesktop = (progress) => {
+      const max = Math.max(caseCount - 1, 0)
+      const clamped = Math.min(Math.max(progress, 0), max)
+      const baseIndex = Math.floor(clamped)
+      const nextIndex = Math.min(baseIndex + 1, max)
+      const local = clamped - baseIndex
+      const active = cases[baseIndex] || cases[0]
+
+      leftLayers.forEach((layer, index) => {
+        let opacity = 0
+        if (baseIndex === nextIndex && index === baseIndex) opacity = 1
+        else {
+          if (index === baseIndex) opacity = 1 - local
+          if (index === nextIndex) opacity = local
+        }
+        layer.style.opacity = String(opacity)
+      })
+      rightLayers.forEach((layer, index) => {
+        let opacity = 0
+        if (baseIndex === nextIndex && index === baseIndex) opacity = 1
+        else {
+          if (index === baseIndex) opacity = 1 - local
+          if (index === nextIndex) opacity = local
+        }
+        layer.style.opacity = String(opacity)
+      })
+
+      if (names instanceof HTMLElement) {
+        names.style.transform = `translateY(calc(-50% - ${clamped * 6.75}rem))`
+        ;[...names.children].forEach((slot, index) => {
+          const name = slot.querySelector(".f1-proof-morph__name")
+          if (!(name instanceof HTMLElement)) return
+          if (index === baseIndex) name.style.color = `rgba(255,255,255,${1 - local * 0.86})`
+          else if (index === nextIndex) name.style.color = `rgba(255,255,255,${0.14 + local * 0.86})`
+          else name.style.color = "rgba(255,255,255,0.10)"
+        })
+      }
+
+      if (leftLabel) leftLabel.textContent = active?.leftLabel || "Antes"
+      if (rightLabel) rightLabel.textContent = active?.rightLabel || "Depois"
+    }
+
+    const onScroll = () => {
+      if (!(track instanceof HTMLElement) || !(stage instanceof HTMLElement)) return
+      if (window.matchMedia("(max-width: 1023px)").matches) {
+        stage.dataset.pinned = "false"
+        stage.dataset.phase = "before"
+        return
+      }
+
+      const rect = track.getBoundingClientRect()
+      const vh = window.innerHeight
+      const enterBuffer = vh * 0.04
+      const exitBuffer = vh * 0.06
+      const totalScrollable = rect.height - vh - enterBuffer - exitBuffer
+      const safeScrollable = Math.max(totalScrollable, 1)
+
+      if (rect.top >= enterBuffer) {
+        stage.dataset.phase = "before"
+        stage.dataset.pinned = "false"
+        applyDesktop(0)
+        return
+      }
+      if (rect.bottom <= vh - exitBuffer) {
+        stage.dataset.phase = "after"
+        stage.dataset.pinned = "false"
+        applyDesktop(Math.max(caseCount - 1, 0))
+        return
+      }
+
+      stage.dataset.phase = "active"
+      stage.dataset.pinned = "true"
+      const raw = (-rect.top - enterBuffer) / safeScrollable
+      const progress = Math.min(Math.max(raw, 0), 1)
+      const eased = 1 - Math.pow(1 - progress, 1.5)
+      applyDesktop(eased * Math.max(caseCount - 1, 0))
+    }
+
+    applyDesktop(0)
+    onScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    window.addEventListener("resize", onScroll)
+
+    // Mobile carousel + frame autoplay
+    const scroller = root.querySelector("[data-f1-proof-mobile-scroller]")
+    const cards = [...root.querySelectorAll("[data-f1-proof-mobile-card]")]
+    let activeMobile = 0
+    let frameIndex = 0
+    let frameProgress = 0
+    let raf = 0
+    let lastTs = 0
+    const frameDuration = 3200
+
+    const setMobileCard = (index) => {
+      activeMobile = Math.min(Math.max(index, 0), cards.length - 1)
+      frameIndex = 0
+      frameProgress = 0
+      cards.forEach((card, i) => {
+        card.dataset.active = i === activeMobile ? "true" : "false"
+      })
+    }
+
+    const paintMobileFrames = () => {
+      const card = cards[activeMobile]
+      if (!card) return
+      const frames = [...card.querySelectorAll(".f1-proof-morph__mobile-frame")]
+      const bars = [...card.querySelectorAll("[data-frame-bar]")]
+      const label = card.querySelector("[data-f1-proof-mobile-label]")
+      const cap = card.querySelector("[data-f1-proof-mobile-caption]")
+      const caseItem = cases[activeMobile]
+      const frameMeta =
+        caseItem?.mobileFrames?.[frameIndex] ||
+        (frameIndex === 0
+          ? { label: caseItem?.leftLabel, caption: "" }
+          : { label: caseItem?.rightLabel, caption: "" })
+
+      frames.forEach((frame, i) => {
+        frame.style.opacity = i === frameIndex ? "1" : "0"
+      })
+      bars.forEach((bar, i) => {
+        if (i < frameIndex) bar.style.width = "100%"
+        else if (i === frameIndex) bar.style.width = `${Math.max(0, Math.min(frameProgress, 1)) * 100}%`
+        else bar.style.width = "0%"
+      })
+      if (label) label.textContent = frameMeta?.label || ""
+      if (cap) {
+        const nextCap = frameMeta?.caption || ""
+        cap.textContent = nextCap
+        cap.hidden = !nextCap
+      }
+    }
+
+    const tickMobile = (ts) => {
+      if (!window.matchMedia("(max-width: 1023px)").matches) {
+        raf = requestAnimationFrame(tickMobile)
+        return
+      }
+      if (!lastTs) lastTs = ts
+      const dt = ts - lastTs
+      lastTs = ts
+      const card = cards[activeMobile]
+      const frameCount = card ? card.querySelectorAll(".f1-proof-morph__mobile-frame").length : 1
+      if (card?.dataset.active === "true") {
+        frameProgress += dt / frameDuration
+        if (frameProgress >= 1) {
+          frameProgress = 0
+          frameIndex = (frameIndex + 1) % Math.max(frameCount, 1)
+        }
+        paintMobileFrames()
+      }
+      raf = requestAnimationFrame(tickMobile)
+    }
+
+    if (scroller instanceof HTMLElement) {
+      scroller.addEventListener(
+        "scroll",
+        () => {
+          const cardWidth = scroller.clientWidth * 0.86 + 16
+          const next = Math.round(scroller.scrollLeft / cardWidth)
+          setMobileCard(next)
+          paintMobileFrames()
+        },
+        { passive: true },
+      )
+    }
+
+    setMobileCard(0)
+    paintMobileFrames()
+    raf = requestAnimationFrame(tickMobile)
+  }
+
+  function boot() {
+    document.querySelectorAll("[data-f1-proof-morph]").forEach(initProofMorph)
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot, { once: true })
+  } else {
+    boot()
+  }
+  document.addEventListener("astro:page-load", boot)
+</script>
+
+<style>
+  .f1-proof-morph {
+    --f1-proof-bg: var(--f1-surface-deep, #0b1020);
+    background: var(--f1-proof-bg);
+    color: rgba(255, 255, 255, 0.92);
+    position: relative;
+  }
+
+  .f1-proof-morph__mobile {
+    display: block;
+    padding: 2.5rem 0 3rem;
+  }
+
+  .f1-proof-morph__mobile-scroller {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 0 1rem;
+    scrollbar-width: none;
+  }
+
+  .f1-proof-morph__mobile-scroller::-webkit-scrollbar {
+    display: none;
+  }
+
+  .f1-proof-morph__mobile-card {
+    min-width: 86%;
+    scroll-snap-align: center;
+  }
+
+  .f1-proof-morph__mobile-media {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.6rem;
+    background: #0f1529;
+    aspect-ratio: 4 / 4.6;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  }
+
+  .f1-proof-morph__mobile-frame {
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.7s ease;
+  }
+
+  .f1-proof-morph__media {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .f1-proof-morph__mobile-meta {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 2;
+    padding: 1.25rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.1), transparent);
+  }
+
+  .f1-proof-morph__mobile-kicker {
+    margin: 0;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .f1-proof-morph__mobile-caption {
+    margin: 0.25rem 0 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.83);
+  }
+
+  .f1-proof-morph__mobile-progress {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .f1-proof-morph__mobile-bar {
+    flex: 1;
+    height: 3px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .f1-proof-morph__mobile-bar-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: inherit;
+    background: #fff;
+  }
+
+  .f1-proof-morph__desktop {
+    display: none;
+  }
+
+  @media (min-width: 1024px) {
+    .f1-proof-morph__mobile {
+      display: none;
+    }
+
+    .f1-proof-morph__desktop {
+      display: block;
+    }
+
+    .f1-proof-morph__track {
+      position: relative;
+      height: calc(100vh + var(--f1-proof-track-extra, 0vh));
+    }
+
+    .f1-proof-morph__stage {
+      position: absolute;
+      inset-inline: 0;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--f1-proof-bg);
+      z-index: 1;
+    }
+
+    .f1-proof-morph__stage[data-phase="after"] {
+      top: auto;
+      bottom: 0;
+    }
+
+    .f1-proof-morph__stage[data-pinned="true"] {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      height: 100vh;
+    }
+
+    .f1-proof-morph__grid {
+      width: min(1480px, calc(100% - 4rem));
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 0.5fr 1fr;
+      align-items: center;
+      gap: 2.5rem;
+    }
+
+    .f1-proof-morph__side-label {
+      margin: 0 0 1rem;
+      text-align: center;
+      font-size: 1.9rem;
+      font-style: italic;
+      line-height: 1;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .f1-proof-morph__frame {
+      position: relative;
+      overflow: hidden;
+      border-radius: 0.6rem;
+      background: #0f1529;
+      height: 520px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+      ring: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .f1-proof-morph__frame--glow::after {
+      content: "";
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(255, 255, 255, 0.06), transparent 60%);
+    }
+
+    .f1-proof-morph__layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    .f1-proof-morph__col--center {
+      position: relative;
+      height: 300px;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .f1-proof-morph__names {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .f1-proof-morph__name-slot {
+      display: flex;
+      height: 4.75rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .f1-proof-morph__name {
+      margin: 0;
+      font-size: 3.2rem;
+      font-weight: 500;
+      letter-spacing: -0.035em;
+      line-height: 1;
+      color: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  /* Continuity into next section */
+  .f1-proof-morph::after {
+    content: "";
+    display: block;
+    height: 4rem;
+    background: linear-gradient(to bottom, var(--f1-proof-bg), var(--f1-proof-bg));
+  }
+
+  @media (min-width: 1024px) {
+    .f1-proof-morph::after {
+      height: 0;
+    }
+  }
+</style>

@@ -20,11 +20,16 @@ const {
   footerSurface?: "light" | "dark"
   /** classic_v1: primary token; engine_v1: muted neutrals. */
   socialIconEmphasis?: "primary" | "muted"
-  layout?: "standard" | "cinematic-editorial"
+  layout?: "standard" | "shop" | "cinematic-editorial" | "cinematic-pt"
   navItems?: Array<{ label: string; href: string }>
   whatsappHref?: string
   headerCtaLabel?: string
 }
+
+const isShopFooter = layout === "shop"
+
+const hostParam = (Astro.url.searchParams.get("host") || "").trim()
+const homeHref = hostParam ? `/?host=${encodeURIComponent(hostParam)}` : "/"
 
 function formatPhoneDisplay(phone: string) {
   if (!phone || phone.length < 10) return phone
@@ -39,6 +44,7 @@ function formatPhoneDisplay(phone: string) {
 }
 
 const isCinematic = layout === "cinematic-editorial"
+const isCinematicPt = layout === "cinematic-pt"
 const hasContactInfo =
   (footer.whatsappVisible && footer.whatsappNumber) ||
   footer.email ||
@@ -56,10 +62,163 @@ const ctaLabel =
   typeof headerCtaLabel === "string" && headerCtaLabel.trim()
     ? headerCtaLabel.trim()
     : "Fale comigo"
+
+function socialGlyph(type: string) {
+  return type.slice(0, 2).toUpperCase()
+}
 ---
 
 {
-  isCinematic ? (
+  isCinematicPt ? (
+    <footer
+      id="contato"
+      class="site-footer site-footer--pt"
+      data-just-signature="true"
+      data-footer-surface="dark"
+      data-layout="cinematic-pt"
+    >
+      <div class="site-footer__signature site-footer__signature--pt" aria-label="Desenvolvido pela JUST">
+        <p class="site-footer__signature-text site-footer__signature-text--pt">
+          Desenvolvido pela{" "}
+          <a
+            href="https://www.justwebsites.com.br"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="site-footer__signature-brand site-footer__signature-brand--pt"
+          >
+            JUST
+          </a>{" "}
+          <span class="site-footer__signature-tail site-footer__signature-tail--pt">
+            — a estrutura para seu negócio funcionar online
+          </span>
+        </p>
+      </div>
+
+      <div class="site-footer__pt-shell">
+        <div class="site-footer__pt-rule" aria-hidden="true"></div>
+
+        <div class="site-footer__pt-mobile">
+          <div class="site-footer__pt-brand-row">
+            {footer.logoUrl && (
+              <a href="/" class="site-footer__pt-logo-link">
+                <img
+                  src={footer.logoUrl}
+                  alt={footer.companyName || "Logo"}
+                  class="site-footer__pt-logo"
+                />
+              </a>
+            )}
+            <div class="site-footer__pt-brand-copy">
+              {footer.companyName && (
+                <p class="site-footer__pt-name">{footer.companyName}</p>
+              )}
+              {footer.tagline && (
+                <p class="site-footer__pt-tagline">{footer.tagline}</p>
+              )}
+            </div>
+          </div>
+
+          {visibleLinks.length > 0 && (
+            <div class="site-footer__pt-social">
+              {visibleLinks.map((link) => (
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={link.type}
+                  class="site-footer__pt-social-link"
+                >
+                  {link.type === "instagram" && (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <rect x="4" y="4" width="16" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="1.8" />
+                      <circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8" />
+                      <circle cx="17" cy="7" r="1" fill="currentColor" />
+                    </svg>
+                  )}
+                  {link.type === "facebook" && (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M13 20v-7h3l.4-3H13V8.3c0-.9.3-1.5 1.6-1.5h2V4.1c-.3 0-1.2-.1-2.4-.1-2.4 0-4 1.4-4 4.2V10H8v3h2.2v7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  )}
+                  {link.type === "tiktok" && <span class="site-footer__pt-tt">TT</span>}
+                  {link.type !== "instagram" && link.type !== "facebook" && link.type !== "tiktok" && (
+                    <span class="site-footer__pt-tt">{socialGlyph(link.type)}</span>
+                  )}
+                </a>
+              ))}
+            </div>
+          )}
+
+          {footer.companyName && (
+            <p class="site-footer__pt-copy">
+              {`© ${year} ${footer.companyName}. Todos os direitos reservados.`}
+            </p>
+          )}
+        </div>
+
+        <div class="site-footer__pt-desktop">
+          <div class="site-footer__pt-brand-row site-footer__pt-brand-row--desk">
+            {footer.logoUrl && (
+              <a href="/" class="site-footer__pt-logo-link">
+                <img
+                  src={footer.logoUrl}
+                  alt={footer.companyName || "Logo"}
+                  class="site-footer__pt-logo site-footer__pt-logo--desk"
+                />
+              </a>
+            )}
+            <div class="site-footer__pt-brand-copy">
+              {footer.companyName && (
+                <p class="site-footer__pt-name site-footer__pt-name--desk">{footer.companyName}</p>
+              )}
+              {footer.tagline && (
+                <p class="site-footer__pt-tagline site-footer__pt-tagline--desk">{footer.tagline}</p>
+              )}
+            </div>
+          </div>
+
+          <div class="site-footer__pt-end">
+            {visibleLinks.length > 0 && (
+              <div class="site-footer__pt-social site-footer__pt-social--desk">
+                {visibleLinks.map((link) => (
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={link.type}
+                    class="site-footer__pt-social-link"
+                  >
+                    {link.type === "instagram" && (
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="4" y="4" width="16" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="1.8" />
+                        <circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8" />
+                        <circle cx="17" cy="7" r="1" fill="currentColor" />
+                      </svg>
+                    )}
+                    {link.type === "facebook" && (
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M13 20v-7h3l.4-3H13V8.3c0-.9.3-1.5 1.6-1.5h2V4.1c-.3 0-1.2-.1-2.4-.1-2.4 0-4 1.4-4 4.2V10H8v3h2.2v7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    )}
+                    {link.type === "tiktok" && <span class="site-footer__pt-tt">TT</span>}
+                    {link.type !== "instagram" && link.type !== "facebook" && link.type !== "tiktok" && (
+                      <span class="site-footer__pt-tt">{socialGlyph(link.type)}</span>
+                    )}
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {footer.companyName && (
+              <p class="site-footer__pt-copy site-footer__pt-copy--desk">
+                {`© ${year} ${footer.companyName}. Todos os direitos reservados.`}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </footer>
+  ) : isCinematic ? (
     <footer
       id="contato"
       class="site-footer site-footer--cinematic"
@@ -320,17 +479,35 @@ const ctaLabel =
       data-just-signature={justSignatureBand ? "true" : "false"}
       data-footer-surface={footerSurface}
       data-social-emphasis={socialIconEmphasis}
+      data-footer-chrome={isShopFooter ? "shop" : "standard"}
     >
       {justSignatureBand && (
-        <div class="site-footer__signature">
-          Desenvolvido pela <strong>JUST</strong> — a estrutura para seu negócio funcionar online
+        <div class="site-footer__signature" aria-label="Desenvolvido pela JUST">
+          {isShopFooter ? (
+            <p class="site-footer__signature-text">
+              Desenvolvido pela{" "}
+              <a
+                href="https://www.justwebsites.com.br"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="site-footer__signature-brand"
+              >
+                JUST
+              </a>{" "}
+              — a estrutura para seu negócio funcionar online
+            </p>
+          ) : (
+            <>Desenvolvido pela <strong>JUST</strong> — a estrutura para seu negócio funcionar online</>
+          )}
         </div>
       )}
 
-      <div class="site-footer__inner">
+      <div class:list={["site-footer__inner", isShopFooter && "site-footer__inner--shop"]}>
+        <div class="site-footer__shop-panel">
+          <div class="site-footer__shop-grid">
         <div class="site-footer__brand">
           {footer.logoUrl && (
-            <a href="/" class="site-footer__logo-link">
+            <a href={homeHref} class="site-footer__logo-link">
               <img
                 src={footer.logoUrl}
                 alt={footer.companyName || "Logo"}
@@ -340,6 +517,11 @@ const ctaLabel =
           )}
 
           {footer.tagline && <p class="site-footer__tagline">{footer.tagline}</p>}
+          {isShopFooter ? (
+            <p class="site-footer__copyright site-footer__copyright--global">
+              {`© ${year} ${footer.companyName || "Empresa"}. Todos os direitos reservados.`}
+            </p>
+          ) : null}
         </div>
 
         {hasContactInfo ? (
@@ -348,7 +530,7 @@ const ctaLabel =
 
             <ul class="site-footer__list">
               {footer.whatsappVisible && footer.whatsappNumber && (
-                <li class="site-footer__item">
+                <li class="site-footer__item site-footer__item--phone">
                   <span class="site-footer__item-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24">
                       <path
@@ -361,14 +543,7 @@ const ctaLabel =
                       />
                     </svg>
                   </span>
-
-                  <TrackedCTA
-                    href={`https://wa.me/${footer.whatsappNumber}`}
-                    label={formatPhoneDisplay(footer.whatsappNumber)}
-                    ctaId="footer-whatsapp"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  />
+                  <span class="site-footer__phone">{formatPhoneDisplay(footer.whatsappNumber)}</span>
                 </li>
               )}
 
@@ -532,9 +707,34 @@ const ctaLabel =
           <div class="site-footer__section site-footer__section--empty"></div>
         )}
 
-        <p class="site-footer__copyright site-footer__copyright--global">
-          {`© ${year} ${footer.companyName || "Empresa"}. Todos os direitos reservados.`}
-        </p>
+        {(isShopFooter || cinematicNavItems.length > 0) && (
+          <div class="site-footer__section">
+            <h3>Navegação</h3>
+            <ul class="site-footer__list">
+              {(isShopFooter
+                ? [
+                    { label: "Início", href: homeHref },
+                    { label: "Catálogo", href: hostParam ? `/catalogo?host=${encodeURIComponent(hostParam)}` : "/catalogo" },
+                    { label: "Sobre", href: hostParam ? `/sobre?host=${encodeURIComponent(hostParam)}` : "/sobre" },
+                    { label: "Contato", href: hostParam ? `/contato?host=${encodeURIComponent(hostParam)}` : "/contato" },
+                  ]
+                : cinematicNavItems
+              ).map((item) => (
+                <li class="site-footer__item">
+                  <a href={item.href}>{item.label}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {!isShopFooter ? (
+          <p class="site-footer__copyright site-footer__copyright--global">
+            {`© ${year} ${footer.companyName || "Empresa"}. Todos os direitos reservados.`}
+          </p>
+        ) : null}
+          </div>
+        </div>
       </div>
     </footer>
   )
@@ -584,6 +784,219 @@ const ctaLabel =
     padding: 3.35rem 1.5rem 3.8rem;
     display: grid;
     gap: 2.2rem;
+  }
+
+  /* Default: wrappers are transparent so standard layout is unchanged. */
+  .site-footer__shop-panel,
+  .site-footer__shop-grid {
+    display: contents;
+  }
+
+  /* ============================================================
+     Shop footer — match product-palette-kit Footer.tsx exactly
+     ============================================================ */
+  .site-footer[data-footer-chrome="shop"] {
+    /* Match published SPA: muted/40 over near-white page (not brand pastel). */
+    background: hsl(220 14% 96% / 0.4);
+    border-top: 1px solid hsl(220 13% 91%);
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__signature {
+    background: #f5f5f5;
+    color: #262626;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.4;
+    padding: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .site-footer[data-footer-chrome="shop"] .site-footer__signature {
+      padding-top: 0.75rem;
+      padding-bottom: 0.75rem;
+      color: #404040;
+    }
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__signature-text {
+    margin: 0;
+    text-align: center;
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__signature-brand {
+    font-weight: 600;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__signature-brand:hover {
+    text-decoration: underline;
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__inner,
+  .site-footer[data-footer-chrome="shop"] .site-footer__inner--shop {
+    display: block;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 2.5rem 1rem;
+    box-sizing: border-box;
+  }
+
+  @media (min-width: 640px) {
+    .site-footer[data-footer-chrome="shop"] .site-footer__inner,
+    .site-footer[data-footer-chrome="shop"] .site-footer__inner--shop {
+      padding: 3.5rem 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .site-footer[data-footer-chrome="shop"] .site-footer__inner,
+    .site-footer[data-footer-chrome="shop"] .site-footer__inner--shop {
+      padding: 3.5rem 2.5rem;
+    }
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__shop-panel {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 1rem;
+    border: 1px solid hsl(220 13% 91%);
+    background: #fff;
+    padding: 2rem 1.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .site-footer[data-footer-chrome="shop"] .site-footer__shop-panel {
+      padding: 2.5rem 2.5rem 2.5rem 3rem;
+    }
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__shop-grid {
+    display: grid;
+    width: 100%;
+    gap: 2.5rem;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  @media (min-width: 640px) {
+    .site-footer[data-footer-chrome="shop"] .site-footer__shop-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .site-footer[data-footer-chrome="shop"] .site-footer__shop-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 3.5rem;
+      justify-items: start;
+      text-align: left;
+    }
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__brand,
+  .site-footer[data-footer-chrome="shop"] .site-footer__section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    min-width: 0;
+  }
+
+  @media (min-width: 1024px) {
+    .site-footer[data-footer-chrome="shop"] .site-footer__brand,
+    .site-footer[data-footer-chrome="shop"] .site-footer__section {
+      align-items: flex-start;
+      text-align: left;
+    }
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__logo {
+    height: 2.25rem;
+    max-width: none;
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__copyright--global {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: hsl(220 10% 46%);
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__section h3 {
+    margin: 0 0 1rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: hsl(220 15% 15% / 0.8);
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: hsl(220 10% 46%);
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__item a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__item a:hover {
+    color: hsl(220 15% 15%);
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__phone {
+    white-space: nowrap;
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__section--empty {
+    display: none;
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__social {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    justify-content: center;
+  }
+
+  @media (min-width: 1024px) {
+    .site-footer[data-footer-chrome="shop"] .site-footer__social {
+      justify-content: flex-start;
+    }
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__social-link {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 999px;
+    border: 1px solid hsl(220 13% 91%);
+    background: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: hsl(220 15% 15%);
+  }
+
+  .site-footer[data-footer-chrome="shop"] .site-footer__social-link:hover {
+    background: hsl(220 15% 15%);
+    color: #fff;
   }
 
   .site-footer__brand {
@@ -1067,18 +1480,18 @@ const ctaLabel =
   }
 
   @media (min-width: 768px) {
-    .site-footer__inner {
+    .site-footer:not([data-footer-chrome="shop"]) .site-footer__inner {
       grid-template-columns: 1.2fr 1fr 0.8fr;
       align-items: start;
       gap: 3.25rem;
     }
 
-    .site-footer__logo {
+    .site-footer:not([data-footer-chrome="shop"]) .site-footer__logo {
       height: 3.45rem;
       max-width: 15rem;
     }
 
-    .site-footer__copyright--global {
+    .site-footer:not([data-footer-chrome="shop"]) .site-footer__copyright--global {
       grid-column: 1 / 2;
       justify-self: start;
       margin-top: -0.25rem;
@@ -1086,34 +1499,34 @@ const ctaLabel =
   }
 
   @media (max-width: 767px) {
-    .site-footer:not(.site-footer--cinematic) .site-footer__inner {
+    .site-footer:not(.site-footer--cinematic):not([data-footer-chrome="shop"]) .site-footer__inner {
       text-align: center;
       justify-items: center;
       gap: 1.75rem;
     }
 
-    .site-footer:not(.site-footer--cinematic) .site-footer__brand {
+    .site-footer:not(.site-footer--cinematic):not([data-footer-chrome="shop"]) .site-footer__brand {
       justify-items: center;
     }
 
-    .site-footer:not(.site-footer--cinematic) .site-footer__tagline {
+    .site-footer:not(.site-footer--cinematic):not([data-footer-chrome="shop"]) .site-footer__tagline {
       text-align: center;
       max-width: 32ch;
     }
 
-    .site-footer:not(.site-footer--cinematic) .site-footer__item {
+    .site-footer:not(.site-footer--cinematic):not([data-footer-chrome="shop"]) .site-footer__item {
       justify-content: center;
     }
 
-    .site-footer:not(.site-footer--cinematic) .site-footer__item--start {
+    .site-footer:not(.site-footer--cinematic):not([data-footer-chrome="shop"]) .site-footer__item--start {
       align-items: flex-start;
     }
 
-    .site-footer:not(.site-footer--cinematic) .site-footer__social {
+    .site-footer:not(.site-footer--cinematic):not([data-footer-chrome="shop"]) .site-footer__social {
       justify-content: center;
     }
 
-    .site-footer:not(.site-footer--cinematic) .site-footer__copyright--global {
+    .site-footer:not(.site-footer--cinematic):not([data-footer-chrome="shop"]) .site-footer__copyright--global {
       text-align: center;
       max-width: 24ch;
     }
@@ -1127,5 +1540,222 @@ const ctaLabel =
     .site-footer--cinematic .site-footer__logo-link {
       margin-inline: auto;
     }
+  }
+
+  /* —— PT dark footer (Flavio Golden Master) —— */
+  /* Must beat `.site-footer[data-footer-surface="dark"]` (#1f2937 gray). */
+  .site-footer.site-footer--pt,
+  .site-footer.site-footer--pt[data-footer-surface="dark"] {
+    background: #05070d;
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .site-footer__signature.site-footer__signature--pt {
+    position: relative;
+    background: #05070d;
+    color: rgba(255, 255, 255, 0.3);
+    padding: 1rem 0;
+    border: none;
+    text-align: center;
+    font-size: inherit;
+    letter-spacing: normal;
+  }
+
+  .site-footer__signature.site-footer__signature--pt::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .site-footer__signature-text--pt {
+    margin: 0 auto;
+    max-width: 42ch;
+    padding: 0 1rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  @media (min-width: 1024px) {
+    .site-footer__signature-text--pt {
+      max-width: none;
+      font-size: 0.95rem;
+    }
+  }
+
+  .site-footer__signature-brand--pt {
+    color: rgba(255, 255, 255, 0.48);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .site-footer__signature-brand--pt:hover {
+    color: #fff;
+  }
+
+  .site-footer__signature-tail--pt {
+    color: rgba(255, 255, 255, 0.22);
+  }
+
+  .site-footer__pt-shell {
+    position: relative;
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 2.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .site-footer__pt-shell {
+      padding: 2.5rem 1.5rem 3rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .site-footer__pt-shell {
+      padding: 3rem 2rem;
+    }
+  }
+
+  .site-footer__pt-rule {
+    margin-bottom: 2rem;
+    height: 1px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  @media (min-width: 1024px) {
+    .site-footer__pt-rule {
+      margin-bottom: 2.5rem;
+    }
+  }
+
+  .site-footer__pt-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .site-footer__pt-desktop {
+    display: none;
+  }
+
+  @media (min-width: 640px) {
+    .site-footer__pt-mobile {
+      display: none;
+    }
+
+    .site-footer__pt-desktop {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 2.5rem;
+    }
+  }
+
+  .site-footer__pt-brand-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .site-footer__pt-brand-row--desk {
+    align-items: flex-end;
+    gap: 1.25rem;
+  }
+
+  .site-footer__pt-logo {
+    display: block;
+    height: 3rem;
+    width: auto;
+    opacity: 0.9;
+  }
+
+  .site-footer__pt-logo--desk {
+    height: 3.5rem;
+  }
+
+  .site-footer__pt-name {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .site-footer__pt-name--desk {
+    font-size: 1rem;
+    letter-spacing: 0.26em;
+  }
+
+  .site-footer__pt-tagline {
+    margin: 0.25rem 0 0;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .site-footer__pt-tagline--desk {
+    margin-top: 0.5rem;
+    letter-spacing: 0.24em;
+  }
+
+  .site-footer__pt-social {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .site-footer__pt-social--desk {
+    gap: 1.25rem;
+    justify-content: flex-end;
+  }
+
+  .site-footer__pt-social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.3);
+    text-decoration: none;
+    transition: color 300ms ease;
+  }
+
+  .site-footer__pt-social-link:hover {
+    color: #fff;
+  }
+
+  .site-footer__pt-social-link svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    display: block;
+  }
+
+  .site-footer__pt-tt {
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .site-footer__pt-end {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1.25rem;
+  }
+
+  .site-footer__pt-copy {
+    margin: 0;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .site-footer__pt-copy--desk {
+    font-size: 0.72rem;
   }
 </style>

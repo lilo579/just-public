@@ -1,0 +1,176 @@
+---
+export const prerender = false;
+
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import SiteTheme from "../components/SiteTheme.astro";
+import PublicSiteHead from "../components/PublicSiteHead.astro";
+import WhatsAppFloat from "../components/WhatsAppFloat.astro";
+import catalogF3CssUrl from "../styles/catalog-f3.css?url";
+import { createPublicSupabaseClient } from "../lib/publicSupabase.js";
+import { HostResolutionError, resolveRequestHost } from "../lib/publicHomepage";
+import { loadCatalogPublicChrome } from "../lib/loadCatalogPublicChrome.js";
+import {
+  applyHostOverrideToNavItems,
+  resolveCatalogHostOverride,
+} from "../lib/catalogBrowse.js";
+
+const requestUrl = new URL(Astro.request.url);
+let host: string;
+try {
+  host = resolveRequestHost(Astro.request, requestUrl.searchParams);
+} catch (err) {
+  const reason =
+    err instanceof HostResolutionError || (err && typeof err === "object" && "reason" in err)
+      ? String((err as { reason: string }).reason)
+      : "invalid_host";
+  return new Response(`Invalid host (${reason})`, {
+    status: 400,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
+const hostOverride = resolveCatalogHostOverride(requestUrl.searchParams, host);
+
+const chrome = await loadCatalogPublicChrome(host, Astro.locals);
+if (!chrome.ok) {
+  return new Response(`Page unavailable (${chrome.reason})`, {
+    status: chrome.status || 502,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
+const supabase = createPublicSupabaseClient(Astro.locals);
+if (!supabase) {
+  return new Response("Page unavailable (supabase runtime config missing)", {
+    status: 503,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
+const { data: contentRows } = await supabase.rpc("public_get_site_content_by_host", {
+  p_host: host,
+});
+const contentMap = Object.fromEntries(
+  (Array.isArray(contentRows) ? contentRows : []).map((row) => [row.key, row.value]),
+);
+
+const companyName = chrome.companyName;
+const pageTitle = contentMap["contact.hero.title"] || "Contato";
+const description =
+  contentMap["contact.hero.subtitle"] ||
+  contentMap["contact.whatsapp.description"] ||
+  "Fale conosco pelo WhatsApp e receba atendimento personalizado.";
+const waHref = chrome.whatsappHref
+  ? `${chrome.whatsappHref}?text=${encodeURIComponent("Olá! Gostaria de falar sobre os produtos.")}`
+  : null;
+const instagram = (chrome.socialLinks || []).find(
+  (link) =>
+    String(link.type || "").toLowerCase().includes("instagram") ||
+    String(link.url || "").toLowerCase().includes("instagram"),
+);
+const fontLoadUrl =
+  typeof chrome.tokens?.__fontLoadUrl === "string" ? chrome.tokens.__fontLoadUrl : null;
+const navItems = applyHostOverrideToNavItems(chrome.navItems, hostOverride);
+---
+
+<html lang="pt-BR" data-f3-presentation="f3.presentation.grid_v1">
+  <head>
+    <PublicSiteHead
+      title={`${pageTitle} — ${companyName}`}
+      description={description.slice(0, 160)}
+      canonicalUrl={`https://${host}/contato`}
+      ogImage={chrome.ogImage || null}
+      faviconUrl={chrome.faviconUrl || null}
+      robots={chrome.noindex ? "noindex,nofollow" : "index,follow"}
+      twitterCard={chrome.ogImage ? "summary_large_image" : "summary"}
+      fontLoadUrl={fontLoadUrl}
+    />
+    <link rel="stylesheet" href={catalogF3CssUrl} />
+  </head>
+  <body class="catalog-page catalog-page--contact">
+    <SiteTheme tokens={chrome.tokens}>
+      <Header
+        siteTitle={companyName}
+        logoUrl={chrome.logoUrl}
+        logoAlt={companyName}
+        whatsappHref={chrome.whatsappHref}
+        pillChrome={false}
+        overHero={false}
+        ctaLabel={chrome.headerCtaLabel}
+        navItems={navItems}
+        chrome="shop"
+        showCta={false}
+      />
+
+      <main>
+        <section class="catalog-page__hero">
+          <div class="catalog-page__wide">
+            <div class="catalog-page__hero-inner">
+              <h1>{pageTitle}</h1>
+              <p class="catalog-page__prose">{description}</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="catalog-page__wide catalog-contact__grid">
+          <div class="catalog-contact__panel">
+            <h2 style="margin:0 0 1rem;font-size:1.35rem">WhatsApp</h2>
+            <p class="catalog-page__prose" style="margin-bottom:1.25rem">
+              Atendimento personalizado para pedidos, personalizações e dúvidas.
+            </p>
+            {waHref ? (
+              <a class="catalog-pdp__wa" href={waHref} target="_blank" rel="noopener noreferrer">
+                Falar no WhatsApp
+              </a>
+            ) : (
+              <p>WhatsApp não configurado.</p>
+            )}
+          </div>
+
+          <div>
+            <h2 style="margin:0 0 1rem;font-size:1.35rem">Canais</h2>
+            <ul class="catalog-pdp__facts">
+              {instagram?.url ? (
+                <li>
+                  Instagram:{" "}
+                  <a href={instagram.url} target="_blank" rel="noopener noreferrer">
+                    {instagram.url.replace(/^https?:\/\/(www\.)?/, "")}
+                  </a>
+                </li>
+              ) : null}
+              {chrome.contact?.email ? <li>Email: {chrome.contact.email}</li> : null}
+              {chrome.contact?.address ? <li>Endereço: {chrome.contact.address}</li> : null}
+              {chrome.contact?.businessHours ? (
+                <li>Horário: {chrome.contact.businessHours}</li>
+              ) : null}
+            </ul>
+            <p style="margin-top:1.5rem">
+              <a class="catalog-btn catalog-btn--pill" href="/catalogo">Ver catálogo</a>
+            </p>
+          </div>
+        </section>
+      </main>
+
+      <Footer
+        footer={{
+          companyName,
+          logoUrl: chrome.footerLogoUrl,
+          whatsappNumber: chrome.contact?.whatsappNumber ?? null,
+          whatsappVisible: chrome.contact?.whatsappVisible === true,
+          email: chrome.contact?.email ?? null,
+          address: chrome.contact?.address ?? null,
+          socialLinks: chrome.socialLinks,
+          tagline: null,
+        }}
+        justSignatureBand={chrome.justSignatureBand}
+        footerSurface={chrome.footerSurface}
+        layout="shop"
+        navItems={navItems}
+        whatsappHref={chrome.whatsappHref}
+        headerCtaLabel={chrome.headerCtaLabel}
+      />
+      {chrome.whatsappHref && <WhatsAppFloat href={chrome.whatsappHref} />}
+    </SiteTheme>
+  </body>
+</html>

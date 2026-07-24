@@ -1,0 +1,183 @@
+---
+export const prerender = false;
+
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import SiteTheme from "../components/SiteTheme.astro";
+import PublicSiteHead from "../components/PublicSiteHead.astro";
+import WhatsAppFloat from "../components/WhatsAppFloat.astro";
+import catalogF3CssUrl from "../styles/catalog-f3.css?url";
+import { createPublicSupabaseClient } from "../lib/publicSupabase.js";
+import { HostResolutionError, resolveRequestHost } from "../lib/publicHomepage";
+import { loadCatalogPublicChrome } from "../lib/loadCatalogPublicChrome.js";
+import { resolveF3ShopMediaRoot, resolveOwnedShopMediaUrl } from "../lib/f3ShopMedia.js";
+import {
+  applyHostOverrideToNavItems,
+  resolveCatalogHostOverride,
+} from "../lib/catalogBrowse.js";
+
+const requestUrl = new URL(Astro.request.url);
+let host: string;
+try {
+  host = resolveRequestHost(Astro.request, requestUrl.searchParams);
+} catch (err) {
+  const reason =
+    err instanceof HostResolutionError || (err && typeof err === "object" && "reason" in err)
+      ? String((err as { reason: string }).reason)
+      : "invalid_host";
+  return new Response(`Invalid host (${reason})`, {
+    status: 400,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
+const hostOverride = resolveCatalogHostOverride(requestUrl.searchParams, host);
+
+const chrome = await loadCatalogPublicChrome(host, Astro.locals);
+if (!chrome.ok) {
+  return new Response(`Page unavailable (${chrome.reason})`, {
+    status: chrome.status || 502,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
+const supabase = createPublicSupabaseClient(Astro.locals);
+if (!supabase) {
+  return new Response("Page unavailable (supabase runtime config missing)", {
+    status: 503,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
+const { data: contentRows } = await supabase.rpc("public_get_site_content_by_host", {
+  p_host: host,
+});
+
+const contentMap = Object.fromEntries(
+  (Array.isArray(contentRows) ? contentRows : []).map((row) => [row.key, row.value]),
+);
+
+const title = contentMap["about.hero.title"] || "Sobre Nós";
+const heroBody = contentMap["about.hero.body"] || "";
+const historyTitle = contentMap["about.history.title"] || "";
+const historyBody = contentMap["about.history.body"] || "";
+const historyImageRaw =
+  contentMap["about.history.image"] ||
+  contentMap["about.history.image_url"] ||
+  (resolveF3ShopMediaRoot(host)
+    ? "/presentation/f3_3d_jewish/about/history.png"
+    : "");
+const historyImage =
+  resolveOwnedShopMediaUrl(historyImageRaw, host) || historyImageRaw;
+const valuesTitle = contentMap["about.values.title"] || "";
+const valuesSubtitle = contentMap["about.values.subtitle"] || "";
+const values = [1, 2, 3, 4]
+  .map((n) => ({
+    title: contentMap[`about.values.item${n}.title`] || "",
+    description: contentMap[`about.values.item${n}.description`] || "",
+  }))
+  .filter((item) => item.title || item.description);
+
+const companyName = chrome.companyName;
+const fontLoadUrl =
+  typeof chrome.tokens?.__fontLoadUrl === "string" ? chrome.tokens.__fontLoadUrl : null;
+const navItems = applyHostOverrideToNavItems(chrome.navItems, hostOverride);
+---
+
+<html lang="pt-BR" data-f3-presentation="f3.presentation.grid_v1">
+  <head>
+    <PublicSiteHead
+      title={`${title} — ${companyName}`}
+      description={(heroBody || title).slice(0, 160)}
+      canonicalUrl={`https://${host}/sobre`}
+      ogImage={chrome.ogImage || null}
+      faviconUrl={chrome.faviconUrl || null}
+      robots={chrome.noindex ? "noindex,nofollow" : "index,follow"}
+      twitterCard={chrome.ogImage ? "summary_large_image" : "summary"}
+      fontLoadUrl={fontLoadUrl}
+    />
+    <link rel="stylesheet" href={catalogF3CssUrl} />
+  </head>
+  <body class="catalog-page catalog-page--about">
+    <SiteTheme tokens={chrome.tokens}>
+      <Header
+        siteTitle={companyName}
+        logoUrl={chrome.logoUrl}
+        logoAlt={companyName}
+        whatsappHref={chrome.whatsappHref}
+        pillChrome={false}
+        overHero={false}
+        ctaLabel={chrome.headerCtaLabel}
+        navItems={navItems}
+        chrome="shop"
+        showCta={false}
+      />
+
+      <main>
+        <section class="catalog-page__hero">
+          <div class="catalog-page__wide">
+            <div class="catalog-page__hero-inner">
+              <h1>{title}</h1>
+              {heroBody ? <div class="catalog-page__prose">{heroBody}</div> : null}
+            </div>
+          </div>
+        </section>
+
+        {historyTitle || historyBody ? (
+          <section class="catalog-page__history">
+            <div class="catalog-page__wide catalog-page__history-grid">
+              <div>
+                {historyTitle ? <h2>{historyTitle}</h2> : null}
+                {historyBody ? <div class="catalog-page__prose" style="margin-top:1.5rem">{historyBody}</div> : null}
+              </div>
+              {historyImage ? (
+                <div class="catalog-page__photo">
+                  <img src={historyImage} alt="" loading="lazy" decoding="async" />
+                </div>
+              ) : (
+                <div class="catalog-page__photo" aria-hidden="true" />
+              )}
+            </div>
+          </section>
+        ) : null}
+
+        {valuesTitle || values.length > 0 ? (
+          <section class="catalog-page__values">
+            <div class="catalog-page__wide">
+              {valuesTitle ? <h2>{valuesTitle}</h2> : null}
+              {valuesSubtitle ? <p class="catalog-browse__sub">{valuesSubtitle}</p> : null}
+              <ul class="catalog-values catalog-values--grid">
+                {values.map((item) => (
+                  <li>
+                    {item.title ? <h3>{item.title}</h3> : null}
+                    {item.description ? <p>{item.description}</p> : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        ) : null}
+      </main>
+
+      <Footer
+        footer={{
+          companyName,
+          logoUrl: chrome.footerLogoUrl,
+          whatsappNumber: chrome.contact?.whatsappNumber ?? null,
+          whatsappVisible: chrome.contact?.whatsappVisible === true,
+          email: chrome.contact?.email ?? null,
+          address: chrome.contact?.address ?? null,
+          socialLinks: chrome.socialLinks,
+          tagline: null,
+        }}
+        justSignatureBand={chrome.justSignatureBand}
+        footerSurface={chrome.footerSurface}
+        layout="shop"
+        navItems={navItems}
+        whatsappHref={chrome.whatsappHref}
+        headerCtaLabel={chrome.headerCtaLabel}
+      />
+      {chrome.whatsappHref && <WhatsAppFloat href={chrome.whatsappHref} />}
+    </SiteTheme>
+  </body>
+</html>

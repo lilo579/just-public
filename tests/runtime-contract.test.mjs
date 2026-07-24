@@ -177,10 +177,12 @@ test("Cloudflare Worker artifact and assets directory exist after build", async 
   // Assets live alongside the Worker under dist/ (Wrangler assets.directory).
   const distEntries = await fs.readdir(distDir)
   assert.ok(
-    distEntries.includes("_astro") ||
-      distEntries.includes("favicon.svg") ||
-      distEntries.includes("favicon.ico"),
-    "expected Static Assets under dist/ (_astro and/or favicon)",
+    distEntries.includes("_astro"),
+    "expected Static Assets under dist/ (_astro)",
+  )
+  assert.ok(
+    !distEntries.includes("favicon.ico") && !distEntries.includes("favicon.svg"),
+    "Astro scaffold favicons must not ship as Static Assets",
   )
   assert.ok(
     !(await fs

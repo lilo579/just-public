@@ -1,0 +1,209 @@
+---
+/**
+ * Reusable F3 featured tabs (COLLAB / PERSONALIZAÇÃO / BRINDES style).
+ * Tabs + fade slide card with pointer swipe — matches Golden Master behavior.
+ */
+const { tabs = [], slides = [] } = Astro.props as {
+  tabs: Array<{
+    id: string;
+    title?: string | null;
+    order_index?: number | null;
+  }>;
+  slides: Array<{
+    id: string;
+    title?: string | null;
+    image_url?: string | null;
+    link_url?: string | null;
+    parent_id?: string | null;
+    order_index?: number | null;
+    config?: Record<string, unknown> | null;
+  }>;
+};
+
+const sortedTabs = [...tabs].sort(
+  (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0),
+);
+const initialTabId = sortedTabs[0]?.id ?? null;
+---
+
+{
+  sortedTabs.length > 0 && (
+    <section
+      class="shop-featured"
+      aria-label="Destaques editoriais"
+      data-shop-featured
+      data-initial-tab={initialTabId || ""}
+    >
+      <div class="shop-featured__tabs" role="tablist" aria-label="Temas">
+        {sortedTabs.map((tab, index) => (
+          <button
+            type="button"
+            class="shop-featured__tab"
+            role="tab"
+            id={`shop-tab-${tab.id}`}
+            aria-selected={index === 0 ? "true" : "false"}
+            aria-controls={`shop-panel-${tab.id}`}
+            data-tab-id={tab.id}
+          >
+            {tab.title || "Destaque"}
+          </button>
+        ))}
+      </div>
+
+      {sortedTabs.map((tab, tabIndex) => {
+        const tabSlides = slides
+          .filter((s) => s.parent_id === tab.id)
+          .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+        return (
+          <div
+            class="shop-featured__panel"
+            role="tabpanel"
+            id={`shop-panel-${tab.id}`}
+            aria-labelledby={`shop-tab-${tab.id}`}
+            hidden={tabIndex !== 0}
+            data-tab-panel={tab.id}
+          >
+            <div
+              class="shop-featured__stage"
+              data-featured-stage
+              data-slide-count={tabSlides.length}
+            >
+              {tabSlides.map((slide, slideIndex) => {
+                const fit =
+                  typeof slide.config?.fit === "string" ? slide.config.fit : "cover";
+                const href =
+                  typeof slide.link_url === "string" && slide.link_url.trim()
+                    ? slide.link_url
+                    : null;
+                const inner = (
+                  <>
+                    {slide.image_url ? (
+                      <img
+                        src={slide.image_url}
+                        alt={slide.title || tab.title || ""}
+                        class="shop-featured__img"
+                        style={`object-fit:${fit}`}
+                        loading={tabIndex === 0 && slideIndex === 0 ? "eager" : "lazy"}
+                        decoding="async"
+                      />
+                    ) : (
+                      <div class="shop-featured__placeholder" aria-hidden="true" />
+                    )}
+                  </>
+                );
+                return (
+                  <div
+                    class="shop-featured__slide"
+                    data-slide-index={slideIndex}
+                    hidden={slideIndex !== 0}
+                  >
+                    {href ? (
+                      <a class="shop-featured__link" href={href}>
+                        {inner}
+                      </a>
+                    ) : (
+                      <div class="shop-featured__link">{inner}</div>
+                    )}
+                  </div>
+                );
+              })}
+              {tabSlides.length > 1 && (
+                <div class="shop-featured__dots" role="tablist" aria-label="Slides">
+                  {tabSlides.map((_, i) => (
+                    <button
+                      type="button"
+                      class="shop-featured__dot"
+                      aria-label={`Slide ${i + 1}`}
+                      data-dot-index={i}
+                      aria-current={i === 0 ? "true" : undefined}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  )
+}
+
+<script>
+  function initShopFeatured(root) {
+    const tabs = Array.from(root.querySelectorAll("[data-tab-id]"));
+    const panels = Array.from(root.querySelectorAll("[data-tab-panel]"));
+
+    function activateTab(tabId) {
+      tabs.forEach((tab) => {
+        const active = tab.getAttribute("data-tab-id") === tabId;
+        tab.setAttribute("aria-selected", active ? "true" : "false");
+      });
+      panels.forEach((panel) => {
+        const active = panel.getAttribute("data-tab-panel") === tabId;
+        panel.hidden = !active;
+        if (active) resetStage(panel.querySelector("[data-featured-stage]"));
+      });
+    }
+
+    function resetStage(stage) {
+      if (!stage) return;
+      const slides = Array.from(stage.querySelectorAll("[data-slide-index]"));
+      const dots = Array.from(stage.querySelectorAll("[data-dot-index]"));
+      slides.forEach((slide, i) => {
+        slide.hidden = i !== 0;
+      });
+      dots.forEach((dot, i) => {
+        if (i === 0) dot.setAttribute("aria-current", "true");
+        else dot.removeAttribute("aria-current");
+      });
+      stage.dataset.activeIndex = "0";
+    }
+
+    function goSlide(stage, index) {
+      const slides = Array.from(stage.querySelectorAll("[data-slide-index]"));
+      const dots = Array.from(stage.querySelectorAll("[data-dot-index]"));
+      if (!slides.length) return;
+      const next = Math.max(0, Math.min(slides.length - 1, index));
+      slides.forEach((slide, i) => {
+        slide.hidden = i !== next;
+      });
+      dots.forEach((dot, i) => {
+        if (i === next) dot.setAttribute("aria-current", "true");
+        else dot.removeAttribute("aria-current");
+      });
+      stage.dataset.activeIndex = String(next);
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => activateTab(tab.getAttribute("data-tab-id")));
+    });
+
+    panels.forEach((panel) => {
+      const stage = panel.querySelector("[data-featured-stage]");
+      if (!stage) return;
+      stage.querySelectorAll("[data-dot-index]").forEach((dot) => {
+        dot.addEventListener("click", () => {
+          goSlide(stage, Number(dot.getAttribute("data-dot-index") || 0));
+        });
+      });
+
+      let startX = null;
+      stage.addEventListener("pointerdown", (e) => {
+        startX = e.clientX;
+      });
+      stage.addEventListener("pointerup", (e) => {
+        if (startX == null) return;
+        const dx = e.clientX - startX;
+        startX = null;
+        const current = Number(stage.dataset.activeIndex || 0);
+        if (dx > 48) goSlide(stage, current - 1);
+        else if (dx < -48) goSlide(stage, current + 1);
+      });
+    });
+
+    const initial = root.getAttribute("data-initial-tab");
+    if (initial) activateTab(initial);
+  }
+
+  document.querySelectorAll("[data-shop-featured]").forEach(initShopFeatured);
+</script>

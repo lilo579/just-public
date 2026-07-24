@@ -2,6 +2,8 @@
 
 Origin Astro SSR Node (`@astrojs/node` standalone). No provider-specific deploy commands.
 
+**Tenant migration process (ACTIVE_CANON):** see [SE-MOM-V1](../../just-auth-nexus/docs/architecture/site-engine/JUST-SITE-ENGINE-MIGRATION-OPERATING-MODEL-V1.md) in `just-auth-nexus` (pointer: [docs/architecture/site-engine/JUST-SITE-ENGINE-MIGRATION-OPERATING-MODEL-V1.md](./architecture/site-engine/JUST-SITE-ENGINE-MIGRATION-OPERATING-MODEL-V1.md)).
+
 ## Prerequisites
 
 - Node `^20.3.0 || >=22` and npm `>=9.6.5`

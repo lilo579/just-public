@@ -5,7 +5,14 @@ import WhatsAppIcon from "../icons/WhatsAppIcon.astro";
 import MessageCircleIcon from "../icons/MessageCircleIcon.astro";
 import CinematicSectionIcon from "../icons/CinematicSectionIcon.astro";
 
-const { block, layout = "standard" } = Astro.props as {
+const {
+  block,
+  layout = "standard",
+  manifestoGhost = [],
+  manifestoStatement = [],
+  manifestoImageUrl = null,
+  sectionId,
+} = Astro.props as {
   block: {
     type: "cta";
     content: {
@@ -20,9 +27,16 @@ const { block, layout = "standard" } = Astro.props as {
       buttonLabel?: string | null;
       microcopy?: string | null;
       closingPullQuote?: string | null;
+      manifestoGhost?: string[] | null;
+      manifestoStatement?: string[] | null;
+      manifestoImageUrl?: string | null;
     };
   };
   layout?: "standard" | "cinematic-band";
+  manifestoGhost?: string[];
+  manifestoStatement?: string[];
+  manifestoImageUrl?: string | null;
+  sectionId?: string;
 };
 
 const { primaryCTA, title, body, buttonLabel, microcopy, closingPullQuote } = block.content;
@@ -30,14 +44,98 @@ const finalLabel = buttonLabel || primaryCTA?.label;
 const showButton = primaryCTA?.visible !== false && primaryCTA?.href && finalLabel;
 const isWhatsappCta =
   primaryCTA?.type === "whatsapp" || Boolean(primaryCTA?.href?.includes("wa.me"));
-// DR-001: first official go-live is WhatsApp-only — no public LeadForm.
 const showLeadForm = false;
 const isCinematic = layout === "cinematic-band";
+const ghost =
+  (Array.isArray(manifestoGhost) && manifestoGhost.length > 0
+    ? manifestoGhost
+    : Array.isArray(block.content.manifestoGhost)
+      ? block.content.manifestoGhost
+      : []) || [];
+const statement =
+  (Array.isArray(manifestoStatement) && manifestoStatement.length > 0
+    ? manifestoStatement
+    : Array.isArray(block.content.manifestoStatement)
+      ? block.content.manifestoStatement
+      : []) || [];
+const isManifesto = ghost.length > 0 || statement.length > 0;
+const resolvedSectionId = sectionId || (isCinematic ? (isManifesto ? "manifesto-final" : "contato") : "cta-final");
+const resolvedManifestoImage =
+  (typeof manifestoImageUrl === "string" && manifestoImageUrl.trim()) ||
+  (typeof block.content.manifestoImageUrl === "string" && block.content.manifestoImageUrl.trim()) ||
+  null;
 ---
 
-{(title || body || showButton || showLeadForm || (isCinematic && (microcopy || closingPullQuote))) && (
-  <section class:list={["cta", isCinematic && "cta--cinematic"]} id={isCinematic ? "contato" : "cta-final"}>
-    {isCinematic ? (
+{(title || body || showButton || showLeadForm || (isCinematic && (microcopy || closingPullQuote || isManifesto))) && (
+  <section class:list={["cta", isCinematic && "cta--cinematic", isManifesto && "cta--manifesto"]} id={resolvedSectionId}>
+    {isCinematic && isManifesto ? (
+      <div class="cta__manifesto-art" data-f1-manifesto-art>
+        <div class="cta__manifesto-glow" aria-hidden="true"></div>
+        <div class="cta__manifesto-sheen" aria-hidden="true"></div>
+
+        {ghost.length > 0 && (
+          <p class="cta__ghost cta__ghost--desktop" aria-hidden="true">
+            {ghost.map((line) => (
+              <span class="cta__line">{line}</span>
+            ))}
+          </p>
+        )}
+        {ghost.length > 0 && (
+          <p class="cta__ghost cta__ghost--mobile" aria-hidden="true">
+            {ghost.map((line) => (
+              <span class="cta__line">{line}</span>
+            ))}
+          </p>
+        )}
+
+        <div class="cta__manifesto-rule" aria-hidden="true"></div>
+
+        {resolvedManifestoImage && (
+          <div class="cta__manifesto-portrait">
+            <img src={resolvedManifestoImage} alt="" loading="lazy" />
+          </div>
+        )}
+
+        <div class="cta__manifesto-statement">
+          {statement.length > 0 && (
+            <p class="cta__statement">
+              {statement.map((line) => (
+                <span class="cta__line">{line}</span>
+              ))}
+            </p>
+          )}
+
+          {showButton && (
+            <div class="cta__manifesto-cta">
+              {isWhatsappCta ? (
+                <TrackedCTA
+                  href={primaryCTA!.href!}
+                  label={finalLabel!}
+                  class="cta__arrow-link"
+                  ctaId="cta-final-primary-cta"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span class="cta__arrow" aria-hidden="true">
+                    <span class="cta__arrow-rule"></span>
+                    <span class="cta__arrow-glyph">→</span>
+                  </span>
+                  <span>{finalLabel}</span>
+                </TrackedCTA>
+              ) : (
+                <a href={primaryCTA!.href} class="cta__arrow-link">
+                  <span class="cta__arrow" aria-hidden="true">
+                    <span class="cta__arrow-rule"></span>
+                    <span class="cta__arrow-glyph">→</span>
+                  </span>
+                  <span>{finalLabel}</span>
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    ) : isCinematic ? (
       <>
         <div class="cta__band-wrap">
           <div class="cta__band">
@@ -370,9 +468,274 @@ const isCinematic = layout === "cinematic-band";
     height: 1.5rem;
   }
 
+  .cta--manifesto {
+    position: relative;
+    left: 50%;
+    right: 50%;
+    width: 100vw;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    padding: 0;
+    overflow: hidden;
+    background: var(--f1-surface-deep, #0b1020);
+    color: #fff;
+  }
+
+  .cta__manifesto-art {
+    position: relative;
+    height: 480px;
+    width: 100%;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at center, #05070d 0%, #05070d 55%, #03050a 100%),
+      linear-gradient(115deg, #05070d 0%, #060a14 28%, #081022 52%, #05070d 100%);
+  }
+
+  .cta__manifesto-glow {
+    pointer-events: none;
+    position: absolute;
+    left: -8%;
+    bottom: -12%;
+    height: 240px;
+    width: 240px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--site-color-primary, #dc2626) 26%, transparent);
+    filter: blur(90px);
+  }
+
+  .cta__manifesto-sheen {
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 18%;
+    background: linear-gradient(to left, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 28%, transparent 80%);
+    mix-blend-mode: screen;
+  }
+
+  .cta--manifesto .cta__ghost {
+    pointer-events: none;
+    position: absolute;
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 500;
+    line-height: 0.88;
+    letter-spacing: -0.05em;
+    color: rgba(255, 255, 255, 0.08);
+  }
+
+  .cta--manifesto .cta__ghost--desktop {
+    display: none;
+  }
+
+  .cta--manifesto .cta__ghost--mobile {
+    left: 6%;
+    top: 6%;
+    max-width: 46%;
+    font-size: 2.05rem;
+    line-height: 0.9;
+    color: rgba(255, 255, 255, 0.05);
+  }
+
+  .cta--manifesto .cta__line {
+    display: block;
+  }
+
+  .cta--manifesto .cta__manifesto-rule {
+    pointer-events: none;
+    position: absolute;
+    left: 6%;
+    top: 52%;
+    height: 2px;
+    width: 3rem;
+    background: color-mix(in srgb, var(--site-color-primary, #dc2626) 80%, transparent);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--site-color-primary, #dc2626) 25%, transparent);
+  }
+
+  .cta--manifesto .cta__manifesto-portrait {
+    pointer-events: none;
+    position: absolute;
+    left: 50%;
+    z-index: 1;
+    bottom: 2%;
+    width: 68%;
+    transform: translateX(-50%);
+  }
+
+  .cta--manifesto .cta__manifesto-portrait img {
+    display: block;
+    width: 100%;
+    object-fit: cover;
+    filter: grayscale(1);
+    opacity: 0.42;
+    mix-blend-mode: screen;
+    transform: scale(1.03);
+    mask-image: linear-gradient(to bottom, black 0%, black 72%, rgba(0, 0, 0, 0.6) 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 72%, rgba(0, 0, 0, 0.6) 85%, transparent 100%);
+  }
+
+  .cta--manifesto .cta__manifesto-statement {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 8%;
+    z-index: 3;
+    padding: 0 1.5rem;
+    text-align: center;
+  }
+
+  .cta--manifesto .cta__statement {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 2.15rem;
+    font-weight: 500;
+    line-height: 0.88;
+    letter-spacing: -0.045em;
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  .cta--manifesto .cta__manifesto-cta {
+    margin-top: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cta--manifesto :global(a.cta__arrow-link) {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: rgba(255, 255, 255, 0.88);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.78rem;
+    font-weight: 500;
+    min-height: auto;
+    transition: color 0.3s ease;
+  }
+
+  .cta--manifesto :global(a.cta__arrow-link:hover) {
+    color: #fff;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .cta--manifesto .cta__arrow {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .cta--manifesto .cta__arrow-rule {
+    position: absolute;
+    left: 0;
+    height: 2px;
+    width: 1.5rem;
+    background: var(--site-color-primary, #dc2626);
+    opacity: 0.8;
+  }
+
+  .cta--manifesto .cta__arrow-glyph {
+    margin-left: 2rem;
+    color: var(--site-color-primary, #dc2626);
+    animation: ctaArrow 1.6s ease-in-out infinite;
+  }
+
+  @keyframes ctaArrow {
+    0%,
+    100% {
+      transform: translateX(0);
+      opacity: 0.75;
+    }
+    50% {
+      transform: translateX(4px);
+      opacity: 1;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .cta--manifesto .cta__manifesto-portrait {
+      bottom: 0;
+      width: 60%;
+    }
+  }
+
   @media (min-width: 1024px) {
     .cta--cinematic {
       padding: 0.5rem 0 5rem;
+    }
+
+    .cta--manifesto {
+      padding: 0;
+    }
+
+    .cta--manifesto .cta__manifesto-art {
+      height: 620px;
+    }
+
+    .cta--manifesto .cta__manifesto-glow {
+      left: 2%;
+      bottom: -10%;
+      height: 320px;
+      width: 320px;
+    }
+
+    .cta--manifesto .cta__ghost--desktop {
+      display: block;
+      left: 4%;
+      top: 8%;
+      max-width: 30%;
+      font-size: 4.7rem;
+      color: rgba(255, 255, 255, 0.08);
+    }
+
+    .cta--manifesto .cta__ghost--mobile {
+      display: none;
+    }
+
+    .cta--manifesto .cta__manifesto-rule {
+      left: 4%;
+      top: 58%;
+      width: 4rem;
+      background: color-mix(in srgb, var(--site-color-primary, #dc2626) 95%, transparent);
+      box-shadow: 0 0 18px color-mix(in srgb, var(--site-color-primary, #dc2626) 38%, transparent);
+    }
+
+    .cta--manifesto .cta__manifesto-portrait {
+      bottom: 0;
+      width: 38%;
+    }
+
+    .cta--manifesto .cta__manifesto-statement {
+      inset: auto;
+      right: 6%;
+      bottom: 15%;
+      left: auto;
+      max-width: 34%;
+      padding: 0;
+      text-align: right;
+    }
+
+    .cta--manifesto .cta__statement {
+      font-size: 4.1rem;
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .cta--manifesto .cta__manifesto-cta {
+      margin-top: 1.5rem;
+      justify-content: flex-end;
+      gap: 1.25rem;
+    }
+
+    .cta--manifesto :global(a.cta__arrow-link) {
+      font-size: 0.98rem;
     }
 
     .cta--cinematic .cta__band-wrap {

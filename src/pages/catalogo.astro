@@ -1,0 +1,295 @@
+---
+export const prerender = false;
+
+import CatalogProductCard from "../components/catalog/CatalogProductCard.astro";
+import CatalogProductRail from "../components/catalog/CatalogProductRail.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import SiteTheme from "../components/SiteTheme.astro";
+import PublicSiteHead from "../components/PublicSiteHead.astro";
+import WhatsAppFloat from "../components/WhatsAppFloat.astro";
+import catalogF3CssUrl from "../styles/catalog-f3.css?url";
+import {
+  buildCatalogHref,
+  filterCatalogProducts,
+  readCatalogFilters,
+  resolveCatalogHostOverride,
+  resolveTaxonomyFilter,
+  applyHostOverrideToNavItems,
+} from "../lib/catalogBrowse.js";
+import { createPublicSupabaseClient } from "../lib/publicSupabase.js";
+import { HostResolutionError, resolveRequestHost } from "../lib/publicHomepage";
+import { loadCatalogPublicChrome } from "../lib/loadCatalogPublicChrome.js";
+
+const requestUrl = new URL(Astro.request.url);
+let host: string;
+try {
+  host = resolveRequestHost(Astro.request, requestUrl.searchParams);
+} catch (err) {
+  const reason =
+    err instanceof HostResolutionError || (err && typeof err === "object" && "reason" in err)
+      ? String((err as { reason: string }).reason)
+      : "invalid_host";
+  return new Response(`Invalid host (${reason})`, {
+    status: 400,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
+const hostOverride = resolveCatalogHostOverride(requestUrl.searchParams, host);
+
+const chrome = await loadCatalogPublicChrome(host, Astro.locals);
+if (!chrome.ok) {
+  return new Response(`Catalog unavailable (${chrome.reason})`, {
+    status: chrome.status || 502,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
+const navItems = applyHostOverrideToNavItems(chrome.navItems, hostOverride);
+
+const supabase = createPublicSupabaseClient(Astro.locals);
+if (!supabase) {
+  return new Response("Catalog unavailable (supabase runtime config missing)", {
+    status: 503,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
+const filters = readCatalogFilters(requestUrl.searchParams);
+const isCollectionMode = Boolean(filters.collection);
+
+const [{ data: productRows, error: productError }, { data: taxonomyRows, error: taxError }] =
+  await Promise.all([
+    supabase.rpc("public_get_products_by_host", { p_host: host }),
+    supabase.rpc("public_get_catalog_taxonomy_by_host", { p_host: host }),
+  ]);
+
+if (productError) console.error("catalog products RPC:", productError);
+if (taxError) console.error("catalog taxonomy RPC:", taxError);
+
+const products = Array.isArray(productRows) ? productRows : [];
+const taxonomy = Array.isArray(taxonomyRows) ? taxonomyRows : [];
+
+const categories = taxonomy.filter((row) => row.kind === "category");
+const lines = taxonomy
+  .filter((row) => row.kind === "line")
+  .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+
+const activeCategory = resolveTaxonomyFilter(filters.category, taxonomy, "category");
+const activeLine = resolveTaxonomyFilter(filters.line, taxonomy, "line");
+const activeCollection = resolveTaxonomyFilter(
+  filters.collection,
+  taxonomy,
+  "collection",
+);
+
+/** Golden Master: line scopes first, then optional category within scope. */
+const baseProducts = activeLine
+  ? products.filter((p) => p.line_slug === activeLine.slug)
+  : products;
+
+const categoryIdsInScope = new Set(
+  baseProducts.map((p) => p.category_slug).filter(Boolean),
+);
+const displayCategories = categories.filter((c) => categoryIdsInScope.has(c.slug));
+
+const effectiveCategory =
+  activeCategory && displayCategories.some((c) => c.id === activeCategory.id)
+    ? activeCategory
+    : null;
+
+const scopedProducts = effectiveCategory
+  ? baseProducts.filter((p) => p.category_slug === effectiveCategory.slug)
+  : baseProducts;
+
+const displayLines = activeLine
+  ? lines.filter((l) => l.id === activeLine.id)
+  : lines.filter((l) => scopedProducts.some((p) => p.line_slug === l.slug));
+
+const lineRails = displayLines
+  .map((line) => {
+    const lineProducts = scopedProducts.filter((p) => p.line_slug === line.slug);
+    return { line, products: lineProducts };
+  })
+  .filter((row) => row.products.length > 0);
+
+const collectionProducts = isCollectionMode
+  ? filterCatalogProducts(products, { category: null, line: null, collection: filters.collection }, taxonomy)
+  : [];
+
+const cmsTitle = chrome.catalogHeroTitle || "Catálogo";
+const cmsSubtitle = chrome.catalogHeroSubtitle || "";
+const pageTitle =
+  (isCollectionMode && activeCollection?.name) ||
+  activeLine?.name ||
+  effectiveCategory?.name ||
+  cmsTitle;
+
+const companyName = chrome.companyName;
+const pageUrl = `https://${host}/catalogo`;
+const fontLoadUrl =
+  typeof chrome.tokens?.__fontLoadUrl === "string" ? chrome.tokens.__fontLoadUrl : null;
+---
+
+<html lang="pt-BR" data-f3-presentation="f3.presentation.grid_v1">
+  <head>
+    <PublicSiteHead
+      title={`${pageTitle} — ${companyName}`}
+      description={`Catálogo completo de ${companyName}.`}
+      canonicalUrl={pageUrl}
+      ogImage={chrome.ogImage || null}
+      faviconUrl={chrome.faviconUrl || null}
+      robots={chrome.noindex ? "noindex,nofollow" : "index,follow"}
+      twitterCard={chrome.ogImage ? "summary_large_image" : "summary"}
+      fontLoadUrl={fontLoadUrl}
+    />
+    <link rel="stylesheet" href={catalogF3CssUrl} />
+  </head>
+  <body class="catalog-browse">
+    <SiteTheme tokens={chrome.tokens}>
+      <Header
+        siteTitle={companyName}
+        logoUrl={chrome.logoUrl}
+        logoAlt={companyName}
+        whatsappHref={chrome.whatsappHref}
+        pillChrome={false}
+        overHero={false}
+        ctaLabel={chrome.headerCtaLabel}
+        navItems={navItems}
+        chrome="shop"
+        showCta={false}
+      />
+
+      <main class="shop-catalog">
+        <header class="shop-catalog__titleband">
+          <div class="shop-catalog__wrap">
+            <h1 class="shop-catalog__title">{pageTitle}</h1>
+            {!isCollectionMode && !activeLine && !effectiveCategory && cmsSubtitle ? (
+              <p class="shop-catalog__subtitle">{cmsSubtitle}</p>
+            ) : null}
+          </div>
+        </header>
+
+        {isCollectionMode ? (
+          <section class="shop-catalog__section">
+            <div class="shop-catalog__wrap">
+              {!activeCollection ? (
+                <div class="catalog-empty" role="status">
+                  <p>Esta coleção não foi encontrada ou não está disponível.</p>
+                  <p>
+                    <a class="catalog-btn" href={buildCatalogHref(hostOverride, "/catalogo")}>
+                      Voltar ao catálogo
+                    </a>
+                  </p>
+                </div>
+              ) : collectionProducts.length === 0 ? (
+                <div class="catalog-empty" role="status">
+                  <p>Esta coleção ainda não possui produtos.</p>
+                </div>
+              ) : (
+                <div class="shop-catalog__grid">
+                  {collectionProducts.map((product, index) => (
+                    <CatalogProductCard
+                      href={buildCatalogHref(hostOverride, `/p/${product.slug}`)}
+                      title={product.name}
+                      subtitle={product.line_name || product.category_name || null}
+                      imageUrl={product.image_url}
+                      price={product.price}
+                      aspect="card"
+                      loading={index < 8 ? "eager" : "lazy"}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        ) : (
+          <>
+            {displayCategories.length > 1 && (
+              <nav class="shop-catalog__cats" aria-label="Categorias">
+                <div class="shop-catalog__wrap shop-catalog__cats-track">
+                  <a
+                    class="shop-catalog__cat"
+                    href={buildCatalogHref(hostOverride, "/catalogo", {
+                      line: activeLine?.id || null,
+                    })}
+                    aria-current={!effectiveCategory ? "page" : undefined}
+                  >
+                    Todos
+                  </a>
+                  {displayCategories.map((cat) => (
+                    <a
+                      class="shop-catalog__cat"
+                      href={buildCatalogHref(hostOverride, "/catalogo", {
+                        category: cat.id,
+                        line: activeLine?.id || null,
+                      })}
+                      aria-current={effectiveCategory?.id === cat.id ? "page" : undefined}
+                    >
+                      {cat.name}
+                    </a>
+                  ))}
+                </div>
+              </nav>
+            )}
+
+            <section class="shop-catalog__section">
+              <div class="shop-catalog__wrap">
+                {lineRails.length === 0 ? (
+                  <div class="catalog-empty" role="status">
+                    <p>
+                      {activeLine
+                        ? "Nenhum produto encontrado neste contexto."
+                        : "Nenhum produto cadastrado ainda."}
+                    </p>
+                    {(activeLine || effectiveCategory) && (
+                      <p>
+                        <a class="catalog-btn" href={buildCatalogHref(hostOverride, "/catalogo")}>
+                          Limpar filtros
+                        </a>
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  lineRails.map(({ line, products: lineProducts }) => (
+                    <CatalogProductRail
+                      title={line.name}
+                      countLabel={`${lineProducts.length} ${
+                        lineProducts.length === 1 ? "produto" : "produtos"
+                      }`}
+                      products={lineProducts}
+                      hostOverride={hostOverride}
+                      aspect="card"
+                      railId={line.id}
+                    />
+                  ))
+                )}
+              </div>
+            </section>
+          </>
+        )}
+      </main>
+
+      <Footer
+        footer={{
+          companyName,
+          logoUrl: chrome.footerLogoUrl,
+          whatsappNumber: chrome.contact?.whatsappNumber ?? null,
+          whatsappVisible: chrome.contact?.whatsappVisible === true,
+          email: chrome.contact?.email ?? null,
+          address: chrome.contact?.address ?? null,
+          socialLinks: chrome.socialLinks,
+          tagline: null,
+        }}
+        justSignatureBand={chrome.justSignatureBand}
+        footerSurface={chrome.footerSurface}
+        layout="shop"
+        navItems={navItems}
+        whatsappHref={chrome.whatsappHref}
+        headerCtaLabel={chrome.headerCtaLabel}
+      />
+      {chrome.whatsappHref && <WhatsAppFloat href={chrome.whatsappHref} />}
+    </SiteTheme>
+  </body>
+</html>

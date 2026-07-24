@@ -1,0 +1,50 @@
+---
+/**
+ * Reusable category / collection tile for F3 grids.
+ * variant=overlay matches Golden Master home category carousel.
+ */
+const {
+  href,
+  label,
+  imageUrl = null,
+  count = null,
+  loading = "lazy",
+  variant = "card",
+} = Astro.props as {
+  href: string;
+  label: string;
+  imageUrl?: string | null;
+  count?: number | null;
+  loading?: "lazy" | "eager";
+  variant?: "card" | "overlay";
+};
+
+const isOverlay = variant === "overlay";
+---
+
+<a
+  class:list={[
+    "catalog-category-card",
+    isOverlay && "catalog-category-card--overlay",
+  ]}
+  href={href}
+>
+  <div class="catalog-category-card__media">
+    {imageUrl ? (
+      <img src={imageUrl} alt={label} loading={loading} decoding="async" />
+    ) : (
+      <div class="catalog-category-card__placeholder" aria-hidden="true" />
+    )}
+    {isOverlay ? <div class="catalog-category-card__wash" aria-hidden="true" /> : null}
+  </div>
+  {isOverlay ? (
+    <span class="catalog-category-card__overlay-label">{label}</span>
+  ) : (
+    <div class="catalog-category-card__body">
+      <span class="catalog-category-card__label">{label}</span>
+      {typeof count === "number" ? (
+        <span class="catalog-category-card__count">{count}</span>
+      ) : null}
+    </div>
+  )}
+</a>

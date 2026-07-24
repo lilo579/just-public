@@ -4,9 +4,10 @@ import JustFeatureIcon from "../icons/JustFeatureIcon.astro";
 type FeatureItem = {
   title?: string;
   description?: string | null;
+  imageUrl?: string | null;
 };
 
-const { block, layout = "standard" } = Astro.props as {
+const { block, layout = "standard", sectionId, outcomeImageUrls = [] } = Astro.props as {
   block: {
     type: "features";
     content: {
@@ -14,9 +15,12 @@ const { block, layout = "standard" } = Astro.props as {
       items?: FeatureItem[];
       kicker?: string | null;
       imageUrl?: string | null;
+      outcomeImageUrls?: string[] | null;
     };
   };
-  layout?: "standard" | "cinematic-principles";
+  layout?: "standard" | "cinematic-principles" | "cinematic-outcomes";
+  sectionId?: string;
+  outcomeImageUrls?: string[];
 };
 
 const title = block.content?.title;
@@ -24,20 +28,95 @@ const kicker = block.content?.kicker;
 const imageUrl = block.content?.imageUrl;
 const items = (block.content?.items ?? []).filter((item) => item?.title);
 const isCinematic = layout === "cinematic-principles";
+const isOutcomes = layout === "cinematic-outcomes";
 
 const iconNames = ["shield", "heart", "users", "clock", "star"] as const;
 
 function iconFor(index: number) {
   return iconNames[index % iconNames.length];
 }
+
+const chromeOutcomeUrls = Array.isArray(outcomeImageUrls)
+  ? outcomeImageUrls.filter((url) => typeof url === "string" && url.trim())
+  : [];
+const contentOutcomeUrls = Array.isArray(block.content?.outcomeImageUrls)
+  ? block.content.outcomeImageUrls.filter((url): url is string => typeof url === "string" && Boolean(url.trim()))
+  : [];
+const resolvedOutcomeUrls =
+  chromeOutcomeUrls.length > 0
+    ? chromeOutcomeUrls
+    : contentOutcomeUrls.length > 0
+      ? contentOutcomeUrls
+      : items.map((_, index) => {
+          const n = String(index + 1).padStart(2, "0");
+          return `/presentation/cinematic_v1/pt/benefits-${n}.jpeg`;
+        });
 ---
 
-{(items.length > 0 || (isCinematic && (title || kicker || imageUrl))) && (
-  <section class:list={["features", isCinematic && "features--cinematic"]}>
-    {!isCinematic && <div class="features__overlay" aria-hidden="true"></div>}
+{(items.length > 0 || ((isCinematic || isOutcomes) && (title || kicker || imageUrl))) && (
+  <section
+    class:list={[
+      "features",
+      isCinematic && "features--cinematic",
+      isOutcomes && "features--outcomes",
+    ]}
+    id={sectionId}
+    data-f1-outcomes={isOutcomes ? "true" : undefined}
+  >
+    {!isCinematic && !isOutcomes && <div class="features__overlay" aria-hidden="true"></div>}
 
     <div class="features__container">
-      {isCinematic ? (
+      {isOutcomes ? (
+        <div class="features__outcomes" data-f1-outcomes-root>
+          {(kicker || title) && (
+            <div class="features__outcomes-heading">
+              {kicker && <p class="features__outcomes-kicker">{kicker}</p>}
+              {title && <h2>{title}</h2>}
+            </div>
+          )}
+
+          <div class="features__outcomes-stage">
+            <div class="features__outcomes-media" aria-hidden="true">
+              {items.map((item, index) => {
+                const src = item.imageUrl || resolvedOutcomeUrls[index] || resolvedOutcomeUrls[0];
+                if (!src) return null;
+                return (
+                  <img
+                    src={src}
+                    alt=""
+                    class="features__outcomes-image"
+                    data-f1-outcomes-image
+                    data-index={index}
+                    data-active={index === 0 ? "true" : "false"}
+                    loading={index === 0 ? "eager" : "lazy"}
+                  />
+                );
+              })}
+              <div class="features__outcomes-wash"></div>
+            </div>
+
+            {items.length > 0 && (
+              <div class="features__outcomes-cards">
+                {items.map((item, index) => (
+                  <button
+                    type="button"
+                    class="features__outcomes-card"
+                    data-f1-outcomes-card
+                    data-index={index}
+                    data-active={index === 0 ? "true" : "false"}
+                  >
+                    <div class="features__outcomes-progress" aria-hidden="true">
+                      <div class="features__outcomes-progress-fill" data-f1-outcomes-fill></div>
+                    </div>
+                    <h3>{item.title}</h3>
+                    {item.description && <p>{item.description}</p>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : isCinematic ? (
         <div class="features__principles">
           {imageUrl && (
             <div class="features__media">
@@ -397,4 +476,245 @@ function iconFor(index: number) {
       font-size: 3.1rem;
     }
   }
+
+  /* —— cinematic-outcomes (rotating benefit imagery) —— */
+  .features--outcomes {
+    padding: 4rem 0;
+    background: var(--f1-surface-deep, #0b1020);
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .features--outcomes .features__container {
+    max-width: none;
+    width: min(1400px, calc(100% - 2rem));
+    padding: 0;
+  }
+
+  .features__outcomes-heading {
+    margin: 0 auto 2.5rem;
+    max-width: 48rem;
+    text-align: center;
+  }
+
+  .features__outcomes-kicker {
+    margin: 0 0 1rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .features--outcomes h2 {
+    margin: 0 auto;
+    max-width: 15ch;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: clamp(1.85rem, 4vw, 3rem);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+
+  .features__outcomes-stage {
+    display: grid;
+    gap: 2rem;
+  }
+
+  .features__outcomes-media {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.6rem;
+    background: var(--f1-surface-panel, #0f1529);
+    height: 420px;
+  }
+
+  .features__outcomes-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 700ms ease;
+  }
+
+  .features__outcomes-image[data-active="true"] {
+    opacity: 1;
+  }
+
+  .features__outcomes-wash {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to top, rgba(11, 16, 32, 0.72), rgba(11, 16, 32, 0.18) 38%, rgba(11, 16, 32, 0.1)),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.08), transparent 5rem);
+  }
+
+  .features__outcomes-cards {
+    display: grid;
+    gap: 1.75rem;
+  }
+
+  .features__outcomes-card {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .features__outcomes-progress {
+    position: relative;
+    margin-bottom: 1rem;
+    width: min(220px, 100%);
+    height: 1.5px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .features__outcomes-progress-fill {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    height: 2px;
+    width: 0%;
+    transform: translateY(-50%);
+    border-radius: 999px;
+    background: var(--site-color-primary, #dc2626);
+  }
+
+  .features__outcomes-card h3 {
+    margin: 0;
+    max-width: 16ch;
+    font-size: clamp(1.1rem, 1.5vw, 1.3rem);
+    font-weight: 600;
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    color: rgba(255, 255, 255, 0.18);
+    transition: color 0.3s ease;
+  }
+
+  .features__outcomes-card:hover h3 {
+    color: rgba(255, 255, 255, 0.44);
+  }
+
+  .features__outcomes-card[data-active="true"] h3,
+  .features__outcomes-card[data-active="true"]:hover h3 {
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  .features__outcomes-card p {
+    margin: 1rem 0 0;
+    max-width: 44ch;
+    font-size: 1rem;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.18);
+    transition: color 0.3s ease;
+  }
+
+  .features__outcomes-card[data-active="true"] p {
+    color: rgba(255, 255, 255, 0.64);
+  }
+
+  @media (min-width: 768px) {
+    .features__outcomes-cards {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 2rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .features--outcomes {
+      padding: 6rem 0;
+    }
+
+    .features--outcomes .features__container {
+      width: min(1400px, calc(100% - 6rem));
+    }
+
+    .features__outcomes-heading {
+      margin-bottom: 3rem;
+    }
+
+    .features__outcomes-media {
+      height: 780px;
+    }
+  }
 </style>
+
+<script>
+  function initOutcomes(root) {
+    if (!(root instanceof HTMLElement) || root.dataset.bound === "1") return
+    root.dataset.bound = "1"
+    const cards = [...root.querySelectorAll("[data-f1-outcomes-card]")]
+    const images = [...root.querySelectorAll("[data-f1-outcomes-image]")]
+    if (!cards.length) return
+    let active = 0
+    let progress = 0
+    let raf = 0
+    let last = 0
+    const duration = 5500
+    let visible = false
+
+    const paint = () => {
+      cards.forEach((card, index) => {
+        card.dataset.active = index === active ? "true" : "false"
+        const fill = card.querySelector("[data-f1-outcomes-fill]")
+        if (fill instanceof HTMLElement) {
+          fill.style.width = index === active ? `${Math.max(0, Math.min(progress, 1)) * 100}%` : "0%"
+        }
+      })
+      images.forEach((image, index) => {
+        image.dataset.active = index === active ? "true" : "false"
+      })
+    }
+
+    const tick = (ts) => {
+      if (!visible) {
+        raf = requestAnimationFrame(tick)
+        return
+      }
+      if (!last) last = ts
+      progress += (ts - last) / duration
+      last = ts
+      if (progress >= 1) {
+        progress = 0
+        active = (active + 1) % cards.length
+      }
+      paint()
+      raf = requestAnimationFrame(tick)
+    }
+
+    cards.forEach((card, index) => {
+      card.addEventListener("click", () => {
+        active = index
+        progress = 0
+        last = 0
+        paint()
+      })
+    })
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        visible = Boolean(entry?.isIntersecting)
+        if (visible) last = 0
+      },
+      { threshold: 0.15 },
+    )
+    io.observe(root)
+    paint()
+    raf = requestAnimationFrame(tick)
+  }
+
+  function bootOutcomes() {
+    document.querySelectorAll("[data-f1-outcomes-root]").forEach(initOutcomes)
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootOutcomes, { once: true })
+  else bootOutcomes()
+  document.addEventListener("astro:page-load", bootOutcomes)
+</script>

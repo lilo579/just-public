@@ -167,8 +167,9 @@ test("build inventory: public Static Assets vs Worker internals", async (t) => {
   const routes = JSON.parse(await fs.readFile(path.join(root, "dist/_routes.json"), "utf8"))
   assert.ok(Array.isArray(routes.exclude))
   assert.ok(routes.exclude.includes("/_astro/*"))
-  assert.ok(routes.exclude.includes("/favicon.ico"))
-  assert.ok(routes.exclude.includes("/favicon.svg"))
+  // Favicons are Worker routes (tenant redirect) — must NOT be static-asset excludes.
+  assert.ok(!routes.exclude.includes("/favicon.ico"))
+  assert.ok(!routes.exclude.includes("/favicon.svg"))
 
   const wrangler = await fs.readFile(path.join(root, "wrangler.jsonc"), "utf8")
   assert.match(wrangler, /"directory":\s*".\/dist"/)
@@ -184,8 +185,12 @@ test("build inventory: public Static Assets vs Worker internals", async (t) => {
   const astroFiles = await fs.readdir(path.join(root, "dist/_astro"))
   assert.ok(astroFiles.some((f) => f.endsWith(".css")))
   assert.ok(!astroFiles.some((f) => /\.(m?js)$/.test(f)), "no per-chunk JS under _astro in current build")
-  await fs.access(path.join(root, "dist/favicon.ico"))
-  await fs.access(path.join(root, "dist/favicon.svg"))
+  await fs.access(path.join(root, "dist/_astro")).catch(() => {
+    throw new Error("expected dist/_astro")
+  })
+  // Astro scaffold favicons must not ship as Static Assets.
+  await assert.rejects(fs.access(path.join(root, "dist/favicon.ico")))
+  await assert.rejects(fs.access(path.join(root, "dist/favicon.svg")))
   await fs.access(workerEntry)
 
   for (const name of astroFiles) {
@@ -256,7 +261,7 @@ test("workerd Static Assets: MIME, isolation, 404, traversal, no payload/leads I
   assert.ok(cssUrls.length >= 1, "expected at least one stylesheet in HTML")
 
   const inventory = []
-  for (const url of [...cssUrls, ...jsUrls, "/favicon.ico", "/favicon.svg"]) {
+  for (const url of [...cssUrls, ...jsUrls]) {
     const res = await fetchAsset(port, url)
     const ct = String(res.headers["content-type"] ?? "")
     inventory.push({
@@ -285,14 +290,23 @@ test("workerd Static Assets: MIME, isolation, 404, traversal, no payload/leads I
       assert.doesNotMatch(res.body, /SUPABASE_SERVICE_ROLE|service_role/i)
       assert.doesNotMatch(res.body, /Alpha Consulting|Beta Studio/)
     }
-    if (url === "/favicon.ico") {
-      assert.match(ct, /image\/(x-icon|vnd\.microsoft\.icon|icon)/i)
-    }
-    if (url === "/favicon.svg") {
-      assert.match(ct, /image\/svg\+xml/i)
-    }
 
     assert.doesNotMatch(url, /localhost:|127\.0\.0\.1:4321/)
+  }
+
+  // Favicons are Worker redirects to tenant brand assets (no Astro scaffold in dist).
+  for (const url of ["/favicon.ico", "/favicon.svg"]) {
+    const res = await requestWithHost(port, TENANT_ALPHA.host, url)
+    assert.ok(
+      res.status === 302 || res.status === 404,
+      `${url} should be tenant redirect or 404 when no brand asset (got ${res.status})`,
+    )
+    if (res.status === 302) {
+      const location = String(res.headers.location ?? "")
+      assert.ok(location.startsWith("http"), `${url} Location must be absolute brand URL`)
+      // Reject only root Astro scaffold — packaged /branding/*/favicon.* is valid.
+      assert.doesNotMatch(location, /:\/\/[^/]+\/favicon\.(ico|svg)(\?|$)/)
+    }
   }
 
   // Headers snapshot for report (first CSS).
@@ -350,6 +364,12 @@ test("workerd Static Assets: MIME, isolation, 404, traversal, no payload/leads I
   assert.match(alphaHtml.body, /whatsapp-float|header-whatsapp-cta/)
   assert.doesNotMatch(alphaHtml.body, /eyJ[a-zA-Z0-9_-]+\.eyJ[^"]*role\\?":\\?"service_role/)
 
-  assert.ok(inventory.length >= 3)
+  // Favicons are Worker redirects (not Static Assets), so inventory is CSS/JS only.
+  // Current Astro/CF builds often ship 1–2 CSS chunks and zero `/_astro` JS.
+  assert.ok(
+    inventory.length >= 1,
+    `expected >=1 CSS/JS static assets in inventory, got ${inventory.length}`,
+  )
+  assert.equal(inventory.length, cssUrls.length + jsUrls.length)
   assert.ok(jsUrls.length === 0 || jsUrls.every((u) => u.startsWith("/_astro/")))
 })

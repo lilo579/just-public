@@ -150,9 +150,10 @@ test("supports lato explicitly (not via classic→Georgia)", () => {
   assert.match(lato.heading, /Lato/)
   assert.ok(lato.load)
 
+  // classic is the Hub typography key for self-hosted Lato (media ownership).
   const classic = resolveFontStack("classic")
-  assert.match(classic.heading, /Georgia/)
-  assert.equal(classic.load, null)
+  assert.match(classic.heading, /Lato/)
+  assert.equal(classic.load, "/fonts/lato/lato.css")
 })
 
 test("rejects arbitrary font families", () => {

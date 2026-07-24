@@ -3,10 +3,58 @@
 const { block } = Astro.props as {
   block: { type: string; content: Record<string, unknown> };
 };
+
 const title = typeof block.content.title === "string" ? block.content.title : null;
 const body = typeof block.content.body === "string" ? block.content.body : null;
+const photoUrl =
+  typeof block.content.photoUrl === "string" ? block.content.photoUrl : null;
+const items = Array.isArray(block.content.items)
+  ? (block.content.items as Array<{ title?: string | null; description?: string | null }>)
+  : [];
+const pills = Array.isArray(block.content.pills)
+  ? (block.content.pills as string[]).filter((p) => typeof p === "string" && p.trim())
+  : [];
+const isMaker = block.type === "maker_story";
 ---
-<section class="catalog-rich-section">
-  {title ? <h2>{title}</h2> : null}
-  {body ? <p>{body}</p> : null}
+
+<section
+  class:list={[
+    "catalog-rich-section",
+    isMaker && "catalog-rich-section--maker",
+    items.length > 0 && "catalog-rich-section--features",
+  ]}
+>
+  <div class="catalog-rich-section__inner">
+    {(title || body) && (
+      <header class="catalog-section-head">
+        {title ? <h2>{title}</h2> : null}
+        {body ? <p class="catalog-rich-section__body">{body}</p> : null}
+      </header>
+    )}
+
+    {photoUrl ? (
+      <div class="catalog-rich-section__photo">
+        <img src={photoUrl} alt="" loading="lazy" decoding="async" />
+      </div>
+    ) : null}
+
+    {items.length > 0 ? (
+      <ul class="catalog-feature-list">
+        {items.map((item) => (
+          <li>
+            {item.title ? <h3>{item.title}</h3> : null}
+            {item.description ? <p>{item.description}</p> : null}
+          </li>
+        ))}
+      </ul>
+    ) : null}
+
+    {pills.length > 0 ? (
+      <ul class="catalog-pill-list">
+        {pills.map((pill) => (
+          <li>{pill}</li>
+        ))}
+      </ul>
+    ) : null}
+  </div>
 </section>

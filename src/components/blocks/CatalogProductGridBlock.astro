@@ -1,19 +1,68 @@
 ---
-/** Bind-only F3 product grid (paint.product_grid). */
-const { block } = Astro.props as {
+/** F3 featured product grid. */
+import CatalogProductCard from "../catalog/CatalogProductCard.astro";
+
+const { block, layout = {}, title = null, subtitle = null } = Astro.props as {
   block: { type: string; content: Record<string, unknown> };
+  layout?: { productGridColumns?: number; cardDensity?: string };
+  title?: string | null;
+  subtitle?: string | null;
 };
+
 const items = Array.isArray(block.content.items)
-  ? (block.content.items as Array<{ title?: string | null; description?: string | null }>)
+  ? (block.content.items as Array<{
+      id?: string | null;
+      title?: string | null;
+      description?: string | null;
+      imageUrl?: string | null;
+      badge?: string | null;
+    }>)
   : [];
+
+const columns =
+  layout.productGridColumns === 2 || layout.productGridColumns === 4
+    ? layout.productGridColumns
+    : 3;
+const density = layout.cardDensity === "comfortable" ? "comfortable" : "compact";
 ---
-<section class="catalog-product-grid" aria-label="Featured products">
-  <ul>
-    {items.map((item) => (
-      <li>
-        <strong>{item.title ?? ""}</strong>
-        {item.description ? <p>{item.description}</p> : null}
-      </li>
-    ))}
-  </ul>
-</section>
+
+{
+  items.length > 0 && (
+    <section
+      class:list={[
+        "catalog-product-grid",
+        `catalog-product-grid--cols-${columns}`,
+        `catalog-product-grid--${density}`,
+      ]}
+      aria-label={title || "Produtos em destaque"}
+    >
+      {(title || subtitle) && (
+        <header class="catalog-section-head">
+          {title ? <h2>{title}</h2> : null}
+          {subtitle ? <p>{subtitle}</p> : null}
+        </header>
+      )}
+      <div class="catalog-product-grid__list">
+        {items.map((item, index) => {
+          const slug = typeof item.id === "string" ? item.id : "";
+          const href = slug ? `/p/${encodeURIComponent(slug)}` : "/catalogo";
+          return (
+            <CatalogProductCard
+              href={href}
+              title={item.title || "Produto"}
+              subtitle={item.description ?? null}
+              imageUrl={item.imageUrl ?? null}
+              badge={item.badge ?? null}
+              loading={index < 4 ? "eager" : "lazy"}
+            />
+          );
+        })}
+      </div>
+      <div class="catalog-product-grid__cta">
+        <a class="catalog-btn catalog-btn--ghost" href="/catalogo">
+          Ver catálogo completo
+        </a>
+      </div>
+    </section>
+  )
+}

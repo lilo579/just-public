@@ -1,127 +1,273 @@
 ---
 export const prerender = false;
 
-import { supabase } from '../../lib/supabase'
+import PublicSiteHead from "../../components/PublicSiteHead.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import SiteTheme from "../../components/SiteTheme.astro";
+import WhatsAppFloat from "../../components/WhatsAppFloat.astro";
+import catalogF3CssUrl from "../../styles/catalog-f3.css?url";
+import { createPublicSupabaseClient } from "../../lib/publicSupabase.js";
+import { HostResolutionError, resolveRequestHost } from "../../lib/publicHomepage";
+import { buildCatalogHref, formatCatalogPrice, resolveCatalogHostOverride, applyHostOverrideToNavItems } from "../../lib/catalogBrowse.js";
+import { loadCatalogPublicChrome } from "../../lib/loadCatalogPublicChrome.js";
 
-const { slug } = Astro.params
+const { slug } = Astro.params;
+const requestUrl = new URL(Astro.request.url);
 
-const url = new URL(Astro.request.url)
-const hostOverride = url.searchParams.get('host')?.trim() ?? ''
-const baseOverride = url.searchParams.get('base')?.trim() ?? ''
-
-const hostHeader = Astro.request.headers.get('host') ?? ''
-const hostFromHeader = hostHeader.split(':')[0].toLowerCase()
-const isLocalHost = hostFromHeader === 'localhost' || hostFromHeader === '127.0.0.1'
-
-if (isLocalHost && !hostOverride) {
-  return new Response(
-    'Local product page requires ?host=<tenant-domain>. No default tenant host is applied.',
-    { status: 400, headers: { 'Content-Type': 'text/plain; charset=utf-8' } },
-  )
+let host: string;
+try {
+  host = resolveRequestHost(Astro.request, requestUrl.searchParams);
+} catch (err) {
+  const reason =
+    err instanceof HostResolutionError || (err && typeof err === "object" && "reason" in err)
+      ? String((err as { reason: string }).reason)
+      : "invalid_host";
+  return new Response(`Invalid host (${reason})`, {
+    status: 400,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
 }
 
-const host = hostOverride || hostFromHeader
+const hostOverride = resolveCatalogHostOverride(requestUrl.searchParams, host);
 
-const { data: rows, error } = await supabase.rpc('public_get_product_by_host_and_slug', {
+const chrome = await loadCatalogPublicChrome(host, Astro.locals);
+if (!chrome.ok) {
+  return new Response(`Product unavailable (${chrome.reason})`, {
+    status: chrome.status || 502,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
+const navItems = applyHostOverrideToNavItems(chrome.navItems, hostOverride);
+
+const supabase = createPublicSupabaseClient(Astro.locals);
+if (!supabase) {
+  return new Response("Product unavailable (supabase runtime config missing)", {
+    status: 503,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
+const { data: rows, error } = await supabase.rpc("public_get_product_by_host_and_slug", {
   p_host: host,
   p_slug: slug,
-})
+});
+if (error) console.error("RPC error:", error);
 
-if (error) console.error('RPC error:', error)
-
-const product = rows?.[0] ?? null
-
+const product = Array.isArray(rows) ? rows[0] : null;
 if (!product) {
   return new Response(`Produto não encontrado (host=${host}, slug=${slug})`, {
     status: 404,
-    headers: { 'content-type': 'text/plain; charset=utf-8' },
-  })
+    headers: { "content-type": "text/plain; charset=utf-8" },
+  });
 }
 
-// Base URL (permite override em dev/test)
-const baseUrl = baseOverride || `https://${host}`
-const pageUrl = `${baseUrl}/p/${product.slug}`
-
-const title = `${product.name} — ${product.company_name ?? 'Loja'}`
-const description = product.description ?? `Veja detalhes de ${product.name}.`
-const imageUrl = product.image_url ?? product.image_original_url ?? ''
-
-const whatsappNumberRaw = product.whatsapp_number ?? ''
-const whatsappNumber = whatsappNumberRaw.replace(/\D/g, '')
-
-const waText = `Olá! Tenho interesse no produto: ${product.name}. Link: ${pageUrl}`
+const baseUrl = `https://${host}`;
+const pageUrl = `${baseUrl}/p/${product.slug}`;
+const companyName = product.company_name || chrome.companyName;
+const title = `${product.name} — ${companyName}`;
+const description = product.description ?? `Veja detalhes de ${product.name}.`;
+const gallery = [
+  product.image_url,
+  ...(Array.isArray(product.images) ? product.images : []),
+].filter((url, index, arr) => typeof url === "string" && url && arr.indexOf(url) === index);
+const imageUrl = gallery[0] || "";
+const whatsappNumber = String(
+  product.whatsapp_number || chrome.contact?.whatsappNumber || "",
+).replace(/\D/g, "");
+const waText = `Olá! Tenho interesse no produto: ${product.name}. Link: ${pageUrl}`;
 const waLink = whatsappNumber
   ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(waText)}`
-  : null
+  : null;
+const priceLabel = formatCatalogPrice(product.price);
+const fontLoadUrl =
+  typeof chrome.tokens?.__fontLoadUrl === "string" ? chrome.tokens.__fontLoadUrl : null;
+const facts = [
+  product.material ? { label: "Material", value: product.material } : null,
+  product.dimensions ? { label: "Dimensões", value: product.dimensions } : null,
+  product.production_time ? { label: "Prazo", value: product.production_time } : null,
+].filter(Boolean);
 ---
 
-<html lang="pt-BR">
+<html lang="pt-BR" data-f3-presentation="f3.presentation.grid_v1">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    <title>{title}</title>
-    <meta name="description" content={description} />
-    <link rel="canonical" href={pageUrl} />
-
-    <!-- Open Graph (WhatsApp) -->
-    <meta property="og:locale" content="pt_BR" />
-    <meta property="og:type" content="product" />
-    <meta property="og:site_name" content={product.company_name ?? 'Just Websites'} />
-    <meta property="og:url" content={pageUrl} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-
-    {imageUrl && (
-      <>
-        <meta property="og:image" content={imageUrl} />
-        <meta property="og:image:secure_url" content={imageUrl} />
-        <meta property="og:image:type" content="image/webp" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-      </>
-    )}
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content={imageUrl ? 'summary_large_image' : 'summary'} />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
-    {imageUrl && <meta name="twitter:image" content={imageUrl} />}
-
-    {hostFromHeader === 'localhost' && <meta name="robots" content="noindex,nofollow" />}
+    <PublicSiteHead
+      title={title}
+      description={description}
+      ogTitle={title}
+      ogDescription={description}
+      canonicalUrl={pageUrl}
+      ogImage={imageUrl || chrome.ogImage || null}
+      faviconUrl={chrome.faviconUrl || null}
+      robots={chrome.noindex ? "noindex,nofollow" : "index,follow"}
+      twitterCard={imageUrl || chrome.ogImage ? "summary_large_image" : "summary"}
+      fontLoadUrl={fontLoadUrl}
+    />
+    <link rel="stylesheet" href={catalogF3CssUrl} />
   </head>
-
-  <body>
-    <a href="/">← Voltar</a>
-
-    <h1>{product.name}</h1>
-
-    <p><strong>Preço:</strong> R$ {product.price}</p>
-
-    {product.description && <p>{product.description}</p>}
-
-    {imageUrl && (
-      <img
-        src={imageUrl}
-        alt={product.name}
-        style="max-width: 520px; width: 100%; height: auto; border-radius: 12px;"
+  <body class="catalog-pdp">
+    <SiteTheme tokens={chrome.tokens}>
+      <Header
+        siteTitle={companyName}
+        logoUrl={chrome.logoUrl}
+        logoAlt={companyName}
+        whatsappHref={chrome.whatsappHref}
+        pillChrome={false}
+        overHero={false}
+        ctaLabel={chrome.headerCtaLabel}
+        navItems={navItems}
+        chrome="shop"
+        showCta={false}
       />
-    )}
 
-    <div style="margin-top: 16px;">
-      {waLink ? (
-        <a
-          href={waLink}
-          style="display:inline-block;padding:12px 16px;border-radius:10px;background:#111;color:#fff;text-decoration:none;"
-        >
-          Comprar pelo WhatsApp
-        </a>
-      ) : (
-        <p>WhatsApp não configurado.</p>
-      )}
-    </div>
+      <nav class="catalog-pdp__crumbs" aria-label="Breadcrumb">
+        <div class="catalog-pdp__crumbs-inner">
+          <a href={buildCatalogHref(hostOverride, "/")}>Início</a>
+          <span aria-hidden="true">/</span>
+          <a href={buildCatalogHref(hostOverride, "/catalogo")}>Catálogo</a>
+          <span aria-hidden="true">/</span>
+          <span aria-current="page">{product.name}</span>
+        </div>
+      </nav>
 
-    <hr style="margin: 24px 0;" />
-    <p><small>Link para compartilhar: {pageUrl}</small></p>
+      <main class="catalog-pdp__shell">
+        <article class="catalog-pdp__card" data-pdp-gallery>
+          <div class="catalog-pdp__gallery">
+            {gallery.length > 1 && (
+              <div class="catalog-pdp__thumbs" role="list">
+                {gallery.map((src, index) => (
+                  <button
+                    type="button"
+                    class="catalog-pdp__thumb"
+                    role="listitem"
+                    data-pdp-thumb={src}
+                    aria-label={`Imagem ${index + 1}`}
+                    aria-current={index === 0 ? "true" : undefined}
+                  >
+                    <img src={src} alt="" loading="lazy" />
+                  </button>
+                ))}
+              </div>
+            )}
+            <div class="catalog-pdp__main-frame">
+              {imageUrl ? (
+                <img src={imageUrl} alt={product.name} data-pdp-main loading="eager" />
+              ) : (
+                <div class="catalog-product-card__placeholder" aria-hidden="true" />
+              )}
+            </div>
+          </div>
+
+          <div class="catalog-pdp__meta">
+            {product.line_name ? (
+              <>
+                <p class="catalog-pdp__line">{product.line_name}</p>
+                <div class="catalog-pdp__line-rule" aria-hidden="true" />
+              </>
+            ) : null}
+
+            <h1>{product.name}</h1>
+            {priceLabel ? (
+              <p class="catalog-pdp__price">{priceLabel}</p>
+            ) : null}
+
+            {product.description ? (
+              <div class="catalog-pdp__desc">{product.description}</div>
+            ) : null}
+
+            {facts.length > 0 && (
+              <div class="catalog-pdp__box">
+                <p>
+                  <strong>Detalhes</strong>
+                </p>
+                <ul class="catalog-pdp__facts">
+                  {facts.map((fact) => (
+                    <li>
+                      • {fact.label}: {fact.value}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {product.customization_available || product.customization_notes ? (
+              <div class="catalog-pdp__box">
+                <p>
+                  <strong>Personalização</strong>
+                </p>
+                {product.customization_notes ? (
+                  <p class="catalog-pdp__note">{product.customization_notes}</p>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div class="catalog-pdp__box catalog-pdp__box--cta">
+              <p class="catalog-pdp__cta-title">Quer este item?</p>
+              <p class="catalog-pdp__cta-copy">
+                Clique para falar no WhatsApp. Confirmamos variações, personalização e prazo.
+              </p>
+              {waLink ? (
+                <a class="catalog-pdp__wa" href={waLink} target="_blank" rel="noopener noreferrer">
+                  <span class="catalog-pdp__wa-icon" aria-hidden="true">💬</span>
+                  <span>Falar no WhatsApp</span>
+                </a>
+              ) : (
+                <p>WhatsApp não configurado.</p>
+              )}
+              <p class="catalog-pdp__back">
+                <a
+                  class="catalog-btn catalog-btn--pill"
+                  href={buildCatalogHref(hostOverride, "/catalogo")}
+                >
+                  Voltar ao Catálogo
+                </a>
+              </p>
+            </div>
+
+            <p class="catalog-pdp__note">
+              * As cores podem variar de acordo com tela e lote de material.
+            </p>
+          </div>
+        </article>
+      </main>
+
+      <Footer
+        footer={{
+          companyName,
+          logoUrl: chrome.footerLogoUrl,
+          whatsappNumber: chrome.contact?.whatsappNumber ?? null,
+          whatsappVisible: chrome.contact?.whatsappVisible === true,
+          email: chrome.contact?.email ?? null,
+          address: chrome.contact?.address ?? null,
+          socialLinks: chrome.socialLinks,
+          tagline: null,
+        }}
+        justSignatureBand={chrome.justSignatureBand}
+        footerSurface={chrome.footerSurface}
+        layout="shop"
+        navItems={navItems}
+        whatsappHref={chrome.whatsappHref}
+        headerCtaLabel={chrome.headerCtaLabel}
+      />
+      {chrome.whatsappHref && <WhatsAppFloat href={chrome.whatsappHref} />}
+    </SiteTheme>
+
+    <script>
+      document.querySelectorAll("[data-pdp-gallery]").forEach((root) => {
+        const main = root.querySelector("[data-pdp-main]");
+        const thumbs = Array.from(root.querySelectorAll("[data-pdp-thumb]"));
+        if (!main || !thumbs.length) return;
+        thumbs.forEach((thumb) => {
+          thumb.addEventListener("click", () => {
+            const src = thumb.getAttribute("data-pdp-thumb");
+            if (!src) return;
+            main.setAttribute("src", src);
+            thumbs.forEach((t) => t.removeAttribute("aria-current"));
+            thumb.setAttribute("aria-current", "true");
+          });
+        });
+      });
+    </script>
   </body>
 </html>

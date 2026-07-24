@@ -26,6 +26,37 @@ const {
 }
 
 const jsonLdJson = jsonLd ? JSON.stringify(jsonLd) : ""
+
+/** Brand-first MIME — never assume PNG for OG/webp logos used as icons. */
+function faviconMime(url: string): string {
+  const path = url.split("?")[0]?.toLowerCase() ?? ""
+  if (path.endsWith(".svg")) return "image/svg+xml"
+  if (path.endsWith(".ico")) return "image/x-icon"
+  if (path.endsWith(".webp")) return "image/webp"
+  if (path.endsWith(".jpg") || path.endsWith(".jpeg")) return "image/jpeg"
+  if (path.endsWith(".gif")) return "image/gif"
+  return "image/png"
+}
+
+const resolvedFavicon = typeof faviconUrl === "string" ? faviconUrl.trim() : ""
+/** Only reject root Astro scaffold — packaged branding favicons are valid. */
+const isAstroScaffold =
+  resolvedFavicon === "/favicon.svg" || resolvedFavicon === "/favicon.ico"
+/** Never emit Astro scaffold branding for customer sites. */
+const brandFavicon = resolvedFavicon && !isAstroScaffold ? resolvedFavicon : ""
+const brandingPackMatch = brandFavicon.match(/^\/branding\/([^/]+)\//)
+const brandingPackSlug = brandingPackMatch?.[1] || ""
+const appleTouchIcon = brandingPackSlug
+  ? `/branding/${brandingPackSlug}/apple-touch-icon.png`
+  : ""
+/** Only emit when the pack ships mask-icon.svg (avoid co-tenant 404s). */
+const maskIcon =
+  brandingPackSlug === "3d-jewish"
+    ? `/branding/${brandingPackSlug}/mask-icon.svg`
+    : ""
+const webManifest = brandingPackSlug
+  ? `/branding/${brandingPackSlug}/site.webmanifest`
+  : ""
 ---
 
 <meta charset="utf-8" />
@@ -37,20 +68,26 @@ const jsonLdJson = jsonLd ? JSON.stringify(jsonLd) : ""
 
 {fontLoadUrl && (
   <>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    {fontLoadUrl.includes("fonts.googleapis.com") ? (
+      <>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      </>
+    ) : null}
     <link rel="stylesheet" href={fontLoadUrl} />
   </>
 )}
 
-{faviconUrl && (
-  <link
-    rel="icon"
-    href={faviconUrl}
-    type={faviconUrl.endsWith(".svg") ? "image/svg+xml" : "image/png"}
-  />
+{/* Brand icon only — /favicon.ico is a Worker redirect to the same URL. */}
+{brandFavicon && (
+  <>
+    <link rel="icon" href={brandFavicon} type={faviconMime(brandFavicon)} />
+    <link rel="shortcut icon" href={brandFavicon} type={faviconMime(brandFavicon)} />
+  </>
 )}
-<link rel="alternate icon" href="/favicon.ico" />
+{appleTouchIcon && <link rel="apple-touch-icon" href={appleTouchIcon} />}
+{maskIcon && <link rel="mask-icon" href={maskIcon} color="#111111" />}
+{webManifest && <link rel="manifest" href={webManifest} />}
 
 {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
 <meta property="og:type" content="website" />

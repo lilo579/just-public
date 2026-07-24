@@ -1,0 +1,56 @@
+---
+/**
+ * Reusable catalog product card (homepage grids + /catalogo + share /c).
+ */
+import { formatCatalogPrice } from "../../lib/catalogBrowse.js";
+
+const {
+  href,
+  title,
+  imageUrl = null,
+  subtitle = null,
+  badge = null,
+  price = null,
+  loading = "lazy",
+  aspect = "square",
+} = Astro.props as {
+  href: string;
+  title: string;
+  imageUrl?: string | null;
+  subtitle?: string | null;
+  badge?: string | null;
+  price?: number | string | null;
+  loading?: "lazy" | "eager";
+  aspect?: "square" | "portrait" | "card";
+};
+
+const priceLabel =
+  typeof price === "number" || (typeof price === "string" && price.trim())
+    ? typeof price === "number"
+      ? formatCatalogPrice(price)
+      : String(price)
+    : null;
+
+const aspectClass =
+  aspect === "portrait"
+    ? "catalog-product-card--portrait"
+    : aspect === "card"
+      ? "catalog-product-card--card"
+      : "catalog-product-card--square";
+---
+
+<a class:list={["catalog-product-card", aspectClass]} href={href}>
+  <div class="catalog-product-card__media">
+    {imageUrl ? (
+      <img src={imageUrl} alt={title} loading={loading} decoding="async" />
+    ) : (
+      <div class="catalog-product-card__placeholder" aria-hidden="true" />
+    )}
+  </div>
+  <div class="catalog-product-card__body">
+    {subtitle ? <p class="catalog-product-card__line">{subtitle}</p> : null}
+    {badge ? <span class="catalog-product-card__badge">{badge}</span> : null}
+    <h3 class="catalog-product-card__title">{title}</h3>
+    {priceLabel ? <p class="catalog-product-card__price">{priceLabel}</p> : null}
+  </div>
+</a>

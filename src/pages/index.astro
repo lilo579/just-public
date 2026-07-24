@@ -31,7 +31,18 @@ import {
   resolveFooterLogoUrl,
 } from "@just/site-engine-authority"
 import { resolvePublicPresentationBinding } from "../lib/publicPresentationBinding.js"
-import "../styles/cinematic-f1.css"
+import cinematicF1CssUrl from "../styles/cinematic-f1.css?url"
+import catalogF3CssUrl from "../styles/catalog-f3.css?url"
+import CatalogShopHomepage from "../components/catalog/CatalogShopHomepage.astro"
+import { createPublicSupabaseClient } from "../lib/publicSupabase.js"
+import {
+  applyHostOverrideToNavItems,
+  resolveCatalogHostOverride,
+} from "../lib/catalogBrowse.js"
+import {
+  resolveShopNavItems,
+  resolveShopSolidLogoUrl,
+} from "../lib/resolveShopNavItems.js"
 
 const requestUrl = new URL(Astro.request.url)
 /** Kill-switch: ?renderer=legacy is rejected when a canonical plan is present. */
@@ -51,6 +62,8 @@ try {
     headers: { "Content-Type": "text/plain; charset=utf-8" },
   })
 }
+
+const hostOverride = resolveCatalogHostOverride(requestUrl.searchParams, host)
 
 /** @type {ResolvedHomepage} */
 let homepage: ResolvedHomepage
@@ -114,6 +127,7 @@ const homepageWithSource = homepage as ResolvedHomepage & {
         accentColor?: string | null
         typography?: string | null
         logoUrl?: string | null
+        logoWhiteUrl?: string | null
         logoHorizontalUrl?: string | null
       }
       presentationProfile?: string | null
@@ -155,7 +169,28 @@ if (choice.mode === "error") {
 
 const presentationBinding = resolvePublicPresentationBinding(homepageWithSource, choice)
 const presentationProfile = presentationBinding.profile
+const presentationFamily = presentationBinding.family || "f1"
+const isCinematicPresentation = presentationProfile === "f1.presentation.cinematic_v1"
+const isF3Presentation = presentationFamily === "f3"
 const presentationChrome = presentationBinding.chrome
+const cinematicAtmosphere =
+  presentationChrome &&
+  typeof presentationChrome === "object" &&
+  "cinematicEditorial" in presentationChrome &&
+  presentationChrome.cinematicEditorial &&
+  typeof presentationChrome.cinematicEditorial === "object" &&
+  "atmosphere" in presentationChrome.cinematicEditorial
+    ? String(presentationChrome.cinematicEditorial.atmosphere || "editorial")
+    : "editorial"
+const cinematicTypography =
+  presentationChrome &&
+  typeof presentationChrome === "object" &&
+  "cinematicEditorial" in presentationChrome &&
+  presentationChrome.cinematicEditorial &&
+  typeof presentationChrome.cinematicEditorial === "object" &&
+  "typography" in presentationChrome.cinematicEditorial
+    ? String(presentationChrome.cinematicEditorial.typography || "editorial")
+    : "editorial"
 
 const metaFooter = homepageWithSource.source?.meta?.footer
 const footerSocialLinks = (
@@ -190,27 +225,109 @@ const footer = {
 const brandingName =
   homepageWithSource.source?.contact?.companyName ?? footer.companyName ?? "Site"
 const brandingMeta = homepageWithSource.source?.meta?.branding ?? null
-const brandingLogo = resolveHeaderLogoUrl(brandingMeta, presentationChrome)
-const brandingLogoOverHero = resolveHeaderOverHeroLogoUrl(
+/** F3 shop homepage pulls header over media hero (Golden Master). */
+const headerOverHero = isF3Presentation
+  ? true
+  : presentationChrome.headerOverHero === true
+const brandingLogo = isF3Presentation
+  ? resolveShopSolidLogoUrl(
+      brandingMeta,
+      resolveHeaderLogoUrl(brandingMeta, presentationChrome),
+    )
+  : resolveHeaderLogoUrl(brandingMeta, presentationChrome)
+/** Force over-hero chrome when resolving white logo (F3 home always overlays media). */
+const brandingLogoOverHeroResolved = resolveHeaderOverHeroLogoUrl(
   brandingMeta,
-  presentationChrome,
+  {
+    ...presentationChrome,
+    headerOverHero,
+  },
 )
+/** F3 shop: prefer Hub white logo, else packaged brand-pack white crest. */
+const brandingLogoOverHero =
+  (typeof brandingMeta?.logoWhiteUrl === "string" && brandingMeta.logoWhiteUrl.trim()) ||
+  brandingLogoOverHeroResolved ||
+  (isF3Presentation ? "/branding/3d-jewish/logo-white.png" : "")
 const footerLogoUrl = resolveFooterLogoUrl(brandingMeta, presentationChrome)
-const headerOverHero = presentationChrome.headerOverHero === true
 const cinematicEditorial =
   presentationChrome &&
   "cinematicEditorial" in presentationChrome &&
   presentationChrome.cinematicEditorial
     ? presentationChrome.cinematicEditorial
     : null
-const headerNavItems = Array.isArray(cinematicEditorial?.navItems)
-  ? cinematicEditorial.navItems
-  : []
+const f3NavItems =
+  isF3Presentation &&
+  presentationChrome &&
+  "navItems" in presentationChrome &&
+  Array.isArray(presentationChrome.navItems)
+    ? presentationChrome.navItems
+    : []
+
+/** Prefer DB show_in_nav lines for F3 shop chrome (Golden Master). */
+let shopNavItems = f3NavItems
+if (isF3Presentation) {
+  const supabase = createPublicSupabaseClient(Astro.locals)
+  if (supabase) {
+    const { data: taxonomyRows } = await supabase.rpc(
+      "public_get_catalog_taxonomy_by_host",
+      { p_host: host },
+    )
+    const fromTaxonomy = resolveShopNavItems(
+      Array.isArray(taxonomyRows) ? taxonomyRows : [],
+    )
+    if (fromTaxonomy.length > 0) shopNavItems = fromTaxonomy
+  }
+}
+
+const headerNavItems = applyHostOverrideToNavItems(
+  Array.isArray(cinematicEditorial?.navItems)
+    ? cinematicEditorial.navItems
+    : shopNavItems,
+  hostOverride,
+)
 const headerCtaLabel =
   typeof cinematicEditorial?.headerCtaLabel === "string" &&
   cinematicEditorial.headerCtaLabel.trim()
     ? cinematicEditorial.headerCtaLabel
-    : "WhatsApp"
+    : isF3Presentation &&
+        typeof presentationChrome?.headerCtaLabel === "string" &&
+        presentationChrome.headerCtaLabel.trim()
+      ? presentationChrome.headerCtaLabel
+      : "WhatsApp"
+const isPtDarkAtmosphere = cinematicAtmosphere === "pt_dark"
+const headerCtaVariant = isF3Presentation
+  ? "outline-on-dark"
+  : isPtDarkAtmosphere
+    ? "solid"
+    : "outline-on-dark"
+const headerNavReveal = isF3Presentation
+  ? "always"
+  : isPtDarkAtmosphere
+    ? "always"
+    : "on-scroll"
+
+const catalogSource =
+  homepageWithSource.source &&
+  typeof homepageWithSource.source === "object" &&
+  "catalog" in homepageWithSource.source
+    ? /** @type {{ catalog?: Record<string, any> }} */ (homepageWithSource.source).catalog
+    : null
+const catalogHero = catalogSource?.hero ?? null
+const catalogFeatured = Array.isArray(catalogSource?.featured_items)
+  ? catalogSource.featured_items
+  : []
+const catalogCategories = Array.isArray(catalogSource?.categories)
+  ? catalogSource.categories
+  : []
+const homeInscription =
+  (typeof catalogHero?.highlight === "string" && catalogHero.highlight.trim()) ||
+  "tradição impressa em cada detalhe"
+/** PT Golden Master uses the brand crest on dark footer — not mono/white swap. */
+const brandCrest =
+  typeof brandingMeta?.logoUrl === "string" ? brandingMeta.logoUrl.trim() : ""
+const footerLogoForRender = isPtDarkAtmosphere
+  ? brandCrest || footerLogoUrl
+  : footerLogoUrl
 const tokens = themeTokensFromBranding(homepageWithSource.source?.meta?.branding ?? null)
 const fontLoadUrl =
   typeof tokens.__fontLoadUrl === "string" ? tokens.__fontLoadUrl : null
@@ -251,24 +368,66 @@ const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : ""
       twitterCard={seo.twitterCard}
       fontLoadUrl={fontLoadUrl}
     />
+    {isCinematicPresentation && <link rel="stylesheet" href={cinematicF1CssUrl} />}
+    {isF3Presentation && <link rel="stylesheet" href={catalogF3CssUrl} />}
   </head>
   <body>
     <SiteTheme tokens={tokens}>
-      <div data-f1-presentation={presentationProfile}>
+      <div
+        data-f1-presentation={!isF3Presentation ? presentationProfile : undefined}
+        data-f3-presentation={isF3Presentation ? presentationProfile : undefined}
+        {...(isCinematicPresentation
+          ? {
+              "data-f1-atmosphere": cinematicAtmosphere,
+              "data-f1-typography": cinematicTypography,
+            }
+          : {})}
+      >
         <Header
           siteTitle={brandingName}
           logoUrl={brandingLogo}
           logoOverHeroUrl={brandingLogoOverHero}
           logoAlt={brandingName}
           whatsappHref={whatsappHref}
-          pillChrome={presentationChrome.headerPillChrome}
+          pillChrome={presentationChrome.headerPillChrome !== false && !isF3Presentation}
           overHero={headerOverHero}
           ctaLabel={headerCtaLabel}
           navItems={headerNavItems}
+          ctaVariant={headerCtaVariant}
+          navReveal={headerNavReveal}
+          chrome={isF3Presentation ? "shop" : "default"}
+          showCta={!isF3Presentation}
         />
 
-        <main class="page-shell" data-renderer={choice.mode} data-f1-presentation={presentationProfile}>
-          {choice.mode === "canonical" ? (
+        <main
+          class:list={["page-shell", isF3Presentation && "page-shell--shop"]}
+          data-renderer={choice.mode}
+          data-f1-presentation={!isF3Presentation ? presentationProfile : undefined}
+          data-f3-presentation={isF3Presentation ? presentationProfile : undefined}
+          {...(isCinematicPresentation
+            ? {
+                "data-f1-atmosphere": cinematicAtmosphere,
+                "data-f1-typography": cinematicTypography,
+              }
+            : {})}
+        >
+          {isF3Presentation && choice.mode === "canonical" ? (
+            <CatalogShopHomepage
+              host={host}
+              hostOverride={hostOverride}
+              inscription={homeInscription}
+              heroCtaLabel={
+                typeof catalogHero?.primaryCtaLabel === "string"
+                  ? catalogHero.primaryCtaLabel
+                  : "Ver catálogo"
+              }
+              heroImageUrl={
+                typeof catalogHero?.imageUrl === "string" ? catalogHero.imageUrl : null
+              }
+              featuredItems={catalogFeatured}
+              categories={catalogCategories}
+            />
+          ) : choice.mode === "canonical" ? (
             <CanonicalHomepageRenderer
               plan={choice.plan}
               presentationChrome={presentationChrome}
@@ -284,15 +443,23 @@ const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : ""
           footer={{
             ...footer,
             companyName: brandingName,
-            logoUrl: footerLogoUrl,
+            logoUrl: footerLogoForRender,
           }}
-          justSignatureBand={presentationChrome.justSignatureBand}
-          footerSurface={presentationChrome.footerSurface}
-          socialIconEmphasis={presentationChrome.footerSocialIconEmphasis}
+          justSignatureBand={presentationChrome.justSignatureBand !== false}
+          footerSurface={presentationChrome.footerSurface || "light"}
+          socialIconEmphasis={
+            "footerSocialIconEmphasis" in presentationChrome
+              ? presentationChrome.footerSocialIconEmphasis
+              : undefined
+          }
           layout={
-            presentationProfile === "f1.presentation.cinematic_v1"
-              ? "cinematic-editorial"
-              : "standard"
+            isF3Presentation
+              ? "shop"
+              : isPtDarkAtmosphere
+                ? "cinematic-pt"
+                : isCinematicPresentation
+                  ? "cinematic-editorial"
+                  : "standard"
           }
           navItems={headerNavItems}
           whatsappHref={whatsappHref}
@@ -311,6 +478,11 @@ const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : ""
     max-width: none;
     padding: 0;
     width: 100%;
+  }
+
+  /* Overflow clip is cinematic-only — must not leak to engine_v1 / classic_v1. */
+  [data-f1-presentation="f1.presentation.cinematic_v1"] .page-shell,
+  .page-shell[data-f1-presentation="f1.presentation.cinematic_v1"] {
     overflow-x: clip;
   }
 </style>

@@ -38,14 +38,14 @@ const FONT_ALLOWLIST = {
     load: null,
   },
   classic: {
-    heading: 'Georgia, "Times New Roman", Times, serif',
-    body: 'Georgia, "Times New Roman", Times, serif',
-    load: null,
+    heading: '"Lato", ui-sans-serif, system-ui, sans-serif',
+    body: '"Lato", ui-sans-serif, system-ui, sans-serif',
+    load: "/fonts/lato/lato.css",
   },
   lato: {
     heading: '"Lato", ui-sans-serif, system-ui, sans-serif',
     body: '"Lato", ui-sans-serif, system-ui, sans-serif',
-    load: "https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap",
+    load: "/fonts/lato/lato.css",
   },
 }
 
@@ -93,15 +93,15 @@ function toHslIfValid(h, s, l) {
 
 /**
  * @param {string} value
- * @returns {number | null} lightness 0–100
+ * @returns {{ l: number, s: number } | null} HSL lightness/saturation 0–100
  */
-export function parseCssColorLightness(value) {
+export function parseCssColorHsl(value) {
   if (typeof value !== "string") return null
   const trimmed = value.trim()
   const trip = trimmed.match(HSL_TRIPLET_RE)
-  if (trip) return Number(trip[3])
+  if (trip) return { s: Number(trip[2]), l: Number(trip[3]) }
   const fn = trimmed.match(HSL_FUNC_RE)
-  if (fn) return Number(fn[3])
+  if (fn) return { s: Number(fn[2]), l: Number(fn[3]) }
   const hex = trimmed.match(HEX_RE)
   if (!hex) return null
   let raw = hex[1]
@@ -111,7 +111,35 @@ export function parseCssColorLightness(value) {
   const b = parseInt(raw.slice(4, 6), 16) / 255
   const max = Math.max(r, g, b)
   const min = Math.min(r, g, b)
-  return ((max + min) / 2) * 100
+  const l = ((max + min) / 2) * 100
+  const delta = max - min
+  const s =
+    delta === 0 ? 0 : (delta / (1 - Math.abs((max + min) / 2 * 2 - 1))) * 100
+  return { s, l }
+}
+
+/**
+ * @param {string} value
+ * @returns {number | null} lightness 0–100
+ */
+export function parseCssColorLightness(value) {
+  const hsl = parseCssColorHsl(value)
+  return hsl ? hsl.l : null
+}
+
+/**
+ * Hub sometimes stores a light “secondary” as page wash (cream/off-white).
+ * Reject chromatic pastels (e.g. brand blue at ~81% L) — those are not page bg.
+ * @param {string} color
+ */
+export function isNeutralPageWash(color) {
+  const hsl = parseCssColorHsl(color)
+  if (!hsl) return false
+  const { s, l } = hsl
+  if (l >= 92) return true
+  if (l >= 85 && s <= 30) return true
+  if (l >= 80 && s <= 12) return true
+  return false
 }
 
 export function sanitizeCssColor(value, fallback) {
@@ -215,11 +243,11 @@ export function themeTokensFromBranding(branding, extras = null) {
   )
 
   // Hub often stores a light “secondary” as page wash (cream/off-white).
-  const secondaryL = parseCssColorLightness(secondary)
-  const background =
-    secondaryL != null && secondaryL >= 80
-      ? secondary
-      : DEFAULTS["--site-color-background"]
+  // Only promote near-neutral washes — never chromatic brand pastels.
+  const secondaryIsWash = isNeutralPageWash(secondary)
+  const background = secondaryIsWash
+    ? secondary
+    : DEFAULTS["--site-color-background"]
 
   const density = resolveDensityTokens(extras?.density)
   const radius = resolveRadiusToken(extras?.radius, "md")
@@ -238,10 +266,9 @@ export function themeTokensFromBranding(branding, extras = null) {
 
   return {
     "--site-color-primary": primary,
-    "--site-color-secondary":
-      secondaryL != null && secondaryL >= 80
-        ? DEFAULTS["--site-color-secondary"]
-        : secondary,
+    "--site-color-secondary": secondaryIsWash
+      ? DEFAULTS["--site-color-secondary"]
+      : secondary,
     "--site-color-accent": accent,
     "--site-color-background": background,
     "--site-color-text": DEFAULTS["--site-color-text"],

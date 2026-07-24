@@ -1,0 +1,59 @@
+---
+/**
+ * Frozen legacy alias: /produto/:id → /p/:slug (or /catalogo when unknown).
+ * Accepts product UUID or slug.
+ */
+export const prerender = false;
+
+import { createPublicSupabaseClient } from "../../lib/publicSupabase.js";
+import { HostResolutionError, resolveRequestHost } from "../../lib/publicHomepage";
+
+const { id } = Astro.params;
+const requestUrl = new URL(Astro.request.url);
+
+let host: string;
+try {
+  host = resolveRequestHost(Astro.request, requestUrl.searchParams);
+} catch (err) {
+  const reason =
+    err instanceof HostResolutionError || (err && typeof err === "object" && "reason" in err)
+      ? String((err as { reason: string }).reason)
+      : "invalid_host";
+  return new Response(`Invalid host (${reason})`, {
+    status: 400,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
+const hostHeader = Astro.request.headers.get("host") ?? "";
+const hostFromHeader = hostHeader.split(":")[0].toLowerCase();
+const isLocal = hostFromHeader === "localhost" || hostFromHeader === "127.0.0.1";
+
+const supabase = createPublicSupabaseClient(Astro.locals);
+if (!supabase) {
+  return new Response("Redirect unavailable (supabase runtime config missing)", {
+    status: 503,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
+const { data: rows, error } = await supabase.rpc("public_get_products_by_host", {
+  p_host: host,
+});
+if (error) console.error("legacy produto redirect RPC:", error);
+
+const needle = String(id || "").trim();
+const products = Array.isArray(rows) ? rows : [];
+const match = products.find(
+  (row) =>
+    row.product_id === needle ||
+    row.slug === needle ||
+    String(row.slug || "").toLowerCase() === needle.toLowerCase(),
+);
+
+const targetPath = match?.slug ? `/p/${match.slug}` : "/catalogo";
+const location = new URL(targetPath, requestUrl.origin);
+if (isLocal) location.searchParams.set("host", host);
+
+return Astro.redirect(location.pathname + location.search, 302);
+---

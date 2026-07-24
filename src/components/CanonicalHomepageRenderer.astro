@@ -14,6 +14,7 @@ import FeaturesBlock from "./blocks/FeaturesBlock.astro"
 import ProcessBlock from "./blocks/ProcessBlock.astro"
 import InfoCardBlock from "./blocks/InfoCardBlock.astro"
 import TestimonialsBlock from "./blocks/TestimonialsBlock.astro"
+import ProofGalleryBlock from "./blocks/ProofGalleryBlock.astro"
 import CtaBlock from "./blocks/CtaBlock.astro"
 import CatalogCategoryNavBlock from "./blocks/CatalogCategoryNavBlock.astro"
 import CatalogProductGridBlock from "./blocks/CatalogProductGridBlock.astro"
@@ -45,6 +46,40 @@ const { plan: rawPlan, showDiagnostics = false, presentationChrome = null } = As
 const plan = enrichPlanPaintWithPresentationChrome(rawPlan, presentationChrome as any) as SerializableHomepageRenderPlan
 
 type PaintedNode = NonNullable<SerializableHomepageRenderNode["paint"]>
+type Editorial = {
+  atmosphere?: string
+  composition?: string
+  suppressProblem?: boolean
+  suppressServices?: boolean
+  heroVideoUrl?: string | null
+  processVideoUrl?: string | null
+  proofCases?: unknown[]
+  testimonialCards?: unknown[]
+  testimonialsSubtitle?: string | null
+  manifestoGhost?: string[]
+  manifestoStatement?: string[]
+  sectionIds?: {
+    method?: string
+    benefits?: string
+    proof?: string
+    testimonials?: string
+    manifesto?: string
+  }
+}
+
+const editorial =
+  presentationChrome &&
+  typeof presentationChrome === "object" &&
+  (presentationChrome as { cinematicEditorial?: Editorial }).cinematicEditorial
+    ? ((presentationChrome as { cinematicEditorial: Editorial }).cinematicEditorial as Editorial)
+    : null
+
+const isCinematic =
+  presentationChrome &&
+  typeof presentationChrome === "object" &&
+  (presentationChrome as { profile?: string }).profile === "f1.presentation.cinematic_v1"
+
+const isPtTrainer = editorial?.composition === "pt_trainer"
 
 function sanitizeCommentValue(value: string): string {
   return value.replaceAll("--", " ").trim()
@@ -75,12 +110,33 @@ function cinematicPresentationNodes(
   return next
 }
 
-const presentationOrderedNodes =
-  presentationChrome &&
-  typeof presentationChrome === "object" &&
-  (presentationChrome as { profile?: string }).profile === "f1.presentation.cinematic_v1"
-    ? cinematicPresentationNodes(orderedNodes)
-    : orderedNodes
+/** PT trainer SPA parity: hero → proof → method(process) → benefits → testimonials → manifesto. */
+function ptTrainerPresentationNodes(
+  nodes: SerializableHomepageRenderNode[],
+): SerializableHomepageRenderNode[] {
+  const by = (component: string) => nodes.filter((node) => node.paint?.component === component)
+  const rest = nodes.filter(
+    (node) =>
+      !["hero", "problem", "services", "process", "features", "benefits", "testimonials", "cta_final"].includes(
+        node.paint?.component ?? "",
+      ),
+  )
+  return [
+    ...by("hero"),
+    ...by("process"),
+    ...by("features"),
+    ...by("benefits"),
+    ...by("testimonials"),
+    ...rest,
+    ...by("cta_final"),
+  ]
+}
+
+const presentationOrderedNodes = !isCinematic
+  ? orderedNodes
+  : isPtTrainer
+    ? ptTrainerPresentationNodes(orderedNodes)
+    : cinematicPresentationNodes(orderedNodes)
 
 const paintedEntries = presentationOrderedNodes.map((node) => {
   const paint = node.paint as PaintedNode | undefined
@@ -91,15 +147,37 @@ const paintedEntries = presentationOrderedNodes.map((node) => {
       reason: "paint_missing_on_node",
     }
   }
+  if (editorial?.suppressProblem && (paint.component === "problem" || paint.component === "rich_text")) {
+    return { kind: "skipped" as const, node, reason: "cinematic_suppress_problem" }
+  }
+  if (editorial?.suppressServices && paint.component === "services") {
+    return { kind: "skipped" as const, node, reason: "cinematic_suppress_services" }
+  }
+  if (
+    isPtTrainer &&
+    paint.component === "testimonials" &&
+    Array.isArray(editorial?.testimonialCards) &&
+    editorial.testimonialCards.length > 0
+  ) {
+    return { kind: "skipped" as const, node, reason: "cinematic_pt_testimonials_via_features" }
+  }
   return { kind: "paint" as const, node, paint }
 })
 
 const unsupportedEntries = paintedEntries.filter(
   (entry): entry is Extract<(typeof paintedEntries)[number], { kind: "unsupported" }> =>
-    entry.kind === "unsupported"
+    entry.kind === "unsupported",
 )
 const unsupportedComponentKeys = unsupportedEntries.map((entry) => entry.node.componentKey)
 const renderedCount = paintedEntries.filter((entry) => entry.kind === "paint").length
+
+const proofCases = Array.isArray(editorial?.proofCases) ? editorial.proofCases : []
+const testimonialCards = Array.isArray(editorial?.testimonialCards) ? editorial.testimonialCards : []
+const proofSectionId = editorial?.sectionIds?.proof || "resultados"
+const testimonialsSectionId = editorial?.sectionIds?.testimonials || "depoimentos"
+const methodSectionId = editorial?.sectionIds?.method || "metodo"
+const benefitsSectionId = editorial?.sectionIds?.benefits || "beneficios"
+const manifestoSectionId = editorial?.sectionIds?.manifesto || "manifesto-final"
 ---
 
 {
@@ -154,7 +232,7 @@ const renderedCount = paintedEntries.filter((entry) => entry.kind === "paint").l
 
 {
   paintedEntries.map((entry) => {
-    if (entry.kind === "unsupported") {
+    if (entry.kind === "unsupported" || entry.kind === "skipped") {
       return <Fragment set:html={commentFor(entry.node, entry.reason)} />
     }
 
@@ -164,10 +242,24 @@ const renderedCount = paintedEntries.filter((entry) => entry.kind === "paint").l
     switch (paint.component) {
       case "hero":
         return (
-          <HeroBlock
-            block={paint.block as HeroBlockType}
-            layout={layout.heroLayout === "cinematic" ? "cinematic" : "standard"}
-          />
+          <>
+            <HeroBlock
+              block={paint.block as HeroBlockType}
+              layout={
+                layout.heroLayout === "cinematic"
+                  ? "cinematic"
+                  : layout.heroLayout === "catalog"
+                    ? "catalog"
+                    : "standard"
+              }
+              videoUrl={editorial?.heroVideoUrl ?? null}
+              ctaIcon={editorial?.atmosphere === "pt_dark" ? "none" : "auto"}
+              omitPoster={editorial?.atmosphere === "pt_dark"}
+            />
+            {isPtTrainer && proofCases.length > 0 && (
+              <ProofGalleryBlock cases={proofCases as any} sectionId={proofSectionId} />
+            )}
+          </>
         )
 
       case "trust":
@@ -191,7 +283,13 @@ const renderedCount = paintedEntries.filter((entry) => entry.kind === "paint").l
                     ? "cards"
                     : "list"
             }
-            sectionId={typeof layout.sectionId === "string" ? layout.sectionId : undefined}
+            sectionId={
+              typeof layout.sectionId === "string"
+                ? layout.sectionId
+                : isPtTrainer
+                  ? methodSectionId
+                  : undefined
+            }
           />
         )
 
@@ -235,14 +333,53 @@ const renderedCount = paintedEntries.filter((entry) => entry.kind === "paint").l
 
       case "features":
         return (
-          <FeaturesBlock
-            block={paint.block as FeaturesBlockType}
-            layout={
-              layout.benefitsLayout === "cinematic-principles"
-                ? "cinematic-principles"
-                : "standard"
-            }
-          />
+          <>
+            <FeaturesBlock
+              block={paint.block as FeaturesBlockType}
+              layout={
+                layout.benefitsLayout === "cinematic-outcomes"
+                  ? "cinematic-outcomes"
+                  : layout.benefitsLayout === "cinematic-principles"
+                    ? "cinematic-principles"
+                    : "standard"
+              }
+              sectionId={
+                typeof layout.sectionId === "string"
+                  ? layout.sectionId
+                  : isPtTrainer
+                    ? benefitsSectionId
+                    : undefined
+              }
+              outcomeImageUrls={
+                Array.isArray((paint.block as any)?.content?.outcomeImageUrls)
+                  ? ((paint.block as any).content.outcomeImageUrls as string[])
+                  : []
+              }
+            />
+            {isPtTrainer && testimonialCards.length > 0 && (
+              <TestimonialsBlock
+                block={{
+                  type: "testimonials",
+                  content: {
+                    title: null,
+                    subtitle: editorial?.testimonialsSubtitle ?? null,
+                    items: (testimonialCards as any[]).map((card) => ({
+                      company: card.name,
+                      tag: card.meta,
+                      quote: card.quote,
+                      result: null,
+                      videoUrl: card.videoUrl,
+                      posterUrl: card.posterUrl ?? null,
+                    })),
+                    images: [],
+                  },
+                }}
+                layout="cinematic-video"
+                sectionId={testimonialsSectionId}
+                sectionTitleFallback="Escute dos alunos"
+              />
+            )}
+          </>
         )
 
       case "process":
@@ -254,11 +391,20 @@ const renderedCount = paintedEntries.filter((entry) => entry.kind === "paint").l
               layout.processBadgeEmphasis === "primary" ? "primary" : "accent"
             }
             layout={
-              layout.processLayout === "cinematic-journey"
-                ? "cinematic-journey"
-                : "standard"
+              layout.processLayout === "cinematic-method"
+                ? "cinematic-method"
+                : layout.processLayout === "cinematic-journey"
+                  ? "cinematic-journey"
+                  : "standard"
             }
-            sectionId={typeof layout.sectionId === "string" ? layout.sectionId : undefined}
+            sectionId={
+              typeof layout.sectionId === "string"
+                ? layout.sectionId
+                : isPtTrainer
+                  ? methodSectionId
+                  : undefined
+            }
+            videoUrl={editorial?.processVideoUrl ?? null}
           />
         )
 
@@ -273,21 +419,42 @@ const renderedCount = paintedEntries.filter((entry) => entry.kind === "paint").l
         )
 
       case "testimonials":
-        return <TestimonialsBlock block={paint.block as TestimonialsBlockType} />
+        return (
+          <TestimonialsBlock
+            block={paint.block as TestimonialsBlockType}
+            layout={testimonialCards.length > 0 ? "cinematic-video" : "standard"}
+            sectionId={testimonialsSectionId}
+          />
+        )
 
       case "cta_final":
         return (
           <CtaBlock
             block={paint.block as CtaBlockType}
             layout={layout.ctaLayout === "cinematic-band" ? "cinematic-band" : "standard"}
+            manifestoGhost={editorial?.manifestoGhost ?? []}
+            manifestoStatement={editorial?.manifestoStatement ?? []}
+            manifestoImageUrl={
+              isPtTrainer
+                ? ((paint.block as any)?.content?.manifestoImageUrl as string) ||
+                  "/presentation/cinematic_v1/pt/manifesto-portrait.png"
+                : ((paint.block as any)?.content?.manifestoImageUrl as string) || null
+            }
+            sectionId={
+              typeof layout.sectionId === "string"
+                ? layout.sectionId
+                : isPtTrainer
+                  ? manifestoSectionId
+                  : undefined
+            }
           />
         )
 
       case "category_nav":
-        return <CatalogCategoryNavBlock block={paint.block} />
+        return <CatalogCategoryNavBlock block={paint.block} layout={layout} />
 
       case "product_grid":
-        return <CatalogProductGridBlock block={paint.block} />
+        return <CatalogProductGridBlock block={paint.block} layout={layout} />
 
       case "customization":
       case "maker_story":
@@ -297,114 +464,13 @@ const renderedCount = paintedEntries.filter((entry) => entry.kind === "paint").l
       default:
         return (
           <Fragment
-            set:html={commentFor(entry.node, `unsupported_paint_component_${paint.component}`)}
+            set:html={commentFor(entry.node, `unsupported_component:${paint.component}`)}
           />
         )
     }
   })
 }
 
-<style>
-  .canonical-diagnostics {
-    margin: 1.5rem auto 2rem;
-    max-width: 1100px;
-    padding: 1rem 1.25rem;
-    border: 1px solid hsl(35 15% 82%);
-    border-radius: 0.75rem;
-    background: hsl(40 33% 97%);
-    color: hsl(220 15% 15%);
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-      "Courier New", monospace;
-    font-size: 0.9rem;
-    line-height: 1.5;
-  }
-
-  .canonical-diagnostics__header {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    align-items: baseline;
-  }
-
-  .canonical-diagnostics__header strong {
-    font-size: 0.95rem;
-  }
-
-  .canonical-diagnostics__stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.75rem;
-    margin: 1rem 0 0;
-  }
-
-  .canonical-diagnostics__stats div {
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    background: hsl(0 0% 100% / 0.85);
-    border: 1px solid hsl(35 15% 86%);
-  }
-
-  .canonical-diagnostics__stats dt {
-    margin: 0;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: hsl(220 10% 35%);
-  }
-
-  .canonical-diagnostics__stats dd {
-    margin: 0.25rem 0 0;
-    font-size: 1.1rem;
-    font-weight: 700;
-  }
-
-  .canonical-diagnostics__body {
-    display: grid;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-
-  .canonical-diagnostics__body h2 {
-    margin: 0 0 0.5rem;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: hsl(220 10% 35%);
-  }
-
-  .canonical-diagnostics__body p,
-  .canonical-diagnostics__body ul {
-    margin: 0;
-  }
-
-  .canonical-diagnostics__body ul {
-    padding-left: 1.2rem;
-  }
-
-  .canonical-diagnostics__body li + li {
-    margin-top: 0.35rem;
-  }
-
-  @media (min-width: 900px) {
-    .canonical-diagnostics__body {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-    }
-  }
-
-  @media (max-width: 720px) {
-    .canonical-diagnostics {
-      margin: 1rem 1rem 1.5rem;
-      padding: 0.9rem 1rem;
-      font-size: 0.84rem;
-    }
-
-    .canonical-diagnostics__header {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .canonical-diagnostics__stats {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-</style>
+{!isPtTrainer && isCinematic && proofCases.length > 0 && (
+  <ProofGalleryBlock cases={proofCases as any} sectionId={proofSectionId} />
+)}
