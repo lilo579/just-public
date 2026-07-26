@@ -381,20 +381,31 @@ const planForSeo =
   choice.mode === "canonical" ? choice.plan : homepageWithSource.serializablePlan
 
 const justSeo = packagedInstitutional?.comingSoonSeo || null
-const seoExplicit =
-  homepageWithSource.source?.meta?.seo &&
-  typeof homepageWithSource.source.meta.seo === "object"
-    ? homepageWithSource.source.meta.seo
-    : justSeo
-      ? {
-          title: justSeo.title,
-          description: justSeo.description,
-          ogTitle: justSeo.ogTitle,
-          ogDescription: justSeo.ogDescription,
-          ogImage: `/branding/${packagedInstitutional.slug}/og-image.jpg`,
-          favicon: `/branding/${packagedInstitutional.slug}/favicon.ico`,
-        }
-      : null
+/** R1 JUST-scoped: empty Hub meta.seo must not suppress packaged Coming Soon SEO. */
+function hubSeoHasNonEmptyString(seo) {
+  if (!seo || typeof seo !== "object") return false
+  return Object.values(seo).some(
+    (v) => typeof v === "string" && v.trim().length > 0,
+  )
+}
+const hubSeo = homepageWithSource.source?.meta?.seo
+const packagedJustSeoExplicit = justSeo
+  ? {
+      title: justSeo.title,
+      description: justSeo.description,
+      ogTitle: justSeo.ogTitle,
+      ogDescription: justSeo.ogDescription,
+      ogImage: `/branding/${packagedInstitutional.slug}/og-image.jpg`,
+      favicon: `/branding/${packagedInstitutional.slug}/favicon.svg`,
+    }
+  : null
+const seoExplicit = packagedInstitutional
+  ? hubSeoHasNonEmptyString(hubSeo)
+    ? hubSeo
+    : packagedJustSeoExplicit
+  : hubSeo && typeof hubSeo === "object"
+    ? hubSeo
+    : null
 
 const seo = buildPublicHomepageSeo({
   host,
@@ -456,6 +467,7 @@ const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
       description={seo.description}
       ogTitle={seo.ogTitle}
       ogDescription={seo.ogDescription}
+      ogSiteName={packagedInstitutional ? "JUST" : undefined}
       canonicalUrl={seo.canonicalUrl}
       ogImage={seo.ogImage}
       faviconUrl={seo.faviconUrl}

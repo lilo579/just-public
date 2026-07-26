@@ -88,8 +88,7 @@ export async function loadJustInstitutionalChrome(request, locals) {
   const seoBase = packaged.comingSoonSeo
   const faviconUrl = resolveBrandFaviconUrl({
     host,
-    favicon: `/branding/${packaged.slug}/favicon.ico`,
-    preferIco: true,
+    favicon: `/branding/${packaged.slug}/favicon.svg`,
   })
   const ogImage = toAbsolutePublicUrl(
     host,

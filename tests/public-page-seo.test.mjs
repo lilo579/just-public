@@ -104,10 +104,10 @@ test("JUST packaged OG is absolute on www (D-001)", () => {
     branding: {},
     seo: {
       ogImage: "/branding/just/og-image.jpg",
-      favicon: "/branding/just/favicon.ico",
+      favicon: "/branding/just/favicon.svg",
     },
   })
-  assert.equal(seo.faviconUrl, "/branding/just/favicon.ico")
+  assert.equal(seo.faviconUrl, "/branding/just/favicon.svg")
   assert.equal(
     seo.ogImage,
     "https://www.justwebsites.com.br/branding/just/og-image.jpg",
@@ -117,6 +117,15 @@ test("JUST packaged OG is absolute on www (D-001)", () => {
     toAbsolutePublicUrl("www.justwebsites.com.br", "/branding/just/og-image.jpg"),
     "https://www.justwebsites.com.br/branding/just/og-image.jpg",
   )
+})
+
+test("JUST packaged favicon defaults to SVG mark when Hub SEO unset", () => {
+  const seo = buildPublicHomepageSeo({
+    host: "www.justwebsites.com.br",
+    companyName: "JUST",
+    branding: {},
+  })
+  assert.equal(seo.faviconUrl, "/branding/just/favicon.svg")
 })
 
 test("favicon follows Golden Master: explicit → packaged/ogImage → logos", () => {

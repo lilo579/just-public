@@ -10,6 +10,7 @@ const {
   twitterCard = "summary",
   ogTitle,
   ogDescription,
+  ogSiteName,
   fontLoadUrl,
 } = Astro.props as {
   title: string
@@ -22,8 +23,12 @@ const {
   twitterCard?: string
   ogTitle?: string
   ogDescription?: string
+  /** Optional brand site name for og:site_name (e.g. JUST). */
+  ogSiteName?: string
   fontLoadUrl?: string | null
 }
+const resolvedOgSiteName =
+  typeof ogSiteName === "string" && ogSiteName.trim() ? ogSiteName.trim() : ""
 
 const jsonLdJson = jsonLd ? JSON.stringify(jsonLd) : ""
 
@@ -102,6 +107,9 @@ const webManifest =
 
 {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
 <meta property="og:type" content="website" />
+{resolvedOgSiteName && (
+  <meta property="og:site_name" content={resolvedOgSiteName} />
+)}
 <meta property="og:title" content={ogTitle || title} />
 {ogDescription || description ? (
   <meta property="og:description" content={ogDescription || description} />

@@ -71,7 +71,7 @@ const PACKAGED_FAVICON_SLUG_BY_HOST = Object.freeze({
 })
 
 /** Packs that ship favicon.ico only (no favicon.svg). */
-const PACKAGED_FAVICON_ICO_ONLY = new Set(["just"])
+const PACKAGED_FAVICON_ICO_ONLY = new Set([])
 /**
  * @param {string} host
  * @returns {string}

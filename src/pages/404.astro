@@ -38,8 +38,7 @@ const fontLoadUrl =
   typeof tokens.__fontLoadUrl === "string" ? tokens.__fontLoadUrl : null
 const faviconUrl = resolveBrandFaviconUrl({
   host,
-  favicon: packaged ? `/branding/${packaged.slug}/favicon.ico` : "",
-  preferIco: true,
+  favicon: packaged ? `/branding/${packaged.slug}/favicon.svg` : "",
 })
 const ogImage = packaged
   ? toAbsolutePublicUrl(host, `/branding/${packaged.slug}/og-image.jpg`)

@@ -342,7 +342,7 @@ function buildJustInstitutionalFixture(host, siteMode = "COMING_SOON") {
           ogDescription:
             "Estamos finalizando a primeira versão pública da JUST. Plataforma para pequenos negócios reunirem gestão, site, agenda, financeiro e marketing em um único lugar.",
           ogImage: "/branding/just/og-image.jpg",
-          favicon: "/branding/just/favicon.ico",
+          favicon: "/branding/just/favicon.svg",
         }),
       }),
     }),

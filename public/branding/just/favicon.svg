@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="JUST">
+  <!-- Official JUST symbol only: hexagon + lightning. No wordmark. -->
+  <defs>
+    <linearGradient id="hexStroke" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3DB8FF"/>
+      <stop offset="55%" stop-color="#7A5CFF"/>
+      <stop offset="100%" stop-color="#5B2FE0"/>
+    </linearGradient>
+    <linearGradient id="boltFill" x1="32" y1="12" x2="32" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFE14A"/>
+      <stop offset="100%" stop-color="#F5A623"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" fill="#000000"/>
+  <!-- Vertically elongated hexagon with padding -->
+  <path
+    fill="#0B1220"
+    stroke="url(#hexStroke)"
+    stroke-width="3.2"
+    stroke-linejoin="round"
+    d="M32 7.5
+       L50.5 18
+       L50.5 46
+       L32 56.5
+       L13.5 46
+       L13.5 18
+       Z"
+  />
+  <!-- Lightning bolt (centered) -->
+  <path
+    fill="url(#boltFill)"
+    d="M35.8 13.5
+       L24.2 32.2
+       H31.1
+       L26.4 50.5
+       L41.2 29.2
+       H33.8
+       Z"
+  />
+</svg>
