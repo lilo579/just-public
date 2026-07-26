@@ -1,0 +1,135 @@
+# M7B — one-shot DNS proxy flip for JUST institutional hosts.
+# Uses CLOUDFLARE_API_TOKEN (CI). Does NOT promote Worker Versions.
+# Sets apex/www A records to Proxied (orange); keeps origin IP.
+# Manual workflow_dispatch only.
+
+name: M7B JUST DNS Proxy Flip
+
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: "preflight | mutate | status"
+        required: true
+        default: "preflight"
+        type: choice
+        options:
+          - preflight
+          - mutate
+          - status
+
+permissions:
+  contents: read
+
+jobs:
+  dns-proxy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: cloudflare-preview
+    steps:
+      - name: JUST apex/www DNS proxy flip
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          PHASE: ${{ inputs.phase }}
+        run: |
+          set -euo pipefail
+          test -n "${CLOUDFLARE_API_TOKEN:-}"
+          test -n "${CLOUDFLARE_ACCOUNT_ID:-}"
+
+          ZONE_ID="352d6957543a1ca9e63e4f21964e8a4d"
+          LEGACY_IP="185.158.133.1"
+          APEX="justwebsites.com.br"
+          WWW="www.justwebsites.com.br"
+
+          api() {
+            local method="$1" path="$2"
+            shift 2
+            curl -sS -X "$method" "https://api.cloudflare.com/client/v4${path}" \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              "$@"
+          }
+
+          echo "=== PHASE=${PHASE} ==="
+          echo "=== DNS snapshot (apex/www only) ==="
+          DNS_JSON="$(api GET "/zones/${ZONE_ID}/dns_records?per_page=100")"
+          echo "$DNS_JSON" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          print('success', d.get('success'), 'errors', d.get('errors'))
+          if not d.get('success'):
+            raise SystemExit(1)
+          targets={'${APEX}','${WWW}'}
+          for r in d.get('result') or []:
+            if r.get('name') in targets:
+              print(r.get('type'), r.get('name'), r.get('content'), 'proxied='+str(r.get('proxied')), 'id='+r.get('id'))
+          "
+
+          if [ "$PHASE" = "preflight" ] || [ "$PHASE" = "status" ]; then
+            exit 0
+          fi
+
+          if [ "$PHASE" != "mutate" ]; then
+            echo "Unknown phase" >&2
+            exit 1
+          fi
+
+          echo "=== PATCH proxied=true (keep content IP) ==="
+          echo "$DNS_JSON" | python3 -c "
+          import json,sys,os,urllib.request
+          d=json.load(sys.stdin)
+          token=os.environ['CLOUDFLARE_API_TOKEN']
+          zone='${ZONE_ID}'
+          legacy='${LEGACY_IP}'
+          targets={('${APEX}','A'),('${WWW}','A')}
+          patched=0
+          for r in d.get('result') or []:
+            key=(r.get('name'), r.get('type'))
+            if key not in targets:
+              continue
+            if r.get('content') != legacy:
+              print('SKIP unexpected content', key, r.get('content'))
+              continue
+            if r.get('proxied') is True:
+              print('ALREADY_PROXIED', key, r.get('id'))
+              patched += 1
+              continue
+            rid=r['id']
+            body=json.dumps({
+              'type': 'A',
+              'name': r['name'],
+              'content': legacy,
+              'proxied': True,
+              'ttl': 1,
+            }).encode()
+            print('PATCH', key, rid, 'proxied=true')
+            req=urllib.request.Request(
+              f'https://api.cloudflare.com/client/v4/zones/{zone}/dns_records/{rid}',
+              data=body,
+              method='PUT',
+              headers={'Authorization':f'Bearer {token}','Content-Type':'application/json'},
+            )
+            with urllib.request.urlopen(req) as resp:
+              out=json.load(resp)
+            print(' result', out.get('success'), out.get('errors'))
+            if not out.get('success'):
+              raise SystemExit(2)
+            rr=(out.get('result') or {})
+            print(' after', rr.get('name'), rr.get('content'), 'proxied='+str(rr.get('proxied')))
+            patched += 1
+          if patched < 2:
+            print('EXPECTED 2 apex/www A records, patched/seen', patched)
+            raise SystemExit(3)
+          print('PATCH_OK', patched)
+          "
+
+          echo "=== Post snapshot ==="
+          api GET "/zones/${ZONE_ID}/dns_records?per_page=100" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          targets={'${APEX}','${WWW}'}
+          for r in d.get('result') or []:
+            if r.get('name') in targets:
+              print(r.get('type'), r.get('name'), r.get('content'), 'proxied='+str(r.get('proxied')))
+          "
