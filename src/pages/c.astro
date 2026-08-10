@@ -5,10 +5,20 @@ import { createPublicSupabaseClient } from '../lib/publicSupabase.js'
 import CatalogProductCard from '../components/catalog/CatalogProductCard.astro'
 import catalogF3CssUrl from '../styles/catalog-f3.css?url'
 import { buildCatalogHref } from '../lib/catalogBrowse.js'
+import {
+  isLeadIntakeSafeMode,
+  resolveDeployEnv,
+} from '../lib/runtimeEnv.js'
+import {
+  buildCanonicalUrl,
+  CanonicalAuthorityError,
+  canonicalAuthorityErrorResponse,
+  fetchPublicCanonicalFromRpc,
+  requirePublicCanonical,
+} from '../lib/canonicalAuthority.js'
 
 const url = new URL(Astro.request.url)
 const hostOverride = url.searchParams.get('host')?.trim() ?? ''
-const baseOverride = url.searchParams.get('base')?.trim() ?? ''
 
 const hostHeader = Astro.request.headers.get('host') ?? ''
 const hostFromHeader = hostHeader.split(':')[0].toLowerCase()
@@ -22,12 +32,36 @@ if (isLocalHost && !hostOverride) {
 }
 
 const host = hostOverride || hostFromHeader
+const deployEnv = resolveDeployEnv(Astro.locals)
+const noindex = isLocalHost || isLeadIntakeSafeMode(deployEnv)
+
 const supabase = createPublicSupabaseClient(Astro.locals)
 if (!supabase) {
   return new Response('Catalog unavailable (supabase runtime config missing)', {
     status: 503,
     headers: { 'Content-Type': 'text/plain; charset=utf-8' },
   })
+}
+
+/** Prefer request-scoped canonical from middleware; RPC only if missing. */
+let pageCanonical = null
+try {
+  const fromLocals =
+    Astro.locals.publicCanonical &&
+    typeof Astro.locals.publicCanonical === 'object'
+      ? Astro.locals.publicCanonical
+      : null
+  if (fromLocals) {
+    pageCanonical = requirePublicCanonical(fromLocals, { deployEnv, noindex })
+  } else {
+    const fromRpc = await fetchPublicCanonicalFromRpc(supabase, host)
+    pageCanonical = requirePublicCanonical(fromRpc, { deployEnv, noindex })
+  }
+} catch (err) {
+  if (err instanceof CanonicalAuthorityError) {
+    return canonicalAuthorityErrorResponse(err)
+  }
+  throw err
 }
 
 const { data: rows, error } = await supabase.rpc('public_get_products_by_host', {
@@ -46,13 +80,12 @@ const companyName = products[0]?.company_name ?? 'Loja'
 const whatsappNumberRaw = products[0]?.whatsapp_number ?? ''
 const whatsappNumber = String(whatsappNumberRaw).replace(/\D/g, '')
 
-const baseUrl = baseOverride || `https://${host}`
-const pageUrl = `${baseUrl}/c`
+const pageUrl = pageCanonical ? buildCanonicalUrl(pageCanonical, '/c') : undefined
 const seller = url.searchParams.get('s')?.trim() ?? ''
 const camp = url.searchParams.get('camp')?.trim() ?? ''
 const msgVariant = url.searchParams.get('msg')?.trim() ?? '1'
 
-const shareUrl = new URL(pageUrl)
+const shareUrl = pageUrl ? new URL(pageUrl) : new URL(`https://example.invalid/c`)
 if (hostOverride) shareUrl.searchParams.set('host', hostOverride)
 if (seller) shareUrl.searchParams.set('s', seller)
 if (camp) shareUrl.searchParams.set('camp', camp)
@@ -70,7 +103,7 @@ const shareMessage =
 const title = `${companyName} — Catálogo`
 const description = `Veja o catálogo completo de ${companyName} e compre pelo WhatsApp.`
 const ogImage = featured[0]?.image_url || products[0]?.image_url || ''
-const waText = `Olá! Quero ver/comprar pelo catálogo: ${pageUrl}`
+const waText = `Olá! Quero ver/comprar pelo catálogo: ${pageUrl || shareLink}`
 const waLink = whatsappNumber
   ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(waText)}`
   : null
@@ -83,15 +116,15 @@ const localHostParam = isLocalHost ? host : ''
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={pageUrl} />
+    {pageUrl && <link rel="canonical" href={pageUrl} />}
     <meta property="og:locale" content="pt_BR" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={companyName} />
-    <meta property="og:url" content={pageUrl} />
+    {pageUrl && <meta property="og:url" content={pageUrl} />}
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     {ogImage && <meta property="og:image" content={ogImage} />}
-    {isLocalHost && <meta name="robots" content="noindex,nofollow" />}
+    {noindex && <meta name="robots" content="noindex,nofollow" />}
     <link rel="stylesheet" href={catalogF3CssUrl} />
   </head>
   <body class="catalog-browse">
