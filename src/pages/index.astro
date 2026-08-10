@@ -26,6 +26,16 @@ import { resolvePocFixturePayload } from "../poc/publicSiteFixtures.js"
 import { themeTokensFromBranding } from "../lib/themeFromBranding"
 import { buildPublicHomepageSeo } from "../lib/publicPageSeo.js"
 import {
+  JUST_OG_IMAGE_HEIGHT,
+  JUST_OG_IMAGE_WIDTH,
+  buildJustComingSoonJsonLd,
+} from "../lib/justInstitutionalSeo.js"
+import {
+  CanonicalAuthorityError,
+  canonicalAuthorityErrorResponse,
+  requirePublicCanonical,
+} from "../lib/canonicalAuthority.js"
+import {
   resolveHeaderLogoUrl,
   resolveHeaderOverHeroLogoUrl,
   resolveFooterLogoUrl,
@@ -77,7 +87,16 @@ const hostOverride = resolveCatalogHostOverride(requestUrl.searchParams, host)
 /** @type {ResolvedHomepage} */
 let homepage: ResolvedHomepage
 
-if (isPocFixtureMode(Astro.locals)) {
+const scopedPayload =
+  Astro.locals.publicSitePayloadHost === host &&
+  Astro.locals.publicSitePayload &&
+  typeof Astro.locals.publicSitePayload === "object"
+    ? Astro.locals.publicSitePayload
+    : null
+
+if (scopedPayload) {
+  homepage = scopedPayload as ResolvedHomepage
+} else if (isPocFixtureMode(Astro.locals)) {
   const fixture = resolvePocFixturePayload(host)
   if (!fixture) {
     return new Response(`Site unavailable\nHost: ${host}\nStatus: 404`, {
@@ -86,38 +105,43 @@ if (isPocFixtureMode(Astro.locals)) {
     })
   }
   homepage = fixture as ResolvedHomepage
+  Astro.locals.publicSitePayload = homepage
+  Astro.locals.publicSitePayloadHost = host
 } else {
   const payloadUrl = resolveSitePayloadUrl(Astro.locals)
   const anonKey = resolveSupabaseAnonKey(Astro.locals) ?? ""
   if (!payloadUrl) {
     return new Response("PUBLIC_SITE_PAYLOAD_URL missing", {
       status: 503,
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
+        "X-Robots-Tag": "noindex, nofollow",
+      },
     })
   }
-
-  console.log(
-    JSON.stringify({
-      msg: "public_host_resolved",
-      host,
-      status: "fetching_payload",
-    }),
-  )
 
   const fetched = await fetchPublicSitePayload({ kind: "host", host }, "public", {
     payloadUrl,
     anonKey,
   })
   if (!fetched.ok) {
+    const status = fetched.status === 404 ? 404 : fetched.status >= 500 ? 503 : 502
     return new Response(
       `Site unavailable\nHost: ${host}\nStatus: ${fetched.status}`,
       {
-        status: fetched.status === 404 ? 404 : 502,
-        headers: { "Content-Type": "text/plain; charset=utf-8" },
+        status,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-store",
+          "X-Robots-Tag": "noindex, nofollow",
+        },
       },
     )
   }
   homepage = fetched.homepage as ResolvedHomepage
+  Astro.locals.publicSitePayload = homepage
+  Astro.locals.publicSitePayloadHost = host
 }
 
 const homepageWithSource = homepage as ResolvedHomepage & {
@@ -407,8 +431,23 @@ const seoExplicit = packagedInstitutional
     ? hubSeo
     : null
 
+let publicCanonical
+try {
+  publicCanonical = requirePublicCanonical(homepageWithSource.canonical, {
+    deployEnv,
+    noindex,
+  })
+} catch (err) {
+  if (err instanceof CanonicalAuthorityError) {
+    return canonicalAuthorityErrorResponse(err)
+  }
+  throw err
+}
+
 const seo = buildPublicHomepageSeo({
   host,
+  canonical: publicCanonical,
+  pathname: "/",
   companyName: brandingName === "Site" && packagedInstitutional ? "JUST" : brandingName,
   branding: homepageWithSource.source?.meta?.branding ?? packagedInstitutional?.themeBranding ?? null,
   contact: homepageWithSource.source?.contact ?? null,
@@ -417,9 +456,14 @@ const seo = buildPublicHomepageSeo({
   seo: seoExplicit,
   noindex,
 })
-/** M1: do not invent JSON-LD for JUST Coming Soon / institutional until OD. */
-if (packagedInstitutional) {
-  /** @type {any} */ (seo).jsonLd = undefined
+/** R3 JUST: accurate Coming Soon schemas; origin from payload canonical (ADR-SEO-001). */
+if (packagedInstitutional && publicCanonical) {
+  seo.ogImage = `${publicCanonical.origin}/branding/just/og-image.jpg`
+  seo.jsonLd = buildJustComingSoonJsonLd({
+    origin: publicCanonical.origin,
+    description: seo.description,
+    ogDescription: seo.ogDescription,
+  })
 }
 
 const whatsappDigits = String(
@@ -468,6 +512,9 @@ const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
       ogTitle={seo.ogTitle}
       ogDescription={seo.ogDescription}
       ogSiteName={packagedInstitutional ? "JUST" : undefined}
+      ogImageWidth={packagedInstitutional ? JUST_OG_IMAGE_WIDTH : undefined}
+      ogImageHeight={packagedInstitutional ? JUST_OG_IMAGE_HEIGHT : undefined}
+      ogImageAlt={packagedInstitutional ? "JUST" : undefined}
       canonicalUrl={seo.canonicalUrl}
       ogImage={seo.ogImage}
       faviconUrl={seo.faviconUrl}
@@ -477,10 +524,15 @@ const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
       fontLoadUrl={fontLoadUrl}
     />
     {isCinematicPresentation && <link rel="stylesheet" href={cinematicF1CssUrl} />}
-    {isF3Presentation && <link rel="stylesheet" href={catalogF3CssUrl} />}
-    {(isJustInstitutionalNormal || (isInterstitialMode && packagedInstitutional)) && (
+    {isF3Presentation && !isInterstitialMode && (
+      <link rel="stylesheet" href={catalogF3CssUrl} />
+    )}
+    {isJustInstitutionalNormal && (
       <link rel="stylesheet" href={justInstitutionalCssUrl} />
     )}
+    {packagedInstitutional && isInterstitialMode && modeLogo ? (
+      <link rel="preload" as="image" href={modeLogo} fetchpriority="high" />
+    ) : null}
     {packagedInstitutional ? <meta name="theme-color" content="#121212" /> : null}
   </head>
   <body>
@@ -495,25 +547,27 @@ const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
               description={siteModeConfig.description || siteModeConfig.subtitle}
             />
           ) : (
-            <ComingSoonPage
-              companyName={packagedInstitutional ? "JUST" : brandingName}
-              logoUrl={modeLogo}
-              headline={siteModeConfig.headline}
-              subtitle={siteModeConfig.subtitle}
-              description={siteModeConfig.description}
-              paragraphs={modeParagraphs}
-              ctaLabel={siteModeConfig.ctaLabel}
-              ctaHref={modeCtaHref || null}
-              email={siteModeConfig.email}
-              socialLinks={modeSocial}
-              backgroundImageUrl={siteModeConfig.backgroundImageUrl}
-              heroImageUrl={siteModeConfig.heroImageUrl}
-              launchDate={siteModeConfig.launchDate}
-              leadForm={modeLeadForm}
-              legalLinks={modeLegalLinks}
-              showJustSignature={siteModeConfig.showJustSignature}
-              showEyebrow={siteModeConfig.showEyebrow}
-            />
+            <main id="main-content">
+              <ComingSoonPage
+                companyName={packagedInstitutional ? "JUST" : brandingName}
+                logoUrl={modeLogo}
+                headline={siteModeConfig.headline}
+                subtitle={siteModeConfig.subtitle}
+                description={siteModeConfig.description}
+                paragraphs={modeParagraphs}
+                ctaLabel={siteModeConfig.ctaLabel}
+                ctaHref={modeCtaHref || null}
+                email={siteModeConfig.email}
+                socialLinks={modeSocial}
+                backgroundImageUrl={siteModeConfig.backgroundImageUrl}
+                heroImageUrl={siteModeConfig.heroImageUrl}
+                launchDate={siteModeConfig.launchDate}
+                leadForm={modeLeadForm}
+                legalLinks={modeLegalLinks}
+                showJustSignature={siteModeConfig.showJustSignature}
+                showEyebrow={siteModeConfig.showEyebrow}
+              />
+            </main>
           )}
         </div>
       ) : isJustInstitutionalNormal ? (

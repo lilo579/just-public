@@ -101,7 +101,15 @@ const year = new Date().getFullYear()
     <header class="site-mode__brand">
       <a href="/" class="site-mode__brand-link" aria-label={`${companyName} — página inicial`}>
         {logoUrl ? (
-          <img src={logoUrl} alt={companyName} class="site-mode__logo" width="784" height="254" />
+          <img
+            src={logoUrl}
+            alt={companyName}
+            class="site-mode__logo"
+            width="784"
+            height="254"
+            decoding="async"
+            fetchpriority="high"
+          />
         ) : (
           <p class="site-mode__wordmark">{companyName}</p>
         )}

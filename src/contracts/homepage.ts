@@ -237,6 +237,17 @@ export {
 
 import type { SerializableHomepageRenderPlan as AuthorityPlan } from "@just/site-engine-authority"
 
+/**
+ * ADR-SEO-001 — public URL authority from the active primary domain (is_primary).
+ * Additive optional field on the public payload contract.
+ */
+export type PublicCanonicalContract = {
+  host: string
+  origin: string
+  requestHost: string
+  isPrimaryRequest: boolean
+}
+
 export type ResolvedHomepage = {
   tenantId: string
   status: HomepageStatus
@@ -244,4 +255,6 @@ export type ResolvedHomepage = {
   footer: HomepageFooter
   source?: HomepageSourcePayload
   serializablePlan?: AuthorityPlan
+  /** Present when an active primary domain exists (host path). */
+  canonical?: PublicCanonicalContract
 }

@@ -4,6 +4,9 @@ const {
   description,
   canonicalUrl,
   ogImage,
+  ogImageWidth,
+  ogImageHeight,
+  ogImageAlt,
   faviconUrl,
   robots,
   jsonLd,
@@ -17,6 +20,10 @@ const {
   description: string
   canonicalUrl?: string
   ogImage?: string
+  /** Optional absolute pixel size for og:image (social crawlers). */
+  ogImageWidth?: number | string
+  ogImageHeight?: number | string
+  ogImageAlt?: string
   faviconUrl?: string
   robots?: string
   jsonLd?: Record<string, unknown>
@@ -29,6 +36,16 @@ const {
 }
 const resolvedOgSiteName =
   typeof ogSiteName === "string" && ogSiteName.trim() ? ogSiteName.trim() : ""
+const resolvedOgImageAlt =
+  typeof ogImageAlt === "string" && ogImageAlt.trim() ? ogImageAlt.trim() : ""
+const resolvedOgImageWidth =
+  ogImageWidth !== undefined && ogImageWidth !== null && String(ogImageWidth).trim()
+    ? String(ogImageWidth).trim()
+    : ""
+const resolvedOgImageHeight =
+  ogImageHeight !== undefined && ogImageHeight !== null && String(ogImageHeight).trim()
+    ? String(ogImageHeight).trim()
+    : ""
 
 const jsonLdJson = jsonLd ? JSON.stringify(jsonLd) : ""
 
@@ -60,15 +77,19 @@ const PACKS_WITH_APPLE_TOUCH = new Set([
   "just",
 ])
 const PACKS_WITH_MANIFEST = new Set(["3d-jewish", "just"])
+/** Packs that ship mask-icon.svg for Safari pinned tabs. */
+const PACKS_WITH_MASK_ICON = new Set(["3d-jewish", "just"])
 const appleTouchIcon =
   brandingPackSlug && PACKS_WITH_APPLE_TOUCH.has(brandingPackSlug)
     ? `/branding/${brandingPackSlug}/apple-touch-icon.png`
     : ""
 /** Only emit when the pack ships mask-icon.svg (avoid co-tenant 404s). */
 const maskIcon =
-  brandingPackSlug === "3d-jewish"
+  brandingPackSlug && PACKS_WITH_MASK_ICON.has(brandingPackSlug)
     ? `/branding/${brandingPackSlug}/mask-icon.svg`
     : ""
+/** Safari applies this color to the mask silhouette. */
+const maskIconColor = brandingPackSlug === "just" ? "#121212" : "#111111"
 const webManifest =
   brandingPackSlug && PACKS_WITH_MANIFEST.has(brandingPackSlug)
     ? `/branding/${brandingPackSlug}/site.webmanifest`
@@ -90,6 +111,31 @@ const webManifest =
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
       </>
     ) : null}
+    {fontLoadUrl === "/fonts/just/just-fonts.css" ? (
+      <>
+        <link
+          rel="preload"
+          href="/fonts/just/Geist-Bold.woff2"
+          as="font"
+          type="font/woff2"
+          crossorigin
+        />
+        <link
+          rel="preload"
+          href="/fonts/just/Inter-Regular.woff2"
+          as="font"
+          type="font/woff2"
+          crossorigin
+        />
+        <link
+          rel="preload"
+          href="/fonts/just/Inter-SemiBold.woff2"
+          as="font"
+          type="font/woff2"
+          crossorigin
+        />
+      </>
+    ) : null}
     <link rel="stylesheet" href={fontLoadUrl} />
   </>
 )}
@@ -102,7 +148,7 @@ const webManifest =
   </>
 )}
 {appleTouchIcon && <link rel="apple-touch-icon" href={appleTouchIcon} />}
-{maskIcon && <link rel="mask-icon" href={maskIcon} color="#111111" />}
+{maskIcon && <link rel="mask-icon" href={maskIcon} color={maskIconColor} />}
 {webManifest && <link rel="manifest" href={webManifest} />}
 
 {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
@@ -115,6 +161,15 @@ const webManifest =
   <meta property="og:description" content={ogDescription || description} />
 ) : null}
 {ogImage && <meta property="og:image" content={ogImage} />}
+{ogImage && resolvedOgImageWidth && (
+  <meta property="og:image:width" content={resolvedOgImageWidth} />
+)}
+{ogImage && resolvedOgImageHeight && (
+  <meta property="og:image:height" content={resolvedOgImageHeight} />
+)}
+{ogImage && resolvedOgImageAlt && (
+  <meta property="og:image:alt" content={resolvedOgImageAlt} />
+)}
 <meta property="og:locale" content="pt_BR" />
 
 <meta name="twitter:card" content={twitterCard} />

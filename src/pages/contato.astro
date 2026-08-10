@@ -14,6 +14,7 @@ import {
   applyHostOverrideToNavItems,
   resolveCatalogHostOverride,
 } from "../lib/catalogBrowse.js";
+import { resolveChromeCanonicalUrl } from "../lib/canonicalAuthority.js";
 
 const requestUrl = new URL(Astro.request.url);
 let host: string;
@@ -42,6 +43,9 @@ if (!chrome.ok) {
 if (chrome.interstitial) {
   return Astro.redirect("/", 302);
 }
+
+const canonicalResolved = resolveChromeCanonicalUrl(chrome, "/contato");
+if (!canonicalResolved.ok) return canonicalResolved.response;
 
 const supabase = createPublicSupabaseClient(Astro.locals);
 if (!supabase) {
@@ -82,7 +86,7 @@ const navItems = applyHostOverrideToNavItems(chrome.navItems, hostOverride);
     <PublicSiteHead
       title={`${pageTitle} — ${companyName}`}
       description={description.slice(0, 160)}
-      canonicalUrl={`https://${host}/contato`}
+      canonicalUrl={canonicalResolved.canonicalUrl}
       ogImage={chrome.ogImage || null}
       faviconUrl={chrome.faviconUrl || null}
       robots={chrome.noindex ? "noindex,nofollow" : "index,follow"}

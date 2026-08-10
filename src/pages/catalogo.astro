@@ -20,6 +20,7 @@ import {
 import { createPublicSupabaseClient } from "../lib/publicSupabase.js";
 import { HostResolutionError, resolveRequestHost } from "../lib/publicHomepage";
 import { loadCatalogPublicChrome } from "../lib/loadCatalogPublicChrome.js";
+import { resolveChromeCanonicalUrl } from "../lib/canonicalAuthority.js";
 
 const requestUrl = new URL(Astro.request.url);
 let host: string;
@@ -48,6 +49,9 @@ if (!chrome.ok) {
 if (chrome.interstitial) {
   return Astro.redirect("/", 302);
 }
+
+const canonicalResolved = resolveChromeCanonicalUrl(chrome, "/catalogo");
+if (!canonicalResolved.ok) return canonicalResolved.response;
 
 const navItems = applyHostOverrideToNavItems(chrome.navItems, hostOverride);
 
@@ -130,7 +134,7 @@ const pageTitle =
   cmsTitle;
 
 const companyName = chrome.companyName;
-const pageUrl = `https://${host}/catalogo`;
+const pageUrl = canonicalResolved.canonicalUrl;
 const fontLoadUrl =
   typeof chrome.tokens?.__fontLoadUrl === "string" ? chrome.tokens.__fontLoadUrl : null;
 ---
