@@ -210,10 +210,10 @@ test("workerd canonical renderer + theme: Alpha/Beta isolation and error paths",
   assert.doesNotMatch(forceLegacy.body, /data-renderer="legacy"/)
 
   const malformed = await requestWithHost(port, HOST_MALFORMED)
-  assert.equal(malformed.status, 502)
+  assert.equal(malformed.status, 503)
   assert.doesNotMatch(malformed.body, /at Object\.|TypeError|SyntaxError|stack/i)
   assert.doesNotMatch(malformed.body, /Alpha Consulting|Beta Studio/)
-  assert.match(malformed.body, /Site unavailable|Invalid payload|Status: 502/)
+  assert.match(malformed.body, /Site unavailable|canonical_authority_unavailable|Invalid payload/)
 
   const badBrand = await requestWithHost(port, "bad-branding.justwebsites.com.br")
   assert.equal(badBrand.status, 200)

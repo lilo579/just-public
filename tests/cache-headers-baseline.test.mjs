@@ -35,12 +35,22 @@ test("unset deploy env defaults to no-store (no shared HTML cache)", () => {
   assert.equal(resolveHtmlCacheControl("weird", 200), "no-store")
 })
 
-test("public/_headers sets immutable only for /_astro/*", () => {
+test("public/_headers sets immutable for /_astro/* and /fonts/*; branding is TTL-only", () => {
   const text = fs.readFileSync(path.join(root, "public/_headers"), "utf8")
   assert.match(text, /\/_astro\/\*/)
+  assert.match(text, /\/fonts\/\*/)
+  assert.match(text, /\/branding\/\*/)
   assert.match(
     text,
-    /Cache-Control:\s*public,\s*max-age=31536000,\s*immutable/,
+    /\/_astro\/\*[\s\S]*?Cache-Control:\s*public,\s*max-age=31536000,\s*immutable/,
+  )
+  assert.match(
+    text,
+    /\/fonts\/\*[\s\S]*?Cache-Control:\s*public,\s*max-age=31536000,\s*immutable/,
+  )
+  assert.match(
+    text,
+    /\/branding\/\*[\s\S]*?Cache-Control:\s*public,\s*max-age=604800/,
   )
   assert.doesNotMatch(text, /\/favicon/)
   assert.doesNotMatch(text, /\/health/)
