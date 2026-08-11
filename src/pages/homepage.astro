@@ -1,100 +1,12 @@
 ---
+/**
+ * ADR-SEO-001 Phase 4 — `/homepage` is not a public indexable surface.
+ * Production GET/HEAD is 301 → `/` in middleware (one hop with host normalization).
+ * Technical renderer preview remains at `/preview` (non-indexable in preview/staging).
+ *
+ * Retained as a belt-and-suspenders redirect when middleware skips (e.g. safe-mode).
+ */
 export const prerender = false
 
-import type { ResolvedHomepage } from "../contracts/homepage"
-import HomepageRenderer from "../components/legacy/HomepageRenderer.astro"
-import CanonicalHomepageRenderer from "../components/CanonicalHomepageRenderer.astro"
-import SiteTheme from "../components/SiteTheme.astro"
-import {
-  chooseHomepageRenderer,
-  fetchPublicSitePayload,
-  HostResolutionError,
-  resolveRequestHost,
-} from "../lib/publicHomepage"
-import {
-  resolveSitePayloadUrl,
-  resolveSupabaseAnonKey,
-} from "../lib/runtimeEnv.js"
-import { themeTokensFromBranding } from "../lib/themeFromBranding"
-
-const requestUrl = new URL(Astro.request.url)
-/** Kill-switch: ?renderer=legacy is rejected when a canonical plan is present. */
-const forceLegacy = requestUrl.searchParams.get("renderer") === "legacy"
-
-let host: string
-try {
-  host = resolveRequestHost(Astro.request, requestUrl.searchParams)
-} catch (err) {
-  const reason =
-    err instanceof HostResolutionError ||
-    (err && typeof err === "object" && "reason" in err)
-      ? String((err as { reason: string }).reason)
-      : "invalid_host"
-  return new Response(`Invalid host (${reason})`, {
-    status: 400,
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
-  })
-}
-
-const payloadUrl = resolveSitePayloadUrl(Astro.locals)
-const anonKey = resolveSupabaseAnonKey(Astro.locals) ?? ""
-if (!payloadUrl) {
-  return new Response("PUBLIC_SITE_PAYLOAD_URL missing", {
-    status: 503,
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
-  })
-}
-
-const fetched = await fetchPublicSitePayload({ kind: "host", host }, "public", {
-  payloadUrl,
-  anonKey,
-})
-if (!fetched.ok) {
-  return new Response(`Site unavailable (${fetched.status})`, {
-    status: fetched.status === 404 ? 404 : 502,
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
-  })
-}
-
-const homepage = fetched.homepage as ResolvedHomepage
-const choice = chooseHomepageRenderer(homepage, { forceLegacy })
-if (choice.mode === "error") {
-  return new Response(`Homepage unavailable (${choice.reason})`, {
-    status: 502,
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
-  })
-}
-
-const tokens = themeTokensFromBranding(homepage.source?.meta?.branding ?? null)
-const title = homepage.source?.contact?.companyName ?? "Site"
+return Astro.redirect("/", 301)
 ---
-
-<html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-  </head>
-  <body>
-    <SiteTheme tokens={tokens}>
-      <main class="page-shell" data-renderer={choice.mode}>
-        {choice.mode === "canonical" ? (
-          <CanonicalHomepageRenderer plan={choice.plan} />
-        ) : (
-          <div data-legacy-runtime={choice.reason}>
-            <HomepageRenderer homepage={homepage} />
-          </div>
-        )}
-      </main>
-    </SiteTheme>
-  </body>
-</html>
-
-<style>
-  .page-shell {
-    margin: 0;
-    max-width: none;
-    padding: 0;
-    width: 100%;
-  }
-</style>

@@ -144,7 +144,11 @@ async function probeHealth({ deployEnv, mockPayloadUrl, expectRobots, mock }) {
     const res = await fetch(`http://127.0.0.1:${port}/health`)
     assert.equal(res.status, 200)
     assert.match(res.headers.get("content-type") ?? "", /application\/json/)
-    assert.deepEqual(await res.json(), { status: "ok", service: "just-public" })
+    const body = await res.json()
+    assert.equal(body.status, "ok")
+    assert.equal(body.service, "just-public")
+    assert.equal(body.canonicalContractVersion, "seo001-v1")
+    assert.equal(body.features?.sharedAuthorityCache, false)
     if (expectRobots) {
       assert.equal(res.headers.get("x-robots-tag"), "noindex, nofollow")
     } else {

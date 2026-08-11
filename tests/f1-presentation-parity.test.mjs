@@ -170,6 +170,12 @@ test("emits Lato tokens when branding.typography is lato", () => {
 test("prefers explicit seo payload over hero derivation", () => {
   const seo = buildPublicHomepageSeo({
     host: "example.test",
+    canonical: {
+      host: "example.test",
+      origin: "https://example.test",
+      requestHost: "example.test",
+      isPrimaryRequest: true,
+    },
     companyName: "Acme",
     plan: {
       nodes: [
@@ -194,6 +200,7 @@ test("prefers explicit seo payload over hero derivation", () => {
   assert.equal(seo.ogTitle, "OG Title")
   assert.equal(seo.jsonLd["@type"], "Person")
   assert.equal(seo.ogImage, "https://cdn.example/og.png")
+  assert.equal(seo.canonicalUrl, "https://example.test/")
 })
 
 test("classic chrome uses feature cards for title-only benefits", () => {

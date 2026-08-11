@@ -21,6 +21,10 @@ import {
 import { resolvePublicSiteMode } from "./resolvePublicSiteMode.js"
 import { themeTokensFromBranding } from "./themeFromBranding"
 import { resolveBrandFaviconUrl, toAbsolutePublicUrl } from "./publicPageSeo.js"
+import {
+  asPublicCanonicalContract,
+  toAbsoluteCanonicalUrl,
+} from "./canonicalAuthority.js"
 
 /**
  * @param {Request} request
@@ -47,8 +51,18 @@ export async function loadJustInstitutionalChrome(request, locals) {
 
   /** @type {any} */
   let homepage = null
-  if (isPocFixtureMode(locals)) {
+  if (
+    locals?.publicSitePayloadHost === host &&
+    locals?.publicSitePayload &&
+    typeof locals.publicSitePayload === "object"
+  ) {
+    homepage = locals.publicSitePayload
+  } else if (isPocFixtureMode(locals)) {
     homepage = resolvePocFixturePayload(host)
+    if (homepage && locals) {
+      locals.publicSitePayload = homepage
+      locals.publicSitePayloadHost = host
+    }
   } else {
     const payloadUrl = resolveSitePayloadUrl(locals)
     const anonKey = resolveSupabaseAnonKey(locals) ?? ""
@@ -57,7 +71,13 @@ export async function loadJustInstitutionalChrome(request, locals) {
         payloadUrl,
         anonKey,
       })
-      if (fetched.ok) homepage = fetched.homepage
+      if (fetched.ok) {
+        homepage = fetched.homepage
+        if (locals) {
+          locals.publicSitePayload = homepage
+          locals.publicSitePayloadHost = host
+        }
+      }
     }
   }
 
@@ -85,21 +105,28 @@ export async function loadJustInstitutionalChrome(request, locals) {
 
   const deployEnv = resolveDeployEnv(locals)
   const noindex = isLeadIntakeSafeMode(deployEnv) || siteModeResolved.mode === "MAINTENANCE"
+  const canonical =
+    asPublicCanonicalContract(locals?.publicCanonical) ||
+    asPublicCanonicalContract(homepage?.canonical)
   const seoBase = packaged.comingSoonSeo
   const faviconUrl = resolveBrandFaviconUrl({
     host,
     favicon: `/branding/${packaged.slug}/favicon.svg`,
   })
-  const ogImage = toAbsolutePublicUrl(
-    host,
-    `/branding/${packaged.slug}/og-image.jpg`,
-  )
+  const ogImage = canonical
+    ? toAbsoluteCanonicalUrl(
+        canonical.origin,
+        `/branding/${packaged.slug}/og-image.jpg`,
+      )
+    : toAbsolutePublicUrl(host, `/branding/${packaged.slug}/og-image.jpg`)
 
   return {
     ok: true,
     host,
     packaged,
     homepage,
+    canonical,
+    deployEnv,
     siteMode: siteModeResolved.mode,
     siteModeConfig: mergeComingSoonConfig(
       siteModeResolved.config,

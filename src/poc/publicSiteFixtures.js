@@ -216,6 +216,13 @@ function buildTenantFixture(t) {
     status: "ready",
     host: t.host,
     slug: t.slug,
+    /** ADR-SEO-001 — POC fixtures model an active primary matching the request host. */
+    canonical: Object.freeze({
+      host: t.host,
+      origin: `https://${t.host}`,
+      requestHost: t.host,
+      isPrimaryRequest: true,
+    }),
     blocks: [],
     footer: Object.freeze({
       logoUrl: null,
@@ -321,6 +328,15 @@ function buildJustInstitutionalFixture(host, siteMode = "COMING_SOON") {
     },
   ]
   return Object.freeze({
+    tenantId: "00000000-0000-4000-8000-just00000001",
+    status: "ready",
+    host,
+    canonical: Object.freeze({
+      host,
+      origin: `https://${host}`,
+      requestHost: host,
+      isPrimaryRequest: true,
+    }),
     source: Object.freeze({
       contact: Object.freeze({ ...contact }),
       meta: Object.freeze({
@@ -370,6 +386,15 @@ export const POC_FIXTURES_BY_HOST = Object.freeze({
   [TENANT_ALPHA.host]: FIXTURE_ALPHA,
   [TENANT_BETA.host]: FIXTURE_BETA,
   [TENANT_GAMMA.host]: FIXTURE_GAMMA,
+  [`www.${TENANT_ALPHA.host}`]: Object.freeze({
+    ...FIXTURE_ALPHA,
+    canonical: Object.freeze({
+      host: TENANT_ALPHA.host,
+      origin: `https://${TENANT_ALPHA.host}`,
+      requestHost: `www.${TENANT_ALPHA.host}`,
+      isPrimaryRequest: false,
+    }),
+  }),
   "www.justwebsites.com.br": FIXTURE_JUST_COMING_SOON,
   "justwebsites.com.br": FIXTURE_JUST_COMING_SOON,
 })

@@ -6,6 +6,15 @@ import {
   toAbsolutePublicUrl,
 } from "../src/lib/publicPageSeo.js"
 
+function primary(host, requestHost = host) {
+  return {
+    host,
+    origin: `https://${host}`,
+    requestHost,
+    isPrimaryRequest: host === requestHost,
+  }
+}
+
 test("extractHeroSeoFields reads hero props from serializable plan", () => {
   const plan = {
     nodes: [
@@ -25,9 +34,10 @@ test("extractHeroSeoFields reads hero props from serializable plan", () => {
   assert.equal(hero?.subtitle, "Subtítulo de apoio para meta description.")
 })
 
-test("buildPublicHomepageSeo emits production SEO fields", () => {
+test("buildPublicHomepageSeo emits production SEO fields from primary", () => {
   const seo = buildPublicHomepageSeo({
     host: "marceloborer.com.br",
+    canonical: primary("marceloborer.com.br"),
     companyName: "Marcelo Borer",
     branding: {
       logoUrl: "https://cdn.example/logo.png",
@@ -72,6 +82,7 @@ test("favicon prefers packaged tenant mark over logo for Marcelo/Rossana/Soraya"
   ]) {
     const seo = buildPublicHomepageSeo({
       host,
+      canonical: primary(host),
       companyName: "Tenant",
       branding: {
         logoUrl: "https://cdn.example/logo.png",
@@ -87,6 +98,7 @@ test("favicon prefers packaged tenant mark over logo for Marcelo/Rossana/Soraya"
 test("3D Jewish packaged OG used when CMS ogImage unset", () => {
   const seo = buildPublicHomepageSeo({
     host: "3djewish.com.br",
+    canonical: primary("3djewish.com.br"),
     companyName: "3D Jewish",
     branding: {},
   })
@@ -97,9 +109,10 @@ test("3D Jewish packaged OG used when CMS ogImage unset", () => {
   )
 })
 
-test("JUST packaged OG is absolute on www (D-001)", () => {
+test("JUST packaged OG is absolute on primary origin (D-001)", () => {
   const seo = buildPublicHomepageSeo({
     host: "www.justwebsites.com.br",
+    canonical: primary("www.justwebsites.com.br"),
     companyName: "JUST",
     branding: {},
     seo: {
@@ -122,6 +135,7 @@ test("JUST packaged OG is absolute on www (D-001)", () => {
 test("JUST packaged favicon defaults to SVG mark when Hub SEO unset", () => {
   const seo = buildPublicHomepageSeo({
     host: "www.justwebsites.com.br",
+    canonical: primary("www.justwebsites.com.br"),
     companyName: "JUST",
     branding: {},
   })
@@ -131,6 +145,7 @@ test("JUST packaged favicon defaults to SVG mark when Hub SEO unset", () => {
 test("favicon follows Golden Master: explicit → packaged/ogImage → logos", () => {
   const withOg = buildPublicHomepageSeo({
     host: "celinapiresdorio.com.br",
+    canonical: primary("celinapiresdorio.com.br"),
     companyName: "Celina",
     branding: { logoUrl: "https://cdn.example/logo.png" },
     seo: { ogImage: "https://cdn.example/social-og.webp" },
@@ -140,6 +155,7 @@ test("favicon follows Golden Master: explicit → packaged/ogImage → logos", (
 
   const explicit = buildPublicHomepageSeo({
     host: "celinapiresdorio.com.br",
+    canonical: primary("celinapiresdorio.com.br"),
     companyName: "Celina",
     branding: { logoUrl: "https://cdn.example/logo.png" },
     seo: {

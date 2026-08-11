@@ -3,6 +3,7 @@ export const prerender = false
 
 import JustLegalLayout from "../components/just-institutional/JustLegalLayout.astro"
 import { loadJustInstitutionalChrome } from "../lib/loadJustInstitutionalChrome.js"
+import { resolveChromeCanonicalUrl } from "../lib/canonicalAuthority.js"
 
 const chrome = await loadJustInstitutionalChrome(Astro.request, Astro.locals)
 if (!chrome.ok) {
@@ -12,8 +13,10 @@ if (!chrome.ok) {
   })
 }
 
+const canonicalResolved = resolveChromeCanonicalUrl(chrome, "/termos")
+if (!canonicalResolved.ok) return canonicalResolved.response
+
 const page = chrome.packaged.legalPages.termos
-const canonicalUrl = `https://${chrome.host}/termos`
 ---
 
 <JustLegalLayout
@@ -23,7 +26,7 @@ const canonicalUrl = `https://${chrome.host}/termos`
   branding={chrome.branding}
   seoTitle={`${page.title} | JUST`}
   seoDescription={chrome.seo.description}
-  canonicalUrl={canonicalUrl}
+  canonicalUrl={canonicalResolved.canonicalUrl || ""}
   faviconUrl={chrome.seo.faviconUrl}
   ogImage={chrome.seo.ogImage}
   robots={chrome.seo.robots}

@@ -11,6 +11,7 @@ import { createPublicSupabaseClient } from "../../lib/publicSupabase.js";
 import { HostResolutionError, resolveRequestHost } from "../../lib/publicHomepage";
 import { buildCatalogHref, formatCatalogPrice, resolveCatalogHostOverride, applyHostOverrideToNavItems } from "../../lib/catalogBrowse.js";
 import { loadCatalogPublicChrome } from "../../lib/loadCatalogPublicChrome.js";
+import { resolveChromeCanonicalUrl } from "../../lib/canonicalAuthority.js";
 
 const { slug } = Astro.params;
 const requestUrl = new URL(Astro.request.url);
@@ -66,8 +67,11 @@ if (!product) {
   });
 }
 
-const baseUrl = `https://${host}`;
-const pageUrl = `${baseUrl}/p/${product.slug}`;
+/** Canonical only after a real product exists (no SEO for error responses). */
+const canonicalResolved = resolveChromeCanonicalUrl(chrome, `/p/${product.slug}`);
+if (!canonicalResolved.ok) return canonicalResolved.response;
+
+const pageUrl = canonicalResolved.canonicalUrl;
 const companyName = product.company_name || chrome.companyName;
 const title = `${product.name} — ${companyName}`;
 const description = product.description ?? `Veja detalhes de ${product.name}.`;

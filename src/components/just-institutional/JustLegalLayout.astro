@@ -16,7 +16,8 @@ interface Props {
   branding: Record<string, unknown>
   seoTitle: string
   seoDescription: string
-  canonicalUrl: string
+  /** Absolute primary URL; omit/empty in preview/noindex without inventing host. */
+  canonicalUrl?: string
   faviconUrl: string
   ogImage: string
   robots: string

@@ -1,7 +1,14 @@
 /**
  * Production SEO helpers for the public homepage.
  * Explicit payload SEO (source.meta.seo) wins when present; otherwise derive from plan/hero.
+ * Canonical / og:url / JSON-LD url / absolute OG images use ADR-SEO-001 `canonical` authority.
  */
+
+import {
+  asPublicCanonicalContract,
+  buildCanonicalUrl,
+  toAbsoluteCanonicalUrl,
+} from "./canonicalAuthority.js"
 
 /**
  * @param {unknown} plan
@@ -56,6 +63,7 @@ function asTrimmed(value) {
 /**
  * Approved per-tenant favicon packs (not logos) shipped under public/branding/.
  * Used when Hub `seo.favicon` is unset — never fall back to the site logo for these hosts.
+ * Pack lookup may use request host; canonical authority is separate (ADR-SEO-001).
  */
 const PACKAGED_FAVICON_SLUG_BY_HOST = Object.freeze({
   "www.marceloborer.com.br": "marcelo-borer",
@@ -86,6 +94,7 @@ function normalizeHost(host) {
 /**
  * Absolute https URL for SEO assets (OG/Twitter/JSON-LD image).
  * Relative pack paths become `https://{host}{path}` when host is known.
+ * Prefer {@link toAbsoluteCanonicalUrl} with payload canonical.origin for indexable pages.
  * @param {string} host
  * @param {string | null | undefined} pathOrUrl
  * @returns {string}
@@ -150,6 +159,8 @@ export function resolveBrandFaviconUrl(input) {
 /**
  * @param {{
  *   host: string
+ *   canonical?: unknown
+ *   pathname?: string
  *   companyName: string
  *   branding?: {
  *     logoUrl?: string | null
@@ -175,10 +186,17 @@ export function resolveBrandFaviconUrl(input) {
  * }} input
  */
 export function buildPublicHomepageSeo(input) {
-  const host = String(input.host || "")
-    .trim()
-    .toLowerCase()
-    .replace(/:\d+$/, "")
+  const requestHost = normalizeHost(input.host)
+  const noindex = input.noindex === true
+  const pathname = typeof input.pathname === "string" ? input.pathname : "/"
+  const canonical = asPublicCanonicalContract(input.canonical)
+
+  if (!noindex && !canonical) {
+    throw new Error(
+      "buildPublicHomepageSeo: canonical authority required for indexable pages (ADR-SEO-001)",
+    )
+  }
+
   const company = (input.companyName || "Site").trim() || "Site"
   const hero = extractHeroSeoFields(input.plan)
   const explicit = input.seo && typeof input.seo === "object" ? input.seo : null
@@ -194,22 +212,25 @@ export function buildPublicHomepageSeo(input) {
   const ogTitle = asTrimmed(explicit?.ogTitle) || title
   const ogDescription = asTrimmed(explicit?.ogDescription) || description
 
-  const canonicalUrl = host ? `https://${host}/` : ""
+  const canonicalUrl = canonical ? buildCanonicalUrl(canonical, pathname) : ""
   const logoUrl = asTrimmed(input.branding?.logoUrl)
   const logoHorizontalUrl = asTrimmed(input.branding?.logoHorizontalUrl)
-  const packagedSlug = PACKAGED_FAVICON_SLUG_BY_HOST[host] || ""
+  // Favicon pack lookup may use request host (both apex/www mapped); not canonical authority.
+  const packagedSlug = PACKAGED_FAVICON_SLUG_BY_HOST[requestHost] || ""
   const packagedOgImage = packagedSlug ? `/branding/${packagedSlug}/og-image.jpg` : ""
   // Prefer CMS OG → Hub logos → packaged OG (only hosts with a shipped og-image.jpg).
   const derivedOgImage = logoHorizontalUrl || logoUrl || packagedOgImage || ""
   const ogImageRelative = asTrimmed(explicit?.ogImage) || derivedOgImage
-  /** D-001 / M5: OG + Twitter images are absolute when host is known. */
-  const ogImage = toAbsolutePublicUrl(host, ogImageRelative)
+  /** Absolute OG/Twitter images use canonical origin when available. */
+  const ogImage = canonical
+    ? toAbsoluteCanonicalUrl(canonical.origin, ogImageRelative)
+    : toAbsolutePublicUrl(requestHost, ogImageRelative)
   /**
    * Favicon: explicit CMS → packaged tenant mark (not logo) → ogImage → logos.
    * Do not use Astro scaffold (/favicon.svg|/favicon.ico) as a customer icon.
    */
   const faviconUrl = resolveBrandFaviconUrl({
-    host,
+    host: requestHost,
     favicon:
       explicit?.favicon ||
       (packagedSlug
@@ -248,7 +269,7 @@ export function buildPublicHomepageSeo(input) {
     canonicalUrl,
     ogImage,
     faviconUrl,
-    robots: input.noindex ? "noindex, nofollow" : "index, follow",
+    robots: noindex ? "noindex, nofollow" : "index, follow",
     jsonLd,
     twitterCard: ogImage ? "summary_large_image" : "summary",
   }

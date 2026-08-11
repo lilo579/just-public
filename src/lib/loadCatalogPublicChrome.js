@@ -25,6 +25,7 @@ import {
   resolveBrandFaviconUrl,
   resolvePackagedTenantFaviconPath,
 } from "./publicPageSeo.js";
+import { toAbsoluteCanonicalUrl } from "./canonicalAuthority.js";
 import { createPublicSupabaseClient } from "./publicSupabase.js";
 import {
   resolveShopNavItems,
@@ -40,8 +41,18 @@ export async function loadCatalogPublicChrome(host, locals) {
   /** @type {any} */
   let homepage = null;
 
-  if (isPocFixtureMode(locals)) {
+  if (
+    locals?.publicSitePayloadHost === host &&
+    locals?.publicSitePayload &&
+    typeof locals.publicSitePayload === "object"
+  ) {
+    homepage = locals.publicSitePayload;
+  } else if (isPocFixtureMode(locals)) {
     homepage = resolvePocFixturePayload(host);
+    if (homepage) {
+      locals.publicSitePayload = homepage;
+      locals.publicSitePayloadHost = host;
+    }
   } else {
     const payloadUrl = resolveSitePayloadUrl(locals);
     const anonKey = resolveSupabaseAnonKey(locals) ?? "";
@@ -55,11 +66,15 @@ export async function loadCatalogPublicChrome(host, locals) {
     if (!fetched.ok) {
       return {
         ok: false,
-        status: fetched.status === 404 ? 404 : 502,
+        status: fetched.status === 404 ? 404 : fetched.status >= 500 ? 503 : 502,
         reason: "payload_unavailable",
       };
     }
     homepage = fetched.homepage;
+    if (locals && typeof locals === "object") {
+      locals.publicSitePayload = homepage;
+      locals.publicSitePayloadHost = host;
+    }
   }
 
   if (!homepage) {
@@ -120,6 +135,14 @@ export async function loadCatalogPublicChrome(host, locals) {
   const deployEnv = resolveDeployEnv(locals);
   const noindex =
     isLeadIntakeSafeMode(deployEnv) || siteModeResolved.mode === "MAINTENANCE";
+  /** ADR-SEO-001 — prefer middleware locals (same request), else payload contract. */
+  const canonical =
+    (locals?.publicCanonical && typeof locals.publicCanonical === "object"
+      ? locals.publicCanonical
+      : null) ||
+    (homepage?.canonical && typeof homepage.canonical === "object"
+      ? homepage.canonical
+      : null);
 
   const seoMeta =
     homepage?.source?.meta?.seo && typeof homepage.source.meta.seo === "object"
@@ -138,19 +161,25 @@ export async function loadCatalogPublicChrome(host, locals) {
       : "";
   const brandingLogoUrl =
     typeof branding?.logoUrl === "string" ? branding.logoUrl.trim() : "";
-  const ogImage =
+  const ogImageRelative =
     (typeof seoMeta?.ogImage === "string" && seoMeta.ogImage.trim()) ||
     packagedOgImage ||
     logoHorizontalUrl ||
     brandingLogoUrl ||
     "";
+  const ogImage = canonical
+    ? toAbsoluteCanonicalUrl(
+        typeof canonical.origin === "string" ? canonical.origin : "",
+        ogImageRelative,
+      ) || ogImageRelative
+    : ogImageRelative;
   const faviconUrl = resolveBrandFaviconUrl({
     host,
     favicon:
       (typeof seoMeta?.favicon === "string" && seoMeta.favicon.trim()) ||
       packagedFavicon ||
       "",
-    ogImage,
+    ogImage: ogImageRelative,
     logoHorizontalUrl,
     logoUrl: brandingLogoUrl,
   });
@@ -175,6 +204,8 @@ export async function loadCatalogPublicChrome(host, locals) {
     tokens,
     socialLinks,
     noindex,
+    deployEnv,
+    canonical,
     faviconUrl,
     ogImage,
     catalogHeroTitle:

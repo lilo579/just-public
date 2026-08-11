@@ -2,9 +2,12 @@ import http from "node:http"
 import net from "node:net"
 
 import {
+  HOST_AUTHORITY_UNAVAILABLE,
   HOST_FIXTURES,
   HOST_MALFORMED,
   HOST_UNKNOWN,
+  SEO001_TENANT_A,
+  SEO001_TENANT_B,
   TENANT_ALPHA,
   TENANT_BETA,
   TENANT_GAMMA,
@@ -14,6 +17,10 @@ const TENANT_BY_HOST = {
   [TENANT_ALPHA.host]: TENANT_ALPHA,
   [TENANT_BETA.host]: TENANT_BETA,
   [TENANT_GAMMA.host]: TENANT_GAMMA,
+  [SEO001_TENANT_A.primary]: SEO001_TENANT_A,
+  [SEO001_TENANT_A.alias]: SEO001_TENANT_A,
+  [SEO001_TENANT_B.primary]: SEO001_TENANT_B,
+  [SEO001_TENANT_B.alias]: SEO001_TENANT_B,
 }
 
 export async function freePort() {
@@ -82,6 +89,11 @@ export function startCanonicalPayloadMock() {
 
     if (host === HOST_MALFORMED) {
       respond(200, "{not-valid-json")
+      return
+    }
+
+    if (host === HOST_AUTHORITY_UNAVAILABLE) {
+      respond(503, JSON.stringify({ error: "canonical_authority_unavailable" }))
       return
     }
 

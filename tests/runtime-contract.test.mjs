@@ -135,10 +135,20 @@ function hasServiceRoleKeyInjection(text) {
 }
 
 test("health contract shape is stable (fixture — no network)", () => {
-  const body = { status: "ok", service: "just-public" }
+  const body = {
+    status: "ok",
+    service: "just-public",
+    canonicalContractVersion: "seo001-v1",
+    features: {
+      canonicalRedirects: true,
+      requestScopedAuthority: true,
+      sharedAuthorityCache: false,
+    },
+  }
   assert.equal(body.status, "ok")
   assert.equal(body.service, "just-public")
-  assert.equal(Object.keys(body).sort().join(","), "service,status")
+  assert.equal(body.canonicalContractVersion, "seo001-v1")
+  assert.equal(body.features.sharedAuthorityCache, false)
 })
 
 test("Host A and Host B stay distinct for payload URLs", () => {
