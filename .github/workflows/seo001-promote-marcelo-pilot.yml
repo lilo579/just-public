@@ -35,7 +35,7 @@ jobs:
           VERSION_ID: ${{ inputs.version_id }}
         run: |
           set -euo pipefail
-          test "$VERSION_ID" = "70990fc2-8a9e-4263-8a76-e7e146be5d26"
+          test "$VERSION_ID" = "7a039076-11cc-4db2-abf0-b9a4d0ae4b58"
           grep -A 3 '"production"' wrangler.jsonc | grep -q '"name": "just-public-production"'
 
       - name: Snapshot active deployment
