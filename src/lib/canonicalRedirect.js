@@ -92,6 +92,25 @@ export function resolvePhysicalRequestHostFromRequest(request, url = new URL(req
 }
 
 /**
+ * Cloudflare injects CF-Visitor on proxied public requests. Treat only its
+ * explicit `http` value as insecure; local/workerd requests omit the header
+ * and represent HTTPS fixtures over an internal HTTP listener.
+ *
+ * @param {Request} request
+ * @returns {"http:" | "https:"}
+ */
+export function resolvePublicRequestProtocol(request) {
+  const raw = request.headers.get("cf-visitor")
+  if (!raw) return "https:"
+  try {
+    const scheme = JSON.parse(raw)?.scheme
+    return scheme === "http" ? "http:" : "https:"
+  } catch {
+    return "https:"
+  }
+}
+
+/**
  * @param {URLSearchParams} searchParams
  * @returns {URLSearchParams}
  */
