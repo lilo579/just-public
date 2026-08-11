@@ -52,8 +52,8 @@ Replace `PRIMARY_HOST` with the inventory primary (no hard-coded apex assumption
 https://example.com.br${uri}
 ```
 
-Status: `301`  
-Preserve query string: yes  
+Status: `301`
+Preserve query string: yes
 
 When primary is still `www` (pre–Phase 7), invert the HTTPS host clause so apex HTTPS redirects to `www`, and HTTP (both hosts) redirects to `https://www…${uri}`. **Do not ship a single global “always apex” rule before data cutover.**
 

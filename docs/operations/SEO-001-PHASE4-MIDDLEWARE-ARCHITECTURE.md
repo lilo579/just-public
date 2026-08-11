@@ -25,5 +25,5 @@ No host/path SEO redirect for: `/_astro/*`, `/fonts/*`, `/branding/*`, favicons,
 
 ## `/homepage`
 
-Production: middleware 301 → `/` (combined with host normalization).  
+Production: middleware 301 → `/` (combined with host normalization).
 Technical preview: use `/preview` (remains available; preview/staging `noindex`).
