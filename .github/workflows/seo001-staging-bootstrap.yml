@@ -1,0 +1,81 @@
+name: SEO-001 Staging Bootstrap
+
+# One-time activation of an isolated staging Worker. This may deploy only to
+# just-public-staging. It cannot touch routes, DNS, Custom Domains, or the
+# just-public-production deployment.
+on:
+  workflow_dispatch:
+    inputs:
+      version_id:
+        description: "Previously uploaded just-public-staging Version UUID"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: cloudflare-preview
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate immutable targets
+        env:
+          VERSION_ID: ${{ inputs.version_id }}
+        run: |
+          set -euo pipefail
+          [[ "$VERSION_ID" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]
+          grep -A 3 '"staging"' wrangler.jsonc | grep -q '"name": "just-public-staging"'
+
+      - name: Snapshot production deployment
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deployments list --name just-public-production --json > /tmp/production-before.json
+
+      - name: Bootstrap isolated staging deployment
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          VERSION_ID: ${{ inputs.version_id }}
+        run: |
+          npx wrangler versions deploy --env staging \
+            --version-id "$VERSION_ID" --percentage 100 \
+            --message "SEO-001 isolated staging bootstrap" --yes
+
+      - name: Assert production deployment unchanged
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler deployments list --name just-public-production --json > /tmp/production-after.json
+          cmp /tmp/production-before.json /tmp/production-after.json
+
+      - name: Assert staging owns no Custom Domain
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          curl -sS "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/domains" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            | node -e '
+              let body=""; process.stdin.on("data", c => body += c); process.stdin.on("end", () => {
+                const json=JSON.parse(body);
+                if (!json.success) process.exit(2);
+                const owned=(json.result || []).filter(x => x.service === "just-public-staging");
+                if (owned.length) { console.error(owned); process.exit(3); }
+                console.log("just-public-staging custom domains: 0");
+              });'
