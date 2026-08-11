@@ -59,6 +59,8 @@ jobs:
           import json,sys
           d=json.load(sys.stdin)
           print('success', d.get('success'), 'errors', d.get('errors'))
+          if not d.get('success'):
+            raise SystemExit(4)
           for r in d.get('result') or []:
             name=r.get('name'); typ=r.get('type'); content=r.get('content')
             if name in ('${APEX}','${WWW}') or typ in ('A','AAAA','CNAME','MX','TXT'):

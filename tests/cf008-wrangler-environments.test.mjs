@@ -37,7 +37,7 @@ function parseJsonc(text) {
   return JSON.parse(stripped)
 }
 
-test("CF-008: POC top-level and production env remain distinct and safe", async () => {
+test("CF-008: POC, staging, and production envs remain distinct and safe", async () => {
   const text = await fs.readFile(path.join(root, "wrangler.jsonc"), "utf8")
   const cfg = parseJsonc(text)
 
@@ -57,6 +57,19 @@ test("CF-008: POC top-level and production env remain distinct and safe", async 
   const topOnly = text.split('"env"')[0] ?? text
   assert.doesNotMatch(topOnly, /PUBLIC_SITE_PAYLOAD_URL|SUPABASE_ANON_KEY|PUBLIC_LEADS_INTAKE_URL/)
   assert.doesNotMatch(text, /PUBLIC_SUPABASE_URL|PUBLIC_SUPABASE_ANON_KEY/)
+
+  const staging = cfg.env?.staging
+  assert.ok(staging, "env.staging required")
+  assert.equal(staging.name, "just-public-staging")
+  assert.equal(staging.workers_dev, false)
+  assert.equal(staging.preview_urls, true)
+  assert.equal(staging.vars?.DEPLOY_ENV, "staging")
+  assert.equal(staging.vars?.POC_FIXTURE_MODE, "false")
+  assert.match(String(staging.vars?.PUBLIC_SITE_PAYLOAD_URL ?? ""), /public-site-payload/)
+  assert.equal(staging.assets?.binding, "ASSETS")
+  assert.equal(staging.assets?.directory, "./dist")
+  assert.ok(!("routes" in staging) && !("route" in staging))
+  assert.ok(!("domains" in staging) && !("domain" in staging))
 
   const prod = cfg.env?.production
   assert.ok(prod, "env.production required")
