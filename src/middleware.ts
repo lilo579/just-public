@@ -37,14 +37,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
     !physicalHost ||
     physicalHost === "localhost" ||
     physicalHost === "127.0.0.1"
+  const explicitSafeHostSimulation =
+    safeMode && context.url.searchParams.has("host")
 
   // Production always resolves authority for public pages.
-  // Preview/staging resolves only for real visitor hosts (not loopback ?host= labs),
-  // so invalid ?host= still fails at the page without a spurious payload fetch.
+  // Preview/staging lets the page own explicit ?host= simulation, including
+  // versioned Cloudflare preview URLs whose physical host is not a tenant.
+  // Invalid ?host= still fails at the page without a spurious payload fetch.
   const shouldResolveAuthority =
     (method === "GET" || method === "HEAD") &&
     routeKind === "public_page" &&
-    (!safeMode || !loopback)
+    (!safeMode || (!loopback && !explicitSafeHostSimulation))
 
   if (shouldResolveAuthority) {
     const ctx = await resolvePublicRequestContext(
