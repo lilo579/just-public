@@ -1,0 +1,78 @@
+name: SEO-001 Promote Marcelo Pilot
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_id:
+        description: "Validated just-public-production version UUID"
+        required: true
+        type: string
+
+concurrency:
+  group: seo001-production-promotion
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: cloudflare-preview
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Validate immutable candidate
+        env:
+          VERSION_ID: ${{ inputs.version_id }}
+        run: |
+          set -euo pipefail
+          test "$VERSION_ID" = "70990fc2-8a9e-4263-8a76-e7e146be5d26"
+          grep -A 3 '"production"' wrangler.jsonc | grep -q '"name": "just-public-production"'
+
+      - name: Snapshot active deployment
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deployments list --name just-public-production --json > production-before.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seo001-marcelo-production-before
+          path: production-before.json
+          retention-days: 30
+
+      - name: Promote validated candidate
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          VERSION_ID: ${{ inputs.version_id }}
+        run: |
+          npx wrangler versions deploy --env production \
+            --version-id "$VERSION_ID" --percentage 100 \
+            --message "SEO-001 Marcelo pilot" --yes
+
+      - name: Verify transitional production state
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5; do
+            apex_headers="$(curl -sS -o /dev/null -D - https://marceloborer.com.br/)"
+            www_code="$(curl -sS -o /tmp/www.html -w '%{http_code}' https://www.marceloborer.com.br/)"
+            if echo "$apex_headers" | grep -qi '^HTTP/.* 301' \
+              && echo "$apex_headers" | grep -qi '^location: https://www.marceloborer.com.br/' \
+              && test "$www_code" = "200" \
+              && grep -qi '<link[^>]*rel="canonical"[^>]*href="https://www.marceloborer.com.br/"' /tmp/www.html; then
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Transitional production verification failed" >&2
+          exit 1
