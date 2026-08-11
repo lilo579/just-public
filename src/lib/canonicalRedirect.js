@@ -151,6 +151,7 @@ export function normalizePublicSeoPath(pathname) {
  *   pathname: string
  *   searchParams: URLSearchParams
  *   requestHost: string
+ *   requestProtocol?: string
  *   canonical: import('./canonicalAuthority.js').PublicCanonicalContract | null | undefined
  *   deployEnv?: string
  *   routeKind?: import('./publicRouteKind.js').PublicRouteKind
@@ -197,12 +198,16 @@ export function planCanonicalRedirect(input) {
   const hostMismatch = requestHost !== canonical.host
   if (hostMismatch) reasons.push("alias")
 
+  const requestProtocol = String(input.requestProtocol || "https:").toLowerCase()
+  const protocolMismatch = requestProtocol !== "https:"
+  if (protocolMismatch) reasons.push("http")
+
   const filteredQuery = filterPublicRedirectQuery(input.searchParams)
   const originalQuery = input.searchParams.toString()
   const nextQuery = filteredQuery.toString()
   const queryChanged = originalQuery !== nextQuery
 
-  if (!hostMismatch && pathNorm.reasons.length === 0 && !queryChanged) {
+  if (!hostMismatch && !protocolMismatch && pathNorm.reasons.length === 0 && !queryChanged) {
     return null
   }
 
@@ -216,6 +221,7 @@ export function planCanonicalRedirect(input) {
     const locUrl = new URL(location)
     if (
       locUrl.hostname.toLowerCase() === requestHost &&
+      !protocolMismatch &&
       normalizePathname(locUrl.pathname) === normalizePathname(input.pathname) &&
       locUrl.searchParams.toString() === originalQuery
     ) {

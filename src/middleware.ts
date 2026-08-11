@@ -72,6 +72,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
           pathname,
           searchParams: context.url.searchParams,
           requestHost: ctx.requestHost,
+          requestProtocol: context.url.protocol,
           canonical: ctx.canonical,
           deployEnv,
           routeKind,

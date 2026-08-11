@@ -52,6 +52,34 @@ test("host: primary match does not redirect", () => {
   assert.equal(plan, null)
 })
 
+test("protocol: HTTP primary redirects directly to HTTPS primary", () => {
+  const plan = planCanonicalRedirect({
+    method: "GET",
+    pathname: "/sobre",
+    searchParams: new URLSearchParams(),
+    requestHost: "example.com.br",
+    requestProtocol: "http:",
+    canonical: primary("example.com.br"),
+    deployEnv: "production",
+  })
+  assert.equal(plan?.location, "https://example.com.br/sobre")
+  assert.ok(plan?.reasons.includes("http"))
+})
+
+test("protocol + alias + path normalize in one redirect", () => {
+  const plan = planCanonicalRedirect({
+    method: "GET",
+    pathname: "/homepage/",
+    searchParams: new URLSearchParams(),
+    requestHost: "www.example.com.br",
+    requestProtocol: "http:",
+    canonical: primary("example.com.br", "www.example.com.br"),
+    deployEnv: "production",
+  })
+  assert.equal(plan?.location, "https://example.com.br/")
+  assert.deepEqual(plan?.reasons, ["homepage", "alias", "http"])
+})
+
 test("host: www request with apex primary → 301 apex", () => {
   const plan = planCanonicalRedirect({
     method: "GET",
