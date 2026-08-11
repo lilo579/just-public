@@ -1,5 +1,6 @@
 # GO-003 — one-shot DNS + Custom Domain cutover for Marcelo Borer.
-# Uses CLOUDFLARE_API_TOKEN (CI). Does NOT promote Worker Versions.
+# Uses the pilot-scoped CLOUDFLARE_SEO001_MARCELO_TOKEN secret.
+# Does NOT promote Worker Versions.
 # Manual workflow_dispatch only.
 
 name: GO-003 Marcelo Cutover DNS-CD
@@ -28,12 +29,15 @@ jobs:
     steps:
       - name: Cutover DNS + Custom Domains
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_SEO001_MARCELO_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           PHASE: ${{ inputs.phase }}
         run: |
           set -euo pipefail
-          test -n "${CLOUDFLARE_API_TOKEN:-}"
+          test -n "${CLOUDFLARE_API_TOKEN:-}" || {
+            echo "CLOUDFLARE_SEO001_MARCELO_TOKEN secret is required" >&2
+            exit 1
+          }
           test -n "${CLOUDFLARE_ACCOUNT_ID:-}"
 
           ACCOUNT="${CLOUDFLARE_ACCOUNT_ID}"
