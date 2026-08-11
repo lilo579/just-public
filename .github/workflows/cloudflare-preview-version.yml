@@ -42,6 +42,7 @@ jobs:
           repository: lilo579/just-auth-nexus
           ref: main
           path: just-auth-nexus
+          ssh-key: ${{ secrets.NEXUS_READ_SSH_KEY }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
