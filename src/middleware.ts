@@ -6,6 +6,7 @@ import {
   buildCanonicalRedirectResponse,
   planCanonicalRedirect,
   resolvePhysicalRequestHostFromRequest,
+  resolvePublicRequestProtocol,
 } from "./lib/canonicalRedirect.js"
 import {
   buildServerTimingHeader,
@@ -67,18 +68,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
       }
 
       if (ctx.canonical) {
-        const listenHost = context.url.hostname.toLowerCase()
-        const requestProtocol = ["localhost", "127.0.0.1", "0.0.0.0"].includes(
-          listenHost,
-        )
-          ? "https:"
-          : context.url.protocol
         const plan = planCanonicalRedirect({
           method,
           pathname,
           searchParams: context.url.searchParams,
           requestHost: ctx.requestHost,
-          requestProtocol,
+          requestProtocol: resolvePublicRequestProtocol(context.request),
           canonical: ctx.canonical,
           deployEnv,
           routeKind,

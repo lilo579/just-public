@@ -11,6 +11,7 @@ import {
   normalizePublicSeoPath,
   planCanonicalRedirect,
   PUBLIC_TRACKING_QUERY_PARAMS,
+  resolvePublicRequestProtocol,
 } from "../src/lib/canonicalRedirect.js"
 
 function primary(host, requestHost = host) {
@@ -78,6 +79,21 @@ test("protocol + alias + path normalize in one redirect", () => {
   })
   assert.equal(plan?.location, "https://example.com.br/")
   assert.deepEqual(plan?.reasons, ["homepage", "alias", "http"])
+})
+
+test("protocol: trusts CF-Visitor and defaults local fixtures to HTTPS", () => {
+  assert.equal(
+    resolvePublicRequestProtocol(
+      new Request("http://example.com.br", {
+        headers: { "cf-visitor": '{"scheme":"http"}' },
+      }),
+    ),
+    "http:",
+  )
+  assert.equal(
+    resolvePublicRequestProtocol(new Request("http://example.com.br")),
+    "https:",
+  )
 })
 
 test("host: www request with apex primary → 301 apex", () => {
