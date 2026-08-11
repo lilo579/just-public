@@ -5,7 +5,6 @@ import { smokeCloudflarePreview } from "../scripts/ci/smoke-cloudflare-preview.m
 function htmlFor(company, color) {
   return `<!doctype html><html><body
     data-renderer="canonical"
-    data-lead-form-safe="true"
     style="--site-color-primary:${color}">
     <h1>${company}</h1>
     <link rel="stylesheet" href="/_astro/index.NZuRlFGq.css" />
@@ -99,6 +98,41 @@ test("CF-006 smokeCloudflarePreview: cross-tenant fails closed", async () => {
           log: () => {},
         }),
       /cross-tenant/,
+    )
+  } finally {
+    globalThis.fetch = original
+  }
+})
+
+test("CF-006 smokeCloudflarePreview: preview LeadForm fails closed", async () => {
+  const original = globalThis.fetch
+  globalThis.fetch = async (input) => {
+    const href = String(input)
+    if (href.endsWith("/health")) {
+      return {
+        status: 200,
+        headers: new Headers({ "x-robots-tag": "noindex" }),
+        text: async () => '{"status":"ok","service":"just-public"}',
+      }
+    }
+    return {
+      status: 200,
+      headers: new Headers(),
+      text: async () =>
+        htmlFor("Alpha Consulting", "#112233").replace(
+          "</body>",
+          '<form data-lead-form></form></body>',
+        ),
+    }
+  }
+  try {
+    await assert.rejects(
+      () =>
+        smokeCloudflarePreview("https://example.test", {
+          timeoutMs: 1000,
+          log: () => {},
+        }),
+      /LeadForm must not render/,
     )
   } finally {
     globalThis.fetch = original

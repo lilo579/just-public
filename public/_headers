@@ -3,7 +3,15 @@
 # https://developers.cloudflare.com/workers/static-assets/headers/
 #
 # Hashed Astro build outputs under /_astro/* → long-lived immutable.
-# Do NOT apply immutable to HTML, favicon, health, or payload.
+# Self-hosted JUST/tenant fonts → long-lived immutable (stable paths).
+# Branding pack files → short/medium TTL (same URL may update without hash).
+# Do NOT apply immutable to HTML, root favicon, health, or payload.
 
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/branding/*
+  Cache-Control: public, max-age=604800

@@ -27,16 +27,34 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: cloudflare-preview
+    defaults:
+      run:
+        working-directory: just-public
     steps:
-      - name: Checkout
+      - name: Checkout Public
         uses: actions/checkout@v4
+        with:
+          path: just-public
+
+      - name: Checkout Nexus authority
+        uses: actions/checkout@v4
+        with:
+          repository: lilo579/just-auth-nexus
+          ref: main
+          path: just-auth-nexus
+          ssh-key: ${{ secrets.NEXUS_READ_SSH_KEY }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: |
+            just-public/package-lock.json
+            just-auth-nexus/package-lock.json
+
+      - name: Install Nexus authority dependencies
+        run: npm ci --prefix ../just-auth-nexus
 
       - name: Install dependencies
         run: npm ci
@@ -150,10 +168,10 @@ jobs:
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload metadata artifact
-        if: always() && hashFiles('cf-preview-metadata.json') != ''
+        if: always() && hashFiles('just-public/cf-preview-metadata.json') != ''
         uses: actions/upload-artifact@v4
         with:
           name: cf-preview-metadata
-          path: cf-preview-metadata.json
+          path: just-public/cf-preview-metadata.json
           retention-days: 7
           if-no-files-found: error
