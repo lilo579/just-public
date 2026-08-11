@@ -98,8 +98,11 @@ export async function smokeCloudflarePreview(previewUrl, opts = {}) {
     if (!res.body.includes('data-renderer="canonical"')) {
       throw new Error(`${t.host}: missing canonical renderer`)
     }
-    if (!res.body.includes('data-lead-form-safe="true"')) {
-      throw new Error(`${t.host}: LeadForm not safe`)
+    if (/<form\b[^>]*data-lead-form\b/i.test(res.body)) {
+      throw new Error(`${t.host}: LeadForm must not render in preview`)
+    }
+    if (/functions\/v1\/leads|service_role|SUPABASE_SERVICE_ROLE/i.test(res.body)) {
+      throw new Error(`${t.host}: lead intake credential or endpoint exposed`)
     }
     if (!res.body.includes(t.company)) {
       throw new Error(`${t.host}: missing company ${t.company}`)
