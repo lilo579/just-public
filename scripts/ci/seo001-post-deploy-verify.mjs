@@ -8,10 +8,7 @@ import { pathToFileURL } from "node:url"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
-import {
-  assertAuthorityMode,
-  resolveCheckerHosts,
-} from "../ops/seo001-promotion-policy.mjs"
+import { assertAuthorityMode } from "../ops/seo001-promotion-policy.mjs"
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const publicRoot = path.join(here, "../..")

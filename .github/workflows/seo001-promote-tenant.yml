@@ -1,6 +1,11 @@
 # SEO-001 — allowlisted tenant production promotion (Worker version only).
 # Does NOT mutate tenant_domains, DNS, or Custom Domains.
 # Enable tenants via PR to ops/seo001/approved-tenants.json (enabled: true).
+#
+# NO-GO until GitHub Environment `seo001-production-promotion` exists with
+# required reviewers. The Environment YAML reference alone does not create
+# reviewers. Independent technical guards still apply: allowlist enabled=true,
+# PROMOTE_<SLUG> confirmation, and version_id must belong to just-public-production.
 
 name: SEO-001 Promote Tenant
 
@@ -56,6 +61,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: just-public/package-lock.json
+
+      - name: Install project dependencies
+        working-directory: just-public
+        run: npm ci
 
       - name: Resolve allowlisted tenant and validate inputs
         id: policy
@@ -67,7 +78,7 @@ jobs:
           CONFIRM: ${{ inputs.confirm }}
         run: |
           set -euo pipefail
-          node <<'NODE'
+          node --input-type=module <<'NODE'
           import {
             assertPromotionConfirm,
             assertVersionId,
@@ -96,12 +107,33 @@ jobs:
         working-directory: just-public
         run: grep -A 3 '"production"' wrangler.jsonc | grep -q '"name": "just-public-production"'
 
+      - name: Assert version belongs to just-public-production
+        id: version_gate
+        working-directory: just-public
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          VERSION_ID: ${{ steps.policy.outputs.version_id }}
+        run: |
+          set -euo pipefail
+          ./node_modules/.bin/wrangler versions list --name just-public-production --json \
+            > /tmp/seo001-production-versions.json
+          VERSION_ID="$VERSION_ID" node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs";
+          import { assertVersionBelongsToWorker } from "./scripts/ops/seo001-promotion-policy.mjs";
+          const payload = JSON.parse(readFileSync("/tmp/seo001-production-versions.json", "utf8"));
+          assertVersionBelongsToWorker(process.env.VERSION_ID, payload, "just-public-production");
+          console.log("version_gate_passed=true");
+          NODE
+
       - name: Snapshot active deployment
         working-directory: just-public
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler deployments list --name just-public-production --json > production-before.json
+        run: |
+          ./node_modules/.bin/wrangler deployments list --name just-public-production --json \
+            > production-before.json
 
       - uses: actions/upload-artifact@v4
         with:
@@ -117,7 +149,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           VERSION_ID: ${{ steps.policy.outputs.version_id }}
         run: |
-          npx wrangler versions deploy --env production \
+          ./node_modules/.bin/wrangler versions deploy --env production \
             --version-id "$VERSION_ID" --percentage 100 \
             --message "SEO-001 promote ${{ inputs.tenant_slug }} (${{ inputs.authority_mode }})" --yes
           echo "deployment_succeeded=true"
@@ -151,6 +183,12 @@ jobs:
             echo "- authority_mode: ${{ inputs.authority_mode }}"
             echo "- deployment_succeeded: ${{ steps.deploy.outcome == 'success' }}"
             echo "- post_deploy_verification_passed: ${{ steps.verify.outcome == 'success' }}"
+            echo "- Environment seo001-production-promotion must have required reviewers (NO-GO until configured)"
+            if [ "${{ steps.deploy.outcome }}" = "success" ] && [ "${{ steps.verify.outcome }}" != "success" ]; then
+              echo "- note: Worker version WAS promoted; verification failed"
+              echo "- do NOT interpret this as a failed deploy"
+              echo "- investigate before rollback or another promotion"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
           if [ "${{ steps.deploy.outcome }}" = "success" ] && [ "${{ steps.verify.outcome }}" != "success" ]; then
             exit 1

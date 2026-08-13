@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url"
 import {
   assertAuthorityMode,
   assertPromotionConfirm,
+  assertStrictHostname,
+  assertVersionBelongsToWorker,
   assertVersionId,
   loadApprovedTenantsFromFile,
   parseApprovedTenants,
@@ -52,9 +54,32 @@ test("checker hosts come from allowlist not operator strings", () => {
   assert.equal(pre.wwwAliasHost, tenant.alias)
 })
 
-test("version id must be UUID", () => {
+test("version id must be RFC UUID", () => {
   assert.equal(assertVersionId("7a039076-11cc-4db2-abf0-b9a4d0ae4b58"), "7a039076-11cc-4db2-abf0-b9a4d0ae4b58")
   assert.throws(() => assertVersionId("not-a-uuid"))
+  assert.throws(() => assertVersionId("-".repeat(36)))
+})
+
+test("assertVersionBelongsToWorker gates promotion", () => {
+  const good = "7a039076-11cc-4db2-abf0-b9a4d0ae4b58"
+  assert.equal(
+    assertVersionBelongsToWorker(good, [{ id: good }, { id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee" }]),
+    good,
+  )
+  assert.throws(
+    () => assertVersionBelongsToWorker(good, [{ id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee" }]),
+    /not a known version/,
+  )
+  assert.throws(() => assertVersionBelongsToWorker(good, []), /no versions listed/)
+  assert.throws(() => assertVersionBelongsToWorker("not-uuid", [{ id: good }]), /must be a UUID/)
+})
+
+test("strict hostname rejects protocol path port newline", () => {
+  assert.equal(assertStrictHostname("justwebsites.com.br"), "justwebsites.com.br")
+  assert.throws(() => assertStrictHostname("JustWebsites.com.br"), /lowercase/)
+  assert.throws(() => assertStrictHostname("https://evil.com"), /protocol|strict/)
+  assert.throws(() => assertStrictHostname("evil.com/path"), /protocol|strict|path/)
+  assert.throws(() => assertStrictHostname("evil.com\nsmuggle"), /whitespace|protocol/)
 })
 
 test("authority mode restricted", () => {
@@ -66,7 +91,7 @@ test("pre_flip post-deploy checks use mocked fetch", async () => {
   const www = "www.example.com.br"
   const apex = "example.com.br"
   const html = `<link rel="canonical" href="https://${www}/" />`
-  const fetchImpl = async (url, init) => {
+  const fetchImpl = async (url) => {
     const u = String(url)
     if (u === `https://${www}/`) return new Response(html, { status: 200 })
     if (u === `https://${apex}/`) {
