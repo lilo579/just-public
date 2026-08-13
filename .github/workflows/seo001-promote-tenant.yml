@@ -1,0 +1,160 @@
+# SEO-001 — allowlisted tenant production promotion (Worker version only).
+# Does NOT mutate tenant_domains, DNS, or Custom Domains.
+# Enable tenants via PR to ops/seo001/approved-tenants.json (enabled: true).
+
+name: SEO-001 Promote Tenant
+
+on:
+  workflow_dispatch:
+    inputs:
+      tenant_slug:
+        description: "Allowlisted tenant slug (ops/seo001/approved-tenants.json)"
+        required: true
+        type: string
+      version_id:
+        description: "Validated just-public-production version UUID"
+        required: true
+        type: string
+      authority_mode:
+        description: "pre_flip (www primary in DB) or post_flip (apex primary in DB)"
+        required: true
+        type: choice
+        options:
+          - pre_flip
+          - post_flip
+      confirm:
+        description: "Type PROMOTE_<SLUG> exactly (underscores, uppercase slug)"
+        required: true
+        type: string
+
+concurrency:
+  group: seo001-production-promotion
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: seo001-production-promotion
+    steps:
+      - name: Checkout Public
+        uses: actions/checkout@v4
+        with:
+          path: just-public
+
+      - name: Checkout Nexus checker
+        uses: actions/checkout@v4
+        with:
+          repository: lilo579/just-auth-nexus
+          ref: main
+          path: just-auth-nexus
+          ssh-key: ${{ secrets.NEXUS_READ_SSH_KEY }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Resolve allowlisted tenant and validate inputs
+        id: policy
+        working-directory: just-public
+        env:
+          TENANT_SLUG: ${{ inputs.tenant_slug }}
+          VERSION_ID: ${{ inputs.version_id }}
+          AUTHORITY_MODE: ${{ inputs.authority_mode }}
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          import {
+            assertPromotionConfirm,
+            assertVersionId,
+            loadApprovedTenantsFromFile,
+            resolveAllowlistedTenant,
+            resolveCheckerHosts,
+            defaultApprovedTenantsPath,
+          } from "./scripts/ops/seo001-promotion-policy.mjs";
+
+          const slug = process.env.TENANT_SLUG;
+          assertPromotionConfirm(slug, process.env.CONFIRM);
+          const versionId = assertVersionId(process.env.VERSION_ID);
+          const allowlist = loadApprovedTenantsFromFile(defaultApprovedTenantsPath());
+          const { tenant } = resolveAllowlistedTenant(allowlist, slug);
+          const hosts = resolveCheckerHosts(tenant, process.env.AUTHORITY_MODE);
+          const fs = await import("node:fs");
+          const out = process.env.GITHUB_OUTPUT;
+          fs.appendFileSync(
+            out,
+            `primary_host=${hosts.primaryHost}\nwww_alias_host=${hosts.wwwAliasHost}\nauthority_mode=${hosts.mode}\nversion_id=${versionId}\n`,
+          );
+          console.log(hosts.description);
+          NODE
+
+      - name: Validate production worker target
+        working-directory: just-public
+        run: grep -A 3 '"production"' wrangler.jsonc | grep -q '"name": "just-public-production"'
+
+      - name: Snapshot active deployment
+        working-directory: just-public
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deployments list --name just-public-production --json > production-before.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seo001-tenant-production-before-${{ inputs.tenant_slug }}
+          path: just-public/production-before.json
+          retention-days: 30
+
+      - name: Promote validated candidate
+        id: deploy
+        working-directory: just-public
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          VERSION_ID: ${{ steps.policy.outputs.version_id }}
+        run: |
+          npx wrangler versions deploy --env production \
+            --version-id "$VERSION_ID" --percentage 100 \
+            --message "SEO-001 promote ${{ inputs.tenant_slug }} (${{ inputs.authority_mode }})" --yes
+          echo "deployment_succeeded=true"
+
+      - name: Post-deploy HTTP verification
+        id: verify
+        working-directory: just-public
+        env:
+          SEO001_NEXUS_ROOT: ${{ github.workspace }}/just-auth-nexus
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5; do
+            if node scripts/ci/seo001-post-deploy-verify.mjs \
+              --primary "${{ steps.policy.outputs.primary_host }}" \
+              --www "${{ steps.policy.outputs.www_alias_host }}" \
+              --mode "${{ steps.policy.outputs.authority_mode }}"; then
+              echo "post_deploy_verification_passed=true"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "post_deploy_verification_failed=true" >&2
+          exit 1
+
+      - name: Promotion outcome
+        if: always()
+        run: |
+          {
+            echo "## SEO-001 tenant promotion outcome"
+            echo "- tenant: ${{ inputs.tenant_slug }}"
+            echo "- authority_mode: ${{ inputs.authority_mode }}"
+            echo "- deployment_succeeded: ${{ steps.deploy.outcome == 'success' }}"
+            echo "- post_deploy_verification_passed: ${{ steps.verify.outcome == 'success' }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.deploy.outcome }}" = "success" ] && [ "${{ steps.verify.outcome }}" != "success" ]; then
+            exit 1
+          fi
+          if [ "${{ steps.deploy.outcome }}" != "success" ]; then
+            exit 1
+          fi
