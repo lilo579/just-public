@@ -1,7 +1,10 @@
-# GO-003 — one-shot DNS + Custom Domain cutover for Marcelo Borer.
-# Uses the pilot-scoped CLOUDFLARE_SEO001_MARCELO_TOKEN secret.
-# Does NOT promote Worker Versions.
-# Manual workflow_dispatch only.
+# GO-003 — Marcelo Borer DNS + Custom Domain cutover (READ-ONLY AUDIT)
+#
+# Pilot cutover COMPLETE (2026-08). This workflow is preserved for preflight/status
+# snapshots only. DNS deletion and Custom Domain attachment are intentionally removed.
+# Any new mutation requires a new workflow and explicit human approval.
+#
+# Does NOT promote Worker Versions. Manual workflow_dispatch only.
 
 name: GO-003 Marcelo Cutover DNS-CD
 
@@ -9,13 +12,12 @@ on:
   workflow_dispatch:
     inputs:
       phase:
-        description: "preflight | mutate | status"
+        description: "preflight | status (read-only audit)"
         required: true
         default: "preflight"
         type: choice
         options:
           - preflight
-          - mutate
           - status
 
 permissions:
@@ -27,7 +29,7 @@ jobs:
     timeout-minutes: 10
     environment: cloudflare-preview
     steps:
-      - name: Cutover DNS + Custom Domains
+      - name: Read-only DNS + Worker domain snapshot
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_SEO001_MARCELO_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
@@ -39,11 +41,10 @@ jobs:
             exit 1
           }
           test -n "${CLOUDFLARE_ACCOUNT_ID:-}"
+          test "$PHASE" = "preflight" -o "$PHASE" = "status"
 
           ACCOUNT="${CLOUDFLARE_ACCOUNT_ID}"
           ZONE_ID="84d7e90e704e0b9d58a69e7cc863b464"
-          WORKER="just-public-production"
-          LEGACY_IP="185.158.133.1"
           APEX="marceloborer.com.br"
           WWW="www.marceloborer.com.br"
 
@@ -56,7 +57,7 @@ jobs:
               "$@"
           }
 
-          echo "=== PHASE=${PHASE} ==="
+          echo "=== PHASE=${PHASE} (read-only) ==="
           echo "=== DNS snapshot ==="
           DNS_JSON="$(api GET "/zones/${ZONE_ID}/dns_records?per_page=100")"
           echo "$DNS_JSON" | python3 -c "
@@ -71,68 +72,11 @@ jobs:
               print(f\"{typ:6} {name:40} {content} proxied={r.get('proxied')} id={r.get('id')}\")
           "
 
-          echo "=== Worker domains ==="
+          echo "=== Worker domains (GET only) ==="
           api GET "/accounts/${ACCOUNT}/workers/domains" | python3 -c "
           import json,sys
           d=json.load(sys.stdin)
           print('success', d.get('success'), 'errors', d.get('errors'))
-          for r in d.get('result') or []:
-            print(r.get('hostname'), r.get('service'), r.get('id'))
-          "
-
-          if [ "$PHASE" = "preflight" ] || [ "$PHASE" = "status" ]; then
-            exit 0
-          fi
-
-          if [ "$PHASE" != "mutate" ]; then
-            echo "Unknown phase" >&2
-            exit 1
-          fi
-
-          echo "=== Delete legacy A records for apex/www only ==="
-          echo "$DNS_JSON" | python3 -c "
-          import json,sys,os,urllib.request
-          d=json.load(sys.stdin)
-          token=os.environ['CLOUDFLARE_API_TOKEN']
-          zone='${ZONE_ID}'
-          legacy='${LEGACY_IP}'
-          targets={('${APEX}','A'),('${WWW}','A')}
-          for r in d.get('result') or []:
-            key=(r.get('name'), r.get('type'))
-            if key in targets and r.get('content')==legacy:
-              rid=r['id']
-              print('DELETE', key, rid, r.get('content'))
-              req=urllib.request.Request(
-                f'https://api.cloudflare.com/client/v4/zones/{zone}/dns_records/{rid}',
-                method='DELETE',
-                headers={'Authorization':f'Bearer {token}','Content-Type':'application/json'},
-              )
-              with urllib.request.urlopen(req) as resp:
-                body=json.load(resp)
-              print(' result', body.get('success'), body.get('errors'))
-              if not body.get('success'):
-                raise SystemExit(2)
-          "
-
-          echo "=== Attach Custom Domains ==="
-          for host in "$APEX" "$WWW"; do
-            echo "ATTACH $host"
-            RESP="$(api PUT "/accounts/${ACCOUNT}/workers/domains/records" \
-              --data "{\"hostname\":\"${host}\",\"service\":\"${WORKER}\",\"environment\":\"production\"}")"
-            echo "$RESP" | python3 -c "
-          import json,sys
-          d=json.load(sys.stdin)
-          print('success', d.get('success'), 'errors', d.get('errors'))
-          print('result', d.get('result'))
-          if not d.get('success'):
-            raise SystemExit(3)
-          "
-          done
-
-          echo "=== Post domains ==="
-          api GET "/accounts/${ACCOUNT}/workers/domains" | python3 -c "
-          import json,sys
-          d=json.load(sys.stdin)
           for r in d.get('result') or []:
             print(r.get('hostname'), r.get('service'), r.get('id'))
           "

@@ -1,78 +1,77 @@
+# SEO-001 — Marcelo pilot LEGACY (READ-ONLY).
+# Marcelo pilot completed; promotion retired.
+# This workflow only verifies apex-final HTTP/SEO state. It MUST NOT promote,
+# upload, deploy, or mutate Cloudflare traffic.
+# Prefer seo001-promote-tenant.yml for future tenants (after allowlist enable + Environment).
+
 name: SEO-001 Promote Marcelo Pilot
 
 on:
   workflow_dispatch:
     inputs:
-      version_id:
-        description: "Validated just-public-production version UUID"
+      phase:
+        description: "status — read-only apex-final verification"
         required: true
-        type: string
+        default: "status"
+        type: choice
+        options:
+          - status
 
 concurrency:
-  group: seo001-production-promotion
+  group: seo001-marcelo-audit
   cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
-  promote:
+  audit:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    environment: cloudflare-preview
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Public
+        uses: actions/checkout@v4
+        with:
+          path: just-public
+
+      - name: Checkout Nexus checker
+        uses: actions/checkout@v4
+        with:
+          repository: lilo579/just-auth-nexus
+          ref: main
+          path: just-auth-nexus
+          ssh-key: ${{ secrets.NEXUS_READ_SSH_KEY }}
 
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
 
-      - run: npm ci
-
-      - name: Validate immutable candidate
+      - name: Verify apex-final canonical state (read-only)
+        working-directory: just-public
         env:
-          VERSION_ID: ${{ inputs.version_id }}
+          SEO001_NEXUS_ROOT: ${{ github.workspace }}/just-auth-nexus
         run: |
           set -euo pipefail
-          test "$VERSION_ID" = "7a039076-11cc-4db2-abf0-b9a4d0ae4b58"
-          grep -A 3 '"production"' wrangler.jsonc | grep -q '"name": "just-public-production"'
-
-      - name: Snapshot active deployment
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler deployments list --name just-public-production --json > production-before.json
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: seo001-marcelo-production-before
-          path: production-before.json
-          retention-days: 30
-
-      - name: Promote validated candidate
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          VERSION_ID: ${{ inputs.version_id }}
-        run: |
-          npx wrangler versions deploy --env production \
-            --version-id "$VERSION_ID" --percentage 100 \
-            --message "SEO-001 Marcelo pilot" --yes
-
-      - name: Verify transitional production state
-        run: |
-          set -euo pipefail
+          test "${{ inputs.phase }}" = "status"
           for attempt in 1 2 3 4 5; do
-            apex_headers="$(curl -sS -o /dev/null -D - https://marceloborer.com.br/)"
-            www_code="$(curl -sS -o /tmp/www.html -w '%{http_code}' https://www.marceloborer.com.br/)"
-            if echo "$apex_headers" | grep -qi '^HTTP/.* 301' \
-              && echo "$apex_headers" | grep -qi '^location: https://www.marceloborer.com.br/' \
-              && test "$www_code" = "200" \
-              && grep -qi '<link[^>]*rel="canonical"[^>]*href="https://www.marceloborer.com.br/"' /tmp/www.html; then
+            if node scripts/ci/seo001-post-deploy-verify.mjs \
+              --primary marceloborer.com.br \
+              --www www.marceloborer.com.br \
+              --mode post_flip; then
+              echo "marcelo_apex_final_verification_passed=true"
               exit 0
             fi
             sleep 3
           done
-          echo "Transitional production verification failed" >&2
+          echo "marcelo_apex_final_verification_failed=true" >&2
           exit 1
+
+      - name: Audit outcome
+        if: always()
+        run: |
+          {
+            echo "## SEO-001 Marcelo legacy audit"
+            echo "- Marcelo pilot completed; promotion retired"
+            echo "- This workflow does not promote Worker versions"
+            echo "- phase: status (HTTP apex-final verify only)"
+          } >> "$GITHUB_STEP_SUMMARY"
