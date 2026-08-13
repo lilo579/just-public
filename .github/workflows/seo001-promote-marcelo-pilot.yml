@@ -1,3 +1,7 @@
+# SEO-001 — Marcelo pilot production promotion (LEGACY — pilot cutover complete).
+# Post-deploy verification uses apex-final canonical state (not transitional www-primary).
+# Prefer seo001-promote-tenant.yml for future tenants once allowlisted.
+
 name: SEO-001 Promote Marcelo Pilot
 
 on:
@@ -18,27 +22,40 @@ permissions:
 jobs:
   promote:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     environment: cloudflare-preview
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Public
+        uses: actions/checkout@v4
+        with:
+          path: just-public
+
+      - name: Checkout Nexus checker
+        uses: actions/checkout@v4
+        with:
+          repository: lilo579/just-auth-nexus
+          ref: main
+          path: just-auth-nexus
+          ssh-key: ${{ secrets.NEXUS_READ_SSH_KEY }}
 
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
 
-      - run: npm ci
-
-      - name: Validate immutable candidate
+      - name: Validate version UUID
+        working-directory: just-public
         env:
           VERSION_ID: ${{ inputs.version_id }}
         run: |
           set -euo pipefail
-          test "$VERSION_ID" = "7a039076-11cc-4db2-abf0-b9a4d0ae4b58"
+          node -e "
+          const id = process.env.VERSION_ID.trim().toLowerCase();
+          if (!/^[0-9a-f-]{36}$/.test(id)) process.exit(1);
+          "
           grep -A 3 '"production"' wrangler.jsonc | grep -q '"name": "just-public-production"'
 
       - name: Snapshot active deployment
+        working-directory: just-public
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
@@ -47,10 +64,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: seo001-marcelo-production-before
-          path: production-before.json
+          path: just-public/production-before.json
           retention-days: 30
 
       - name: Promote validated candidate
+        id: deploy
+        working-directory: just-public
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
@@ -58,21 +77,43 @@ jobs:
         run: |
           npx wrangler versions deploy --env production \
             --version-id "$VERSION_ID" --percentage 100 \
-            --message "SEO-001 Marcelo pilot" --yes
+            --message "SEO-001 Marcelo pilot (legacy workflow)" --yes
+          echo "deployment_succeeded=true"
 
-      - name: Verify transitional production state
+      - name: Verify apex-final canonical state
+        id: verify
+        working-directory: just-public
+        env:
+          SEO001_NEXUS_ROOT: ${{ github.workspace }}/just-auth-nexus
         run: |
           set -euo pipefail
           for attempt in 1 2 3 4 5; do
-            apex_headers="$(curl -sS -o /dev/null -D - https://marceloborer.com.br/)"
-            www_code="$(curl -sS -o /tmp/www.html -w '%{http_code}' https://www.marceloborer.com.br/)"
-            if echo "$apex_headers" | grep -qi '^HTTP/.* 301' \
-              && echo "$apex_headers" | grep -qi '^location: https://www.marceloborer.com.br/' \
-              && test "$www_code" = "200" \
-              && grep -qi '<link[^>]*rel="canonical"[^>]*href="https://www.marceloborer.com.br/"' /tmp/www.html; then
+            if node scripts/ci/seo001-post-deploy-verify.mjs \
+              --primary marceloborer.com.br \
+              --www www.marceloborer.com.br \
+              --mode post_flip; then
+              echo "post_deploy_verification_passed=true"
               exit 0
             fi
             sleep 3
           done
-          echo "Transitional production verification failed" >&2
+          echo "post_deploy_verification_failed=true" >&2
           exit 1
+
+      - name: Promotion outcome
+        if: always()
+        run: |
+          {
+            echo "## SEO-001 Marcelo promotion outcome"
+            echo "- deployment_succeeded: ${{ steps.deploy.outcome == 'success' }}"
+            echo "- post_deploy_verification_passed: ${{ steps.verify.outcome == 'success' }}"
+            if [ "${{ steps.deploy.outcome }}" = "success" ] && [ "${{ steps.verify.outcome }}" != "success" ]; then
+              echo "- note: Worker version was promoted; verification failed — use rollback artifact, do not re-promote blindly"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.deploy.outcome }}" = "success" ] && [ "${{ steps.verify.outcome }}" != "success" ]; then
+            exit 1
+          fi
+          if [ "${{ steps.deploy.outcome }}" != "success" ]; then
+            exit 1
+          fi
