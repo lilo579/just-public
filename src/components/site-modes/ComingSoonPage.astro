@@ -2,9 +2,12 @@
 /**
  * Platform Coming Soon interstitial — tenant-branded via SiteTheme + props.
  * No tenant hardcoding. Content from site.mode.config + branding fallbacks.
+ * Lead form markup is present only when leadCaptureEnabled === true
+ * and leadForm is a valid copy object (same policy as resolveComingSoonLeadForm).
  */
 import JustSignature from "../JustSignature.astro"
 import ComingSoonLeadForm from "./ComingSoonLeadForm.astro"
+import { shouldRenderComingSoonLeadForm } from "../../lib/resolveComingSoonLeadForm.js"
 
 interface SocialLink {
   type?: string | null
@@ -38,6 +41,7 @@ interface Props {
   backgroundImageUrl?: string | null
   heroImageUrl?: string | null
   launchDate?: string | null
+  leadCaptureEnabled?: boolean | null
   leadForm?: LeadFormCopy | null
   legalLinks?: LegalLink[] | null
   showJustSignature?: boolean | null
@@ -58,6 +62,7 @@ const {
   backgroundImageUrl = null,
   heroImageUrl = null,
   launchDate = null,
+  leadCaptureEnabled = null,
   leadForm = null,
   legalLinks = null,
   showJustSignature = true,
@@ -85,7 +90,7 @@ const primaryLabel = (ctaLabel && ctaLabel.trim()) || (ctaHref ? "Fale conosco" 
 const links = Array.isArray(socialLinks) ? socialLinks.filter((l) => l?.url) : []
 const legal = Array.isArray(legalLinks) ? legalLinks.filter((l) => l?.href && l?.label) : []
 const showSignature = showJustSignature !== false
-const showLead = Boolean(leadForm && typeof leadForm === "object")
+const showLead = shouldRenderComingSoonLeadForm(leadCaptureEnabled, leadForm)
 const year = new Date().getFullYear()
 ---
 
@@ -144,8 +149,6 @@ const year = new Date().getFullYear()
             nameLabel={leadForm?.nameLabel}
             whatsappLabel={leadForm?.whatsappLabel}
             submitLabel={leadForm?.submitLabel}
-            successTitle={leadForm?.successTitle}
-            successBody={leadForm?.successBody}
           />
         </div>
       ) : null}

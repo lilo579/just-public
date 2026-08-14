@@ -1,27 +1,24 @@
 ---
 /**
- * Platform Coming Soon lead form — UI-only success (no backend).
- * Persistence requires leadCaptureEnabled + future intake wiring (not M2).
+ * Platform Coming Soon lead form.
+ * Rendered only when leadCaptureEnabled === true (builder + page guard).
+ * No persistence and no simulated success — intake is not wired.
  */
 interface Props {
   nameLabel?: string | null
   whatsappLabel?: string | null
   submitLabel?: string | null
-  successTitle?: string | null
-  successBody?: string | null
 }
 
 const {
   nameLabel = "Nome",
   whatsappLabel = "WhatsApp",
   submitLabel = "Enviar",
-  successTitle = "Obrigado!",
-  successBody = "Recebemos seus dados.",
 } = Astro.props
 ---
 
 <div class="site-mode-lead" data-site-mode-lead>
-  <form class="site-mode-lead__form" data-site-mode-lead-form novalidate>
+  <form class="site-mode-lead__form" data-site-mode-lead-form>
     <div class="site-mode-lead__field">
       <label for="site-mode-lead-name">{nameLabel}</label>
       <input
@@ -43,34 +40,16 @@ const {
         required
       />
     </div>
-    <button type="submit" class="site-mode-lead__submit">{submitLabel}</button>
+    <button type="submit" class="site-mode-lead__submit" disabled>{submitLabel}</button>
   </form>
-
-  <div
-    class="site-mode-lead__success"
-    data-site-mode-lead-success
-    hidden
-    role="status"
-    aria-live="polite"
-  >
-    <p class="site-mode-lead__success-title">{successTitle}</p>
-    <p class="site-mode-lead__success-body">{successBody}</p>
-  </div>
 </div>
 
 <script>
   document.querySelectorAll("[data-site-mode-lead]").forEach((root) => {
     const form = root.querySelector("[data-site-mode-lead-form]")
-    const success = root.querySelector("[data-site-mode-lead-success]")
-    if (!(form instanceof HTMLFormElement) || !(success instanceof HTMLElement)) return
-
+    if (!(form instanceof HTMLFormElement)) return
     form.addEventListener("submit", (event) => {
       event.preventDefault()
-      const name = String(new FormData(form).get("name") || "").trim()
-      const whatsapp = String(new FormData(form).get("whatsapp") || "").trim()
-      if (!name || !whatsapp) return
-      form.hidden = true
-      success.hidden = false
     })
   })
 </script>
@@ -119,31 +98,14 @@ const {
     cursor: pointer;
   }
 
+  .site-mode-lead__submit:disabled {
+    cursor: not-allowed;
+    opacity: 0.72;
+  }
+
   .site-mode-lead__submit:focus-visible,
   .site-mode-lead__field input:focus-visible {
     outline: 2px solid var(--site-color-accent, #3b5bdb);
     outline-offset: 3px;
-  }
-
-  .site-mode-lead__success {
-    padding: 2rem 1.5rem;
-    border-radius: 1rem;
-    border: 1px solid color-mix(in srgb, var(--site-color-text, #121212) 12%, transparent);
-    background: var(--site-color-card, #fff);
-    text-align: center;
-  }
-
-  .site-mode-lead__success-title {
-    margin: 0;
-    font-family: var(--site-font-heading, ui-sans-serif, system-ui, sans-serif);
-    font-size: 1.25rem;
-    font-weight: 600;
-  }
-
-  .site-mode-lead__success-body {
-    margin: 0.75rem 0 0;
-    font-size: 0.875rem;
-    line-height: 1.55;
-    color: var(--site-color-text-muted, #616161);
   }
 </style>

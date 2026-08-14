@@ -54,6 +54,7 @@ import {
   resolveShopSolidLogoUrl,
 } from "../lib/resolveShopNavItems.js"
 import { resolvePublicSiteMode } from "../lib/resolvePublicSiteMode.js"
+import { resolveComingSoonLeadForm } from "../lib/resolveComingSoonLeadForm.js"
 import ComingSoonPage from "../components/site-modes/ComingSoonPage.astro"
 import MaintenancePage from "../components/site-modes/MaintenancePage.astro"
 import JustInstitutionalHomepage from "../components/just-institutional/JustInstitutionalHomepage.astro"
@@ -495,10 +496,7 @@ const modeSocial =
 const modeParagraphs = Array.isArray(siteModeConfig.paragraphs)
   ? siteModeConfig.paragraphs
   : null
-const modeLeadForm =
-  siteModeConfig.leadForm && typeof siteModeConfig.leadForm === "object"
-    ? siteModeConfig.leadForm
-    : null
+const modeLeadForm = resolveComingSoonLeadForm(siteModeConfig)
 const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
   ? siteModeConfig.legalLinks
   : null
@@ -562,6 +560,7 @@ const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
                 backgroundImageUrl={siteModeConfig.backgroundImageUrl}
                 heroImageUrl={siteModeConfig.heroImageUrl}
                 launchDate={siteModeConfig.launchDate}
+                leadCaptureEnabled={siteModeConfig.leadCaptureEnabled === true}
                 leadForm={modeLeadForm}
                 legalLinks={modeLegalLinks}
                 showJustSignature={siteModeConfig.showJustSignature}
