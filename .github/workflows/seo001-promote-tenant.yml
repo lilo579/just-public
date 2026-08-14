@@ -105,7 +105,8 @@ jobs:
 
       - name: Validate production worker target
         working-directory: just-public
-        run: grep -A 3 '"production"' wrangler.jsonc | grep -q '"name": "just-public-production"'
+        run: |
+          grep -A 3 '"production"' wrangler.jsonc | grep -q '"name": "just-public-production"'
 
       - name: Assert version belongs to just-public-production
         id: version_gate

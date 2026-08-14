@@ -67,6 +67,11 @@ test("seo001 promote tenant workflow uses allowlist, version gate, npm ci", asyn
   assert.match(active, /pre_flip/)
   assert.match(active, /post_flip/)
   assert.match(active, /seo001-post-deploy-verify\.mjs/)
+  assert.match(
+    workflow,
+    /name: Validate production worker target\n\s+working-directory: just-public\n\s+run: \|\n\s+grep -A 3 '"production"' wrangler\.jsonc \| grep -q '"name": "just-public-production"'/,
+  )
+  assert.doesNotMatch(active, /^[ \t]*run:[ \t]+grep -A 3 /m)
   assert.match(active, /environment: seo001-production-promotion/)
   assert.match(active, /concurrency:\s*\n\s+group: seo001-production-promotion/)
   assert.match(active, /Worker version WAS promoted|do NOT interpret this as a failed deploy/)
