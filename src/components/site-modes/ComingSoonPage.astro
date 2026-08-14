@@ -2,6 +2,8 @@
 /**
  * Platform Coming Soon interstitial — tenant-branded via SiteTheme + props.
  * No tenant hardcoding. Content from site.mode.config + branding fallbacks.
+ * Lead form markup is present only when the builder passes leadForm
+ * (leadCaptureEnabled === true). Copy-only leadForm objects are ignored upstream.
  */
 import JustSignature from "../JustSignature.astro"
 import ComingSoonLeadForm from "./ComingSoonLeadForm.astro"
@@ -144,8 +146,6 @@ const year = new Date().getFullYear()
             nameLabel={leadForm?.nameLabel}
             whatsappLabel={leadForm?.whatsappLabel}
             submitLabel={leadForm?.submitLabel}
-            successTitle={leadForm?.successTitle}
-            successBody={leadForm?.successBody}
           />
         </div>
       ) : null}
