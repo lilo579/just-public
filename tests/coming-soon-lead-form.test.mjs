@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { resolveComingSoonLeadForm } from "../src/lib/resolveComingSoonLeadForm.js"
+import { resolveComingSoonLeadForm, shouldRenderComingSoonLeadForm } from "../src/lib/resolveComingSoonLeadForm.js"
 import { mergeComingSoonConfig } from "../src/lib/resolvePackagedInstitutionalSite.js"
 import { resolvePublicSiteMode } from "../src/lib/resolvePublicSiteMode.js"
 import { justComingSoonModeConfig } from "../src/lib/justInstitutionalFreeze.js"
@@ -103,6 +103,35 @@ test("ComingSoonLeadForm does not simulate persistence success", () => {
   assert.doesNotMatch(formSrc, /Recebemos seus dados/)
   assert.match(formSrc, /preventDefault/)
   assert.match(formSrc, /disabled/)
+})
+
+test("shouldRenderComingSoonLeadForm: same policy as helper (direct ComingSoonPage caller)", () => {
+  const form = { submitLabel: "Quero saber primeiro" }
+  assert.equal(shouldRenderComingSoonLeadForm(false, form), false)
+  assert.equal(shouldRenderComingSoonLeadForm(undefined, form), false)
+  assert.equal(shouldRenderComingSoonLeadForm(null, form), false)
+  assert.equal(shouldRenderComingSoonLeadForm(true, form), true)
+  assert.equal(shouldRenderComingSoonLeadForm(true, null), false)
+  assert.equal(
+    shouldRenderComingSoonLeadForm(true, form),
+    Boolean(resolveComingSoonLeadForm({ leadCaptureEnabled: true, leadForm: form })),
+  )
+  assert.equal(
+    shouldRenderComingSoonLeadForm(false, form),
+    Boolean(resolveComingSoonLeadForm({ leadCaptureEnabled: false, leadForm: form })),
+  )
+})
+
+test("ComingSoonPage enforces leadCaptureEnabled at the component boundary", () => {
+  const pageSrc = readFileSync(
+    join(root, "src/components/site-modes/ComingSoonPage.astro"),
+    "utf8",
+  )
+  assert.match(pageSrc, /leadCaptureEnabled/)
+  assert.match(pageSrc, /shouldRenderComingSoonLeadForm\(leadCaptureEnabled, leadForm\)/)
+  const indexSrc = readFileSync(join(root, "src/pages/index.astro"), "utf8")
+  assert.match(indexSrc, /leadCaptureEnabled=\{siteModeConfig\.leadCaptureEnabled === true\}/)
+  assert.match(indexSrc, /resolveComingSoonLeadForm/)
 })
 
 test("ComingSoonPage keeps legal, logo, headline, copy, launch without requiring form", () => {
