@@ -44,7 +44,7 @@ export async function freePort() {
  * Routes by query `host`; never calls Hub/Supabase.
  * Each call records: timestamp, host, tenant, mode, status.
  */
-export function startCanonicalPayloadMock() {
+export function startCanonicalPayloadMock(extraHostFixtures = {}, extraTenantByHost = {}) {
   /**
    * @type {{
    *   timestamp: string
@@ -97,13 +97,13 @@ export function startCanonicalPayloadMock() {
       return
     }
 
-    const fixture = HOST_FIXTURES[host]
+    const fixture = extraHostFixtures[host] ?? HOST_FIXTURES[host]
     if (!fixture) {
       respond(404, JSON.stringify({ error: "unknown_host", code: "unknown_host" }))
       return
     }
 
-    const meta = TENANT_BY_HOST[host]
+    const meta = extraTenantByHost[host] ?? TENANT_BY_HOST[host]
     const tenant = typeof fixture.tenantId === "string" ? fixture.tenantId : null
     const tenantKey = meta?.key ?? null
     respond(200, JSON.stringify(fixture), tenant, tenantKey)
