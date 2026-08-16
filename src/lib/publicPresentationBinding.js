@@ -20,15 +20,16 @@ function structuralPlanChrome(planChrome) {
 }
 
 function withEditorialPolicy(profile, planChrome, meta) {
-  const resolved = resolveF1PresentationChrome(profile);
   const policy = resolveCinematicEditorialPolicy(meta, planChrome);
   if (policy.mode === "legacy-temporary") {
-    return {
-      ...resolved,
-      ...planChrome,
-      cinematicEditorial: policy.cinematicEditorial ?? null,
-    };
+    // origin/main canonical F1: painted plan chrome is the chrome object.
+    // Do not spread resolveF1PresentationChrome — partial plans must stay partial.
+    if (planChrome && typeof planChrome === "object") {
+      return planChrome;
+    }
+    return resolveF1PresentationChrome(profile);
   }
+  const resolved = resolveF1PresentationChrome(profile);
   return {
     ...resolved,
     ...structuralPlanChrome(planChrome),

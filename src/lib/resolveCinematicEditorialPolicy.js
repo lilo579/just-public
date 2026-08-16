@@ -1,7 +1,8 @@
 /**
  * Cinematic editorial chrome policy (temporary legacy fallback).
  *
- * Marker absent → Edge legado: keep plan.chrome.cinematicEditorial.
+ * Marker absent → Edge legado: keep the plan chrome object as-is
+ * (origin/main `return planChrome`; do not fill missing flags).
  * Marker v1 → Hub payload is authoritative; ignore plan factory blob.
  * Unknown marker or contradictory mix → fail closed (no editorial chrome).
  *

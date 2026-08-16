@@ -58,6 +58,45 @@ test("marker absent keeps legacy plan chrome (compatible Public + old Edge)", ()
     "old Edge ignores Hub seed; visual stays factory blob",
   )
   assert.equal(nexo.chrome.cinematicEditorial.heroImageUrl, "/presentation/cinematic_v1/hero.jpg")
+  assert.equal(
+    flavio.chrome,
+    FIXTURE_FLAVIO_LEGACY.serializablePlan.presentation.chrome,
+    "legacy fallback must be the plan chrome object, not a reconstructed copy",
+  )
+})
+
+test("legacy-temporary returns partial planChrome without filling cinematic flags", () => {
+  const partialChrome = {
+    cinematicEditorial: {
+      heroImageUrl: "/presentation/cinematic_v1/hero.jpg",
+      headerCtaLabel: "Fale comigo",
+    },
+  }
+  const homepage = {
+    source: {
+      meta: {
+        presentationProfile: "f1.presentation.cinematic_v1",
+      },
+    },
+    serializablePlan: {
+      presentation: {
+        profile: "f1.presentation.cinematic_v1",
+        chrome: partialChrome,
+      },
+    },
+  }
+  const bound = bind(homepage)
+  assert.equal(
+    resolveCinematicEditorialPolicy(homepage.source.meta, partialChrome).mode,
+    "legacy-temporary",
+  )
+  assert.equal(bound.chrome, partialChrome)
+  assert.deepEqual(Object.keys(bound.chrome), ["cinematicEditorial"])
+  assert.equal(bound.chrome.headerOverHero, undefined)
+  assert.equal(bound.chrome.heroLayout, undefined)
+  assert.equal(bound.chrome.trustOverlapsHero, undefined)
+  assert.equal(bound.chrome.profile, undefined)
+  assert.equal(bound.chrome.cinematicEditorial.heroImageUrl, "/presentation/cinematic_v1/hero.jpg")
 })
 
 test("v1 + object ignores the global plan blob completely", () => {
