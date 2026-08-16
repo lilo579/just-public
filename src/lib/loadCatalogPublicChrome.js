@@ -14,6 +14,11 @@ import {
   isLeadIntakeSafeMode,
   resolveDeployEnv,
 } from "./runtimeEnv.js";
+import {
+  isPublicationIndexingEnforced,
+  publicationFromPayload,
+  shouldNoindexFromPublication,
+} from "./publicationContract.js";
 import { resolvePocFixturePayload } from "../poc/publicSiteFixtures.js";
 import { themeTokensFromBranding } from "./themeFromBranding";
 import {
@@ -134,7 +139,13 @@ export async function loadCatalogPublicChrome(host, locals) {
   const siteModeResolved = resolvePublicSiteMode(homepage);
   const deployEnv = resolveDeployEnv(locals);
   const noindex =
-    isLeadIntakeSafeMode(deployEnv) || siteModeResolved.mode === "MAINTENANCE";
+    isLeadIntakeSafeMode(deployEnv) ||
+    siteModeResolved.mode === "MAINTENANCE" ||
+    shouldNoindexFromPublication({
+      enforce: isPublicationIndexingEnforced(locals),
+      publication: publicationFromPayload(homepage),
+      siteMode: siteModeResolved.mode,
+    });
   /** ADR-SEO-001 — prefer middleware locals (same request), else payload contract. */
   const canonical =
     (locals?.publicCanonical && typeof locals.publicCanonical === "object"

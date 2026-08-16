@@ -13,6 +13,11 @@ import {
   resolveSitePayloadUrl,
   resolveSupabaseAnonKey,
 } from "./runtimeEnv.js"
+import {
+  isPublicationIndexingEnforced,
+  publicationFromPayload,
+  shouldNoindexFromPublication,
+} from "./publicationContract.js"
 import { resolvePocFixturePayload } from "../poc/publicSiteFixtures.js"
 import {
   mergeComingSoonConfig,
@@ -104,7 +109,14 @@ export async function loadJustInstitutionalChrome(request, locals) {
       : packaged.themeBranding
 
   const deployEnv = resolveDeployEnv(locals)
-  const noindex = isLeadIntakeSafeMode(deployEnv) || siteModeResolved.mode === "MAINTENANCE"
+  const noindex =
+    isLeadIntakeSafeMode(deployEnv) ||
+    siteModeResolved.mode === "MAINTENANCE" ||
+    shouldNoindexFromPublication({
+      enforce: isPublicationIndexingEnforced(locals),
+      publication: publicationFromPayload(homepage),
+      siteMode: siteModeResolved.mode,
+    })
   const canonical =
     asPublicCanonicalContract(locals?.publicCanonical) ||
     asPublicCanonicalContract(homepage?.canonical)
