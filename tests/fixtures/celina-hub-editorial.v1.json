@@ -1,0 +1,41 @@
+{
+  "atmosphere": "editorial",
+  "typography": "editorial",
+  "composition": "editorial",
+  "heroImageUrl": "/presentation/cinematic_v1/hero.jpg",
+  "processImageUrl": "/presentation/cinematic_v1/process.jpg",
+  "principlesImageUrl": "/presentation/cinematic_v1/principles.jpg",
+  "problemKicker": "O desafio",
+  "problemPullQuote": "Quando a criança é compreendida, o desenvolvimento encontra espaço para acontecer.",
+  "situationsKicker": "Sinais de atenção",
+  "situationsSupport": "Alguns sinais aparecem de forma silenciosa no dia a dia. Quando compreendidos com profundidade, eles podem se transformar em caminhos de desenvolvimento.",
+  "processKicker": "Como acontece o acompanhamento",
+  "processSupport": "Cada criança tem uma história única. Por isso, o acompanhamento é construído a partir da escuta, da observação e do respeito ao seu tempo.",
+  "principlesKicker": "O que guia o nosso trabalho",
+  "aboutStats": [
+    { "value": "40+", "label": "Anos de experiência clínica" },
+    { "value": "Inúmeras", "label": "Famílias e crianças acompanhadas" },
+    { "value": "Olhar", "label": "Individualizado do desenvolvimento" },
+    { "value": "Escuta", "label": "Cuidadosa em cada etapa" }
+  ],
+  "processSupplementalSteps": [
+    {
+      "title": "Parceria com a família",
+      "description": "A família recebe orientação e participa ativamente do processo, fortalecendo o desenvolvimento dentro e fora dos encontros."
+    },
+    {
+      "title": "Acompanhamento contínuo",
+      "description": "Reavaliamos, ajustamos e seguimos juntos, celebrando cada conquista e cada pequeno avanço."
+    }
+  ],
+  "ctaMicrocopy": "Atendimento humanizado e individualizado",
+  "closingPullQuote": "O objetivo não é acelerar a criança, mas construir caminhos possíveis para que ela avance com segurança.",
+  "headerCtaLabel": "Fale comigo",
+  "navItems": [
+    { "label": "Início", "href": "/" },
+    { "label": "Sobre", "href": "#sobre" },
+    { "label": "Como funciona", "href": "#como-funciona" },
+    { "label": "Para quem é", "href": "#para-quem" },
+    { "label": "Contato", "href": "#contato" }
+  ]
+}

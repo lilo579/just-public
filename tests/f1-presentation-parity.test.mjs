@@ -115,20 +115,20 @@ test("resolveHeaderLogoUrl prefers brand logo for classic_v1", () => {
   assert.equal(url, "https://cdn.example/color.png")
 })
 
-test("cinematic_v1 chrome exposes over-hero and editorial without tenant keys", () => {
+test("cinematic_v1 chrome is a visual engine without factory editorial", () => {
   const cinematic = resolveF1PresentationChrome("f1.presentation.cinematic_v1")
   assert.equal(cinematic.heroLayout, "cinematic")
   assert.equal(cinematic.headerOverHero, true)
   assert.equal(cinematic.processLayout, "cinematic-journey")
   assert.equal(cinematic.ctaLayout, "cinematic-band")
-  assert.ok(cinematic.cinematicEditorial)
-  assert.equal(cinematic.cinematicEditorial.processSupplementalSteps.length, 2)
-  assert.ok(cinematic.cinematicEditorial.navItems.length > 0)
+  assert.equal(cinematic.cinematicEditorial, null)
   const src = readFileSync(
     join(dirname(fileURLToPath(import.meta.url)), "../src/lib/enrichPlanPaintWithPresentationChrome.js"),
     "utf8",
   )
   assert.doesNotMatch(src, /celina|b7c2d3c1|tenantId/i)
+  assert.doesNotMatch(src, /benefits-\d\d\.jpeg/)
+  assert.doesNotMatch(src, /manifesto-portrait/)
 })
 
 test("resolveHeaderOverHeroLogoUrl prefers white logo when over-hero", async () => {
