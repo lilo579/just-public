@@ -2,7 +2,7 @@
   "just": {
     "primary": "justwebsites.com.br",
     "alias": "www.justwebsites.com.br",
-    "enabled": true
+    "enabled": false
   },
   "flavio-personal": {
     "primary": "treinecomflaviohenrique.com.br",
