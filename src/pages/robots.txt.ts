@@ -12,6 +12,12 @@ import {
   getPublicRequestContext,
   resolvePublicRequestContext,
 } from "../lib/publicRequestContext.js"
+import {
+  isPublicationIndexingEnforced,
+  publicationCacheControl,
+  publicationFromPayload,
+  shouldNoindexFromPublication,
+} from "../lib/publicationContract.js"
 
 export const prerender = false
 
@@ -89,6 +95,30 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     })
   }
 
+  const enforce = isPublicationIndexingEnforced(locals)
+  const publicationNoindex = shouldNoindexFromPublication({
+    enforce,
+    publication: publicationFromPayload(ctx.payload),
+    siteMode: ctx.payload && typeof ctx.payload === "object"
+      ? /** @type {Record<string, unknown>} */ (ctx.payload).siteMode
+      : undefined,
+    exposureAllowed:
+      ctx.payload && typeof ctx.payload === "object"
+        ? /** @type {Record<string, unknown>} */ (ctx.payload).exposure
+        : undefined,
+  })
+
+  if (publicationNoindex) {
+    return new Response(["User-agent: *", "Disallow: /", ""].join("\n"), {
+      status: 200,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": publicationCacheControl(true),
+        "X-Robots-Tag": "noindex, nofollow",
+      },
+    })
+  }
+
   const body = [
     "User-agent: *",
     "Allow: /",
@@ -104,7 +134,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     status: 200,
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "public, max-age=300",
+      "Cache-Control": publicationCacheControl(enforce),
     },
   })
 }

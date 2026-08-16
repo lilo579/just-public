@@ -16,6 +16,12 @@ import {
   publicAuthorityFailureResponse,
   resolvePublicRequestContext,
 } from "../lib/publicRequestContext.js"
+import {
+  isPublicationIndexingEnforced,
+  publicationCacheControl,
+  publicationFromPayload,
+  shouldNoindexFromPublication,
+} from "../lib/publicationContract.js"
 
 export const prerender = false
 
@@ -93,6 +99,26 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     })
   }
 
+  const enforce = isPublicationIndexingEnforced(locals)
+  if (
+    shouldNoindexFromPublication({
+      enforce,
+      publication: publicationFromPayload(ctx.payload),
+    })
+  ) {
+    return new Response(
+      '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>',
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/xml; charset=utf-8",
+          "Cache-Control": publicationCacheControl(true),
+          "X-Robots-Tag": "noindex",
+        },
+      },
+    )
+  }
+
   const packaged = resolvePackagedInstitutionalSite(canonical.host)
   const paths = packaged?.sitemapPaths?.length ? packaged.sitemapPaths : ["/"]
   const urls = paths
@@ -117,7 +143,7 @@ ${urls}
     status: 200,
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=300",
+      "Cache-Control": publicationCacheControl(enforce),
     },
   })
 }

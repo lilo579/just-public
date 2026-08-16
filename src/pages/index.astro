@@ -22,6 +22,11 @@ import {
   resolveSitePayloadUrl,
   resolveSupabaseAnonKey,
 } from "../lib/runtimeEnv.js"
+import {
+  isPublicationIndexingEnforced,
+  publicationFromPayload,
+  shouldNoindexFromPublication,
+} from "../lib/publicationContract.js"
 import { resolvePocFixturePayload } from "../poc/publicSiteFixtures.js"
 import { themeTokensFromBranding } from "../lib/themeFromBranding"
 import { buildPublicHomepageSeo } from "../lib/publicPageSeo.js"
@@ -401,7 +406,14 @@ const fontLoadUrl =
   typeof tokens.__fontLoadUrl === "string" ? tokens.__fontLoadUrl : null
 
 const deployEnv = resolveDeployEnv(Astro.locals)
-const noindex = isLeadIntakeSafeMode(deployEnv) || siteMode === "MAINTENANCE"
+const noindex =
+  isLeadIntakeSafeMode(deployEnv) ||
+  siteMode === "MAINTENANCE" ||
+  shouldNoindexFromPublication({
+    enforce: isPublicationIndexingEnforced(Astro.locals),
+    publication: publicationFromPayload(homepageWithSource),
+    siteMode,
+  })
 const planForSeo =
   choice.mode === "canonical" ? choice.plan : homepageWithSource.serializablePlan
 
