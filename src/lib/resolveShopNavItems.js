@@ -1,3 +1,5 @@
+import { resolveCatalogLineHref } from "./catalogBrowse.js";
+
 /**
  * F3 shop header nav — Golden Master parity with product-palette-kit useNavLines.
  * Lines flagged show_in_nav, collection-aware hrefs, then trailing "Catálogo".
@@ -30,14 +32,10 @@ export function resolveShopNavItems(taxonomy) {
   }
 
   return [
-    ...navLines.map((line) => {
-      const slug = typeof line.slug === "string" ? line.slug.trim() : "";
-      const href =
-        slug && collectionSlugs.has(slug)
-          ? `/catalogo?colecao=${encodeURIComponent(slug)}`
-          : `/catalogo?line=${encodeURIComponent(String(line.id))}`;
-      return { label: String(line.name || "Linha"), href };
-    }),
+    ...navLines.map((line) => ({
+      label: String(line.name || "Linha"),
+      href: resolveCatalogLineHref(line, collectionSlugs),
+    })),
     { label: "Catálogo", href: "/catalogo", separatorBefore: true },
   ];
 }

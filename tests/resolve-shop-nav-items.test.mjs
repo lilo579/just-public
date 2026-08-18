@@ -56,3 +56,21 @@ test("resolveShopSolidLogoUrl prefers brand crest", () => {
     "https://cdn.example/horizontal.png",
   )
 })
+
+test("null-slug nav lines still link by canonical line id", () => {
+  const nav = resolveShopNavItems([
+    {
+      kind: "line",
+      id: "33ddd67b-9cc5-4458-9d46-3f5a9df70c16",
+      name: "Natlan Elegance",
+      slug: null,
+      show_in_nav: true,
+      sort_order: 0,
+    },
+  ])
+
+  assert.deepEqual(nav[0], {
+    label: "Natlan Elegance",
+    href: "/catalogo?line=33ddd67b-9cc5-4458-9d46-3f5a9df70c16",
+  })
+})
