@@ -413,6 +413,12 @@ const noindex =
     enforce: isPublicationIndexingEnforced(Astro.locals),
     publication: publicationFromPayload(homepageWithSource),
     siteMode,
+    canonicalHost:
+      (Astro.locals.publicCanonical &&
+      typeof Astro.locals.publicCanonical === "object"
+        ? /** @type {{ host?: unknown }} */ (Astro.locals.publicCanonical).host
+        : undefined) ||
+      homepageWithSource.canonical?.host,
   })
 const planForSeo =
   choice.mode === "canonical" ? choice.plan : homepageWithSource.serializablePlan

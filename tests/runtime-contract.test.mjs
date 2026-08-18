@@ -139,6 +139,8 @@ test("health contract shape is stable (fixture — no network)", () => {
     status: "ok",
     service: "just-public",
     canonicalContractVersion: "seo001-v1",
+    publicationContractVersion: "v1",
+    publicationIndexingEnforced: false,
     features: {
       canonicalRedirects: true,
       requestScopedAuthority: true,
@@ -148,6 +150,8 @@ test("health contract shape is stable (fixture — no network)", () => {
   assert.equal(body.status, "ok")
   assert.equal(body.service, "just-public")
   assert.equal(body.canonicalContractVersion, "seo001-v1")
+  assert.equal(body.publicationContractVersion, "v1")
+  assert.equal(typeof body.publicationIndexingEnforced, "boolean")
   assert.equal(body.features.sharedAuthorityCache, false)
 })
 

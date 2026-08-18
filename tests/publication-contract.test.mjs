@@ -8,6 +8,7 @@ import {
   parsePublicationContract,
   publicationCacheControl,
   publicationFromPayload,
+  shouldApplyPublicationIndexingHeaders,
   shouldNoindexFromPublication,
 } from "../src/lib/publicationContract.js"
 
@@ -89,6 +90,14 @@ describe("publicationContract (Public)", () => {
       const seven = approvedPublication(host)
       assert.equal(seven.contractVersion, PUBLICATION_CONTRACT_VERSION)
       assert.equal(shouldNoindexFromPublication({ enforce: true, publication: seven }), false)
+      assert.equal(
+        shouldNoindexFromPublication({
+          enforce: true,
+          publication: seven,
+          canonicalHost: host,
+        }),
+        false,
+      )
     }
   })
 
@@ -209,5 +218,108 @@ describe("publicationContract (Public)", () => {
     assert.equal(flavio.canonicalHost, "treinecomflaviohenrique.com.br")
     assert.equal(celina.canonicalHost, "celinapiresdorio.com.br")
     assert.notEqual(flavio.canonicalHost, celina.canonicalHost)
+  })
+
+  it("flag ON: missing stamp canonicalHost is fail-closed; no fallback from canonical.host", () => {
+    const missingStampHost = parsePublicationContract({
+      contractVersion: "v1",
+      present: true,
+      indexingEnabled: true,
+      domainState: "domain_bound",
+      seoState: "seo_validated",
+    })
+    assert.equal(missingStampHost.canonicalHost, null)
+    assert.equal(
+      shouldNoindexFromPublication({ enforce: true, publication: missingStampHost }),
+      true,
+    )
+    assert.equal(
+      shouldNoindexFromPublication({
+        enforce: true,
+        publication: missingStampHost,
+        canonicalHost: "justwebsites.com.br",
+      }),
+      true,
+    )
+  })
+
+  it("flag ON: publication.canonicalHost must match canonical.host", () => {
+    const flavioStamp = approvedPublication("treinecomflaviohenrique.com.br")
+    const celinaHost = "celinapiresdorio.com.br"
+    assert.equal(
+      shouldNoindexFromPublication({
+        enforce: true,
+        publication: flavioStamp,
+        canonicalHost: "treinecomflaviohenrique.com.br",
+      }),
+      false,
+    )
+    assert.equal(
+      shouldNoindexFromPublication({
+        enforce: true,
+        publication: flavioStamp,
+        canonicalHost: celinaHost,
+      }),
+      true,
+      "mismatch vs another tenant canonical.host",
+    )
+    assert.equal(
+      shouldNoindexFromPublication({
+        enforce: true,
+        publication: flavioStamp,
+        canonicalHost: "www.treinecomflaviohenrique.com.br",
+      }),
+      true,
+      "must not invent www/apex fallback",
+    )
+  })
+
+  it("flag ON: flavio stamp cannot index celina canonical isolation", () => {
+    const flavio = publicationFromPayload({
+      slug: "flavio-personal",
+      publication: approvedPublication("treinecomflaviohenrique.com.br"),
+    })
+    const celina = publicationFromPayload({
+      slug: "celina-pires",
+      publication: approvedPublication("celinapiresdorio.com.br"),
+    })
+    assert.equal(
+      shouldNoindexFromPublication({
+        enforce: true,
+        publication: flavio,
+        canonicalHost: celina.canonicalHost,
+      }),
+      true,
+    )
+    assert.equal(
+      shouldNoindexFromPublication({
+        enforce: true,
+        publication: celina,
+        canonicalHost: flavio.canonicalHost,
+      }),
+      true,
+    )
+    assert.equal(
+      shouldNoindexFromPublication({
+        enforce: true,
+        publication: flavio,
+        canonicalHost: flavio.canonicalHost,
+      }),
+      false,
+    )
+  })
+
+  it("publication headers apply only to host-bound public pages, never assets", () => {
+    const hostBound = {
+      result: "ok",
+      payload: { publication: approvedPublication("justwebsites.com.br") },
+    }
+    assert.equal(shouldApplyPublicationIndexingHeaders("public_page", hostBound), true)
+    assert.equal(shouldApplyPublicationIndexingHeaders("public_page", { result: "skipped", payload: hostBound.payload }), false)
+    assert.equal(shouldApplyPublicationIndexingHeaders("public_page", { result: "ok" }), false)
+    assert.equal(shouldApplyPublicationIndexingHeaders("public_page", null), false)
+    for (const kind of ["asset", "operational", "preview", "excluded"]) {
+      assert.equal(shouldApplyPublicationIndexingHeaders(kind, hostBound), false, kind)
+    }
   })
 })

@@ -12,6 +12,7 @@ const PLACEHOLDER = "poc-publication-indexing-anon"
 const APPROVED_HOST = "approved-pub.example.test"
 const MISSING_HOST = "missing-pub.example.test"
 const FOREIGN_HOST = "foreign-pub.example.test"
+const MISMATCH_HOST = "mismatch-pub.example.test"
 
 function publication(host, extra = {}) {
   return {
@@ -69,6 +70,12 @@ test("workerd flag ON: approved stays indexable; missing publication is noindex/
       publication(FOREIGN_HOST),
       "Foreign Pub Co",
       "foreign@example.test",
+    ),
+    [MISMATCH_HOST]: payloadFor(
+      MISMATCH_HOST,
+      publication(FOREIGN_HOST),
+      "Mismatch Pub Co",
+      "mismatch@example.test",
     ),
   }
 
@@ -139,4 +146,55 @@ test("workerd flag ON: approved stays indexable; missing publication is noindex/
   assert.doesNotMatch(missingSitemap.body, /<loc>/)
   assert.match(missingSitemap.headers["x-robots-tag"] || "", /noindex/)
   assert.match(String(missingSitemap.headers["cache-control"] || ""), /no-store/)
+
+  const mismatchHtml = await requestWithHost(port, MISMATCH_HOST, "/")
+  assert.equal(mismatchHtml.status, 200)
+  assert.match(mismatchHtml.body, /noindex/)
+  assert.match(mismatchHtml.headers["x-robots-tag"] || "", /noindex/)
+  assert.match(String(mismatchHtml.headers["cache-control"] || ""), /no-store/)
+  assert.doesNotMatch(mismatchHtml.body, /Approved Pub Co|Foreign Pub Co/)
+
+  const approvedC = await requestWithHost(port, APPROVED_HOST, "/c")
+  assert.equal(approvedC.status, 200)
+  assert.doesNotMatch(approvedC.body, /noindex/)
+  assert.doesNotMatch(approvedC.headers["x-robots-tag"] || "", /noindex/)
+  assert.doesNotMatch(String(approvedC.headers["cache-control"] || ""), /no-store/)
+  assert.doesNotMatch(approvedC.body, /Foreign Pub Co|foreign-pub\.example\.test/)
+
+  const missingC = await requestWithHost(port, MISSING_HOST, "/c")
+  assert.equal(missingC.status, 200)
+  assert.match(missingC.body, /noindex/)
+  assert.match(missingC.headers["x-robots-tag"] || "", /noindex/)
+  assert.match(String(missingC.headers["cache-control"] || ""), /no-store/)
+
+  const favicon = await requestWithHost(port, MISSING_HOST, "/favicon.ico")
+  assert.ok(
+    favicon.status === 200 || favicon.status === 302 || favicon.status === 404,
+    `favicon status intact, got ${favicon.status}`,
+  )
+  assert.doesNotMatch(
+    favicon.headers["x-robots-tag"] || "",
+    /noindex/,
+    "favicon must not inherit publication-missing X-Robots-Tag",
+  )
+  if (favicon.status === 302) {
+    assert.ok(favicon.headers.location, "favicon redirect Location intact")
+    assert.doesNotMatch(
+      String(favicon.headers["cache-control"] || ""),
+      /no-store/,
+      "favicon 302 must keep its own cache, not gate no-store",
+    )
+  } else if (favicon.status === 404) {
+    assert.equal(favicon.body, "", "favicon 404 body intact (empty, not HTML)")
+  }
+
+  const brandingAsset = await requestWithHost(
+    port,
+    MISSING_HOST,
+    "/branding/just/favicon.svg",
+  )
+  assert.equal(brandingAsset.status, 200)
+  assert.match(brandingAsset.body, /<svg/i)
+  assert.doesNotMatch(brandingAsset.headers["x-robots-tag"] || "", /noindex/)
+  assert.doesNotMatch(String(brandingAsset.headers["cache-control"] || ""), /no-store/)
 })

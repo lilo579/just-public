@@ -4,6 +4,7 @@ import { resolveHtmlCacheControl } from "./lib/cacheHeaders.js"
 import {
   isPublicationIndexingEnforced,
   publicationFromPayload,
+  shouldApplyPublicationIndexingHeaders,
   shouldNoindexFromPublication,
 } from "./lib/publicationContract.js"
 import { classifyPublicRoute } from "./lib/publicRouteKind.js"
@@ -117,16 +118,25 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   const ctx = getPublicRequestContext(locals)
-  const publicationNoindex = shouldNoindexFromPublication({
-    enforce: isPublicationIndexingEnforced(locals),
-    publication: publicationFromPayload(ctx?.payload),
-  })
-  if (publicationNoindex) {
-    response.headers.set("Cache-Control", "no-store")
-    if (!response.headers.has("X-Robots-Tag")) {
-      response.headers.set("X-Robots-Tag", "noindex, nofollow")
+  const applyPublicationGate = shouldApplyPublicationIndexingHeaders(routeKind, ctx)
+  if (applyPublicationGate) {
+    const publicationNoindex = shouldNoindexFromPublication({
+      enforce: isPublicationIndexingEnforced(locals),
+      publication: publicationFromPayload(ctx?.payload),
+      canonicalHost: ctx?.canonical?.host,
+    })
+    if (publicationNoindex) {
+      response.headers.set("Cache-Control", "no-store")
+      if (!response.headers.has("X-Robots-Tag")) {
+        response.headers.set("X-Robots-Tag", "noindex, nofollow")
+      }
+    } else {
+      response.headers.set(
+        "Cache-Control",
+        resolveHtmlCacheControl(deployEnv, response.status),
+      )
     }
-  } else {
+  } else if (routeKind === "public_page") {
     response.headers.set(
       "Cache-Control",
       resolveHtmlCacheControl(deployEnv, response.status),

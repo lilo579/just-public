@@ -109,6 +109,9 @@ export async function loadJustInstitutionalChrome(request, locals) {
       : packaged.themeBranding
 
   const deployEnv = resolveDeployEnv(locals)
+  const canonical =
+    asPublicCanonicalContract(locals?.publicCanonical) ||
+    asPublicCanonicalContract(homepage?.canonical)
   const noindex =
     isLeadIntakeSafeMode(deployEnv) ||
     siteModeResolved.mode === "MAINTENANCE" ||
@@ -116,10 +119,8 @@ export async function loadJustInstitutionalChrome(request, locals) {
       enforce: isPublicationIndexingEnforced(locals),
       publication: publicationFromPayload(homepage),
       siteMode: siteModeResolved.mode,
+      canonicalHost: canonical?.host,
     })
-  const canonical =
-    asPublicCanonicalContract(locals?.publicCanonical) ||
-    asPublicCanonicalContract(homepage?.canonical)
   const seoBase = packaged.comingSoonSeo
   const faviconUrl = resolveBrandFaviconUrl({
     host,

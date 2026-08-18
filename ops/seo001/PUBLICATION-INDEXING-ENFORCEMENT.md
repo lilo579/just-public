@@ -14,6 +14,16 @@ Exact ON value: the string `true`. Absent / any other value = OFF.
 
 Optional one-off (not preferred): `wrangler versions upload --env production --var SEO001_ENFORCE_PUBLICATION_INDEXING:true` from a SHA that already has observable `/health`. Prefer the `wrangler.jsonc` production var so dry-run and health smoke stay reproducible.
 
+## Scope
+
+Publication `X-Robots-Tag` / `no-store` headers apply only when all of these are true:
+
+- `classifyPublicRoute` is `public_page`
+- `publicRequestContext` is host-bound (payload present)
+- `ctx.result` is not `skipped`
+
+Assets, favicon, `/_astro`, branding, fonts, manifests, health, and APIs keep their own cache/headers. An indexable stamp must carry `publication.canonicalHost` and it must equal `canonical.host`. Public does not invent a fallback host.
+
 ## Observability
 
 `GET /health` (no tenant/Edge I/O):

@@ -63,9 +63,35 @@ export function parsePublicationContract(raw) {
 }
 
 /**
+ * Normalize a host for publication/canonical equality. No apex/www invention.
+ * @param {unknown} value
+ * @returns {string}
+ */
+function publicationHostKey(value) {
+  return typeof value === "string" ? value.trim().toLowerCase() : ""
+}
+
+/**
+ * Publication noindex/no-store headers apply only to host-bound public HTML/discovery.
+ * Assets, favicon, `/_astro`, branding, fonts, manifests, health, and APIs stay out.
+ *
+ * @param {string} routeKind
+ * @param {{ result?: string, payload?: unknown } | null | undefined} ctx
+ * @returns {boolean}
+ */
+export function shouldApplyPublicationIndexingHeaders(routeKind, ctx) {
+  if (routeKind !== "public_page") return false
+  if (!ctx || typeof ctx !== "object") return false
+  if (ctx.result === "skipped") return false
+  if (!ctx.payload || typeof ctx.payload !== "object") return false
+  return true
+}
+
+/**
  * @param {{
  *   enforce: boolean,
  *   publication?: PublicPublicationContract | null,
+ *   canonicalHost?: unknown,
  *   billingStatus?: unknown,
  *   siteMode?: unknown,
  *   exposureAllowed?: unknown
@@ -83,6 +109,11 @@ export function shouldNoindexFromPublication(input) {
   if (p.indexingEnabled !== true) return true
   if (p.seoState !== "seo_validated") return true
   if (p.domainState !== "domain_bound") return true
+  const stampHost = publicationHostKey(p.canonicalHost)
+  // Indexable stamps must carry their own canonicalHost. Never copy canonical.host.
+  if (!stampHost) return true
+  const expectedHost = publicationHostKey(input.canonicalHost)
+  if (expectedHost && expectedHost !== stampHost) return true
   return false
 }
 
