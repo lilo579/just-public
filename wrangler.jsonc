@@ -39,7 +39,8 @@
       "vars": {
         "DEPLOY_ENV": "production",
         "POC_FIXTURE_MODE": "false",
-        "PUBLIC_SITE_PAYLOAD_URL": "https://ehondnpqztvybvgsjnxe.supabase.co/functions/v1/public-site-payload"
+        "PUBLIC_SITE_PAYLOAD_URL": "https://ehondnpqztvybvgsjnxe.supabase.co/functions/v1/public-site-payload",
+        "SEO001_ENFORCE_PUBLICATION_INDEXING": "true"
       },
       "assets": {
         "directory": "./dist",

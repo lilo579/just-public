@@ -104,6 +104,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     shouldNoindexFromPublication({
       enforce,
       publication: publicationFromPayload(ctx.payload),
+      canonicalHost: canonical.host,
     })
   ) {
     return new Response(

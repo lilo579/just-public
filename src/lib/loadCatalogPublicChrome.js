@@ -138,14 +138,6 @@ export async function loadCatalogPublicChrome(host, locals) {
 
   const siteModeResolved = resolvePublicSiteMode(homepage);
   const deployEnv = resolveDeployEnv(locals);
-  const noindex =
-    isLeadIntakeSafeMode(deployEnv) ||
-    siteModeResolved.mode === "MAINTENANCE" ||
-    shouldNoindexFromPublication({
-      enforce: isPublicationIndexingEnforced(locals),
-      publication: publicationFromPayload(homepage),
-      siteMode: siteModeResolved.mode,
-    });
   /** ADR-SEO-001 — prefer middleware locals (same request), else payload contract. */
   const canonical =
     (locals?.publicCanonical && typeof locals.publicCanonical === "object"
@@ -154,6 +146,18 @@ export async function loadCatalogPublicChrome(host, locals) {
     (homepage?.canonical && typeof homepage.canonical === "object"
       ? homepage.canonical
       : null);
+  const noindex =
+    isLeadIntakeSafeMode(deployEnv) ||
+    siteModeResolved.mode === "MAINTENANCE" ||
+    shouldNoindexFromPublication({
+      enforce: isPublicationIndexingEnforced(locals),
+      publication: publicationFromPayload(homepage),
+      siteMode: siteModeResolved.mode,
+      canonicalHost:
+        canonical && typeof canonical === "object"
+          ? /** @type {{ host?: unknown }} */ (canonical).host
+          : undefined,
+    });
 
   const seoMeta =
     homepage?.source?.meta?.seo && typeof homepage.source.meta.seo === "object"

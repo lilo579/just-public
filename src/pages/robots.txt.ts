@@ -99,6 +99,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   const publicationNoindex = shouldNoindexFromPublication({
     enforce,
     publication: publicationFromPayload(ctx.payload),
+    canonicalHost: canonical.host,
     siteMode: ctx.payload && typeof ctx.payload === "object"
       ? /** @type {Record<string, unknown>} */ (ctx.payload).siteMode
       : undefined,

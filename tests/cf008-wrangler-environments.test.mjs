@@ -79,6 +79,9 @@ test("CF-008: POC, staging, and production envs remain distinct and safe", async
   assert.equal(prod.vars?.DEPLOY_ENV, "production")
   assert.equal(prod.vars?.POC_FIXTURE_MODE, "false")
   assert.match(String(prod.vars?.PUBLIC_SITE_PAYLOAD_URL ?? ""), /public-site-payload/)
+  assert.equal(prod.vars?.SEO001_ENFORCE_PUBLICATION_INDEXING, "true")
+  assert.notEqual(cfg.vars?.SEO001_ENFORCE_PUBLICATION_INDEXING, "true")
+  assert.notEqual(staging.vars?.SEO001_ENFORCE_PUBLICATION_INDEXING, "true")
   assert.equal(prod.assets?.binding, "ASSETS")
   assert.equal(prod.assets?.directory, "./dist")
   // Custom Domain is remote-only; config must not declare routes/domains.

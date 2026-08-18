@@ -18,6 +18,8 @@ test("production candidate uploads a Version but cannot promote or mutate routin
 
   assert.match(active, /wrangler versions upload --env production/)
   assert.match(active, /wrangler deploy --dry-run --env production/)
+  assert.match(active, /SEO001_ENFORCE_PUBLICATION_INDEXING \("true"\)/)
+  assert.match(active, /publicationIndexingEnforced":true/)
   assert.match(active, /deployments list --name just-public-production/)
   assert.doesNotMatch(active, /wrangler\s+versions\s+deploy\b/)
   assert.doesNotMatch(active, /wrangler\s+deploy\b(?!\s+--dry-run)/)

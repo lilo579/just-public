@@ -26,6 +26,7 @@ function primary(host, requestHost = host) {
 test("classifyPublicRoute: public pages vs assets vs ops vs preview", () => {
   assert.equal(classifyPublicRoute("/"), "public_page")
   assert.equal(classifyPublicRoute("/sobre"), "public_page")
+  assert.equal(classifyPublicRoute("/c"), "public_page")
   assert.equal(classifyPublicRoute("/robots.txt"), "public_page")
   assert.equal(classifyPublicRoute("/sitemap.xml"), "public_page")
   assert.equal(classifyPublicRoute("/_astro/x.css"), "asset")

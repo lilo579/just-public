@@ -1,6 +1,12 @@
 import { defineMiddleware } from "astro:middleware"
 import { isLeadIntakeSafeMode, resolveDeployEnv } from "./lib/runtimeEnv.js"
 import { resolveHtmlCacheControl } from "./lib/cacheHeaders.js"
+import {
+  isPublicationIndexingEnforced,
+  publicationFromPayload,
+  shouldApplyPublicationIndexingHeaders,
+  shouldNoindexFromPublication,
+} from "./lib/publicationContract.js"
 import { classifyPublicRoute } from "./lib/publicRouteKind.js"
 import {
   buildCanonicalRedirectResponse,
@@ -111,12 +117,32 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return response
   }
 
-  response.headers.set(
-    "Cache-Control",
-    resolveHtmlCacheControl(deployEnv, response.status),
-  )
-
   const ctx = getPublicRequestContext(locals)
+  const applyPublicationGate = shouldApplyPublicationIndexingHeaders(routeKind, ctx)
+  if (applyPublicationGate) {
+    const publicationNoindex = shouldNoindexFromPublication({
+      enforce: isPublicationIndexingEnforced(locals),
+      publication: publicationFromPayload(ctx?.payload),
+      canonicalHost: ctx?.canonical?.host,
+    })
+    if (publicationNoindex) {
+      response.headers.set("Cache-Control", "no-store")
+      if (!response.headers.has("X-Robots-Tag")) {
+        response.headers.set("X-Robots-Tag", "noindex, nofollow")
+      }
+    } else {
+      response.headers.set(
+        "Cache-Control",
+        resolveHtmlCacheControl(deployEnv, response.status),
+      )
+    }
+  } else if (routeKind === "public_page") {
+    response.headers.set(
+      "Cache-Control",
+      resolveHtmlCacheControl(deployEnv, response.status),
+    )
+  }
+
   if (ctx && shouldEmitServerTiming(deployEnv, locals)) {
     const existing = response.headers.get("Server-Timing")
     const timing = buildServerTimingHeader(ctx)

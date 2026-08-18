@@ -63,6 +63,7 @@ jobs:
           npx wrangler deploy --dry-run --env production | tee /tmp/production-dry-run.txt
           grep -q 'DEPLOY_ENV ("production")' /tmp/production-dry-run.txt
           grep -q 'POC_FIXTURE_MODE ("false")' /tmp/production-dry-run.txt
+          grep -q 'SEO001_ENFORCE_PUBLICATION_INDEXING ("true")' /tmp/production-dry-run.txt
 
       - name: Snapshot active production deployment
         env:
@@ -92,6 +93,8 @@ jobs:
           BODY="$(curl -fsS "$PREVIEW_URL/health")"
           echo "$BODY" | grep -q '"status":"ok"'
           echo "$BODY" | grep -q '"canonicalContractVersion":"seo001-v1"'
+          echo "$BODY" | grep -q '"publicationContractVersion":"v1"'
+          echo "$BODY" | grep -q '"publicationIndexingEnforced":true'
 
       - name: Assert active production deployment unchanged
         env:
