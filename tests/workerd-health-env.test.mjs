@@ -126,14 +126,22 @@ function startWrangler({ port, vars = {} }) {
  *   mockPayloadUrl: string
  *   expectRobots: boolean
  *   mock: ReturnType<typeof startMockPayloadServer>
+ *   extraVars?: Record<string, string>
  * }} opts
  */
-async function probeHealth({ deployEnv, mockPayloadUrl, expectRobots, mock }) {
+async function probeHealth({
+  deployEnv,
+  mockPayloadUrl,
+  expectRobots,
+  mock,
+  extraVars = {},
+}) {
   const port = await freePort()
   /** @type {Record<string, string>} */
   const vars = {
     PUBLIC_SITE_PAYLOAD_URL: mockPayloadUrl,
     SUPABASE_ANON_KEY: PLACEHOLDER_SECRET,
+    ...extraVars,
   }
   if (deployEnv !== undefined) vars.DEPLOY_ENV = deployEnv
 
@@ -148,6 +156,12 @@ async function probeHealth({ deployEnv, mockPayloadUrl, expectRobots, mock }) {
     assert.equal(body.status, "ok")
     assert.equal(body.service, "just-public")
     assert.equal(body.canonicalContractVersion, "seo001-v1")
+    assert.equal(body.publicationContractVersion, "v1")
+    assert.equal(typeof body.publicationIndexingEnforced, "boolean")
+    assert.equal(
+      body.publicationIndexingEnforced,
+      vars.SEO001_ENFORCE_PUBLICATION_INDEXING === "true",
+    )
     assert.equal(body.features?.sharedAuthorityCache, false)
     if (expectRobots) {
       assert.equal(res.headers.get("x-robots-tag"), "noindex, nofollow")
@@ -202,6 +216,13 @@ test("workerd /health proves env runtime, no external I/O, preview/staging robot
     mockPayloadUrl,
     expectRobots: false,
     mock,
+  })
+  await probeHealth({
+    deployEnv: "production",
+    mockPayloadUrl,
+    expectRobots: false,
+    mock,
+    extraVars: { SEO001_ENFORCE_PUBLICATION_INDEXING: "true" },
   })
   // Project wrangler.jsonc binds DEPLOY_ENV=preview for CF-003; probe an unknown
   // override so "no automatic app robots" is covered without relying on unset.
