@@ -8,7 +8,7 @@ import CatalogProductCard from "./CatalogProductCard.astro";
 import CatalogCategoryCard from "./CatalogCategoryCard.astro";
 import CatalogFeaturedTabs from "./CatalogFeaturedTabs.astro";
 import { createPublicSupabaseClient } from "../../lib/publicSupabase.js";
-import { buildCatalogHref } from "../../lib/catalogBrowse.js";
+import { buildCatalogHref, resolveCatalogLineHref } from "../../lib/catalogBrowse.js";
 import {
   F3_3D_JEWISH_MEDIA_ROOT,
   resolveCanonicalShopHeroUrl,
@@ -86,11 +86,7 @@ const homeTiles = taxonomy
       title: line.name,
       image,
       badge: line.home_badge_label || "COLEÇÃO",
-      href: withHost(
-        line.slug && collectionSlugs.has(line.slug)
-          ? `/catalogo?colecao=${encodeURIComponent(line.slug)}`
-          : `/catalogo?line=${encodeURIComponent(line.id)}`,
-      ),
+      href: withHost(resolveCatalogLineHref(line, collectionSlugs)),
     };
   });
 

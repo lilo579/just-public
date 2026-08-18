@@ -10,11 +10,11 @@ import PublicSiteHead from "../components/PublicSiteHead.astro";
 import WhatsAppFloat from "../components/WhatsAppFloat.astro";
 import catalogF3CssUrl from "../styles/catalog-f3.css?url";
 import {
+  buildCatalogBrowseView,
   buildCatalogHref,
   filterCatalogProducts,
   readCatalogFilters,
   resolveCatalogHostOverride,
-  resolveTaxonomyFilter,
   applyHostOverrideToNavItems,
 } from "../lib/catalogBrowse.js";
 import { createPublicSupabaseClient } from "../lib/publicSupabase.js";
@@ -78,52 +78,25 @@ if (taxError) console.error("catalog taxonomy RPC:", taxError);
 const products = Array.isArray(productRows) ? productRows : [];
 const taxonomy = Array.isArray(taxonomyRows) ? taxonomyRows : [];
 
-const categories = taxonomy.filter((row) => row.kind === "category");
-const lines = taxonomy
-  .filter((row) => row.kind === "line")
-  .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+const browse = buildCatalogBrowseView(products, taxonomy, filters);
+const {
+  diagnostics,
+  activeLine,
+  activeCollection,
+  effectiveCategory,
+  displayCategories,
+  lineRails,
+} = browse;
 
-const activeCategory = resolveTaxonomyFilter(filters.category, taxonomy, "category");
-const activeLine = resolveTaxonomyFilter(filters.line, taxonomy, "line");
-const activeCollection = resolveTaxonomyFilter(
-  filters.collection,
-  taxonomy,
-  "collection",
-);
-
-/** Golden Master: line scopes first, then optional category within scope. */
-const baseProducts = activeLine
-  ? products.filter((p) => p.line_slug === activeLine.slug)
-  : products;
-
-const categoryIdsInScope = new Set(
-  baseProducts.map((p) => p.category_slug).filter(Boolean),
-);
-const displayCategories = categories.filter((c) => categoryIdsInScope.has(c.slug));
-
-const effectiveCategory =
-  activeCategory && displayCategories.some((c) => c.id === activeCategory.id)
-    ? activeCategory
-    : null;
-
-const scopedProducts = effectiveCategory
-  ? baseProducts.filter((p) => p.category_slug === effectiveCategory.slug)
-  : baseProducts;
-
-const displayLines = activeLine
-  ? lines.filter((l) => l.id === activeLine.id)
-  : lines.filter((l) => scopedProducts.some((p) => p.line_slug === l.slug));
-
-const lineRails = displayLines
-  .map((line) => {
-    const lineProducts = scopedProducts.filter((p) => p.line_slug === line.slug);
-    return { line, products: lineProducts };
-  })
-  .filter((row) => row.products.length > 0);
+for (const diagnostic of diagnostics) {
+  console.warn("catalog browse diagnostic:", diagnostic);
+}
 
 const collectionProducts = isCollectionMode
   ? filterCatalogProducts(products, { category: null, line: null, collection: filters.collection }, taxonomy)
   : [];
+const missingLine = diagnostics.some((row) => row.code === "catalog_line_not_found");
+const missingCollection = diagnostics.some((row) => row.code === "catalog_collection_not_found");
 
 const cmsTitle = chrome.catalogHeroTitle || "Catálogo";
 const cmsSubtitle = chrome.catalogHeroSubtitle || "";
@@ -181,8 +154,8 @@ const fontLoadUrl =
         {isCollectionMode ? (
           <section class="shop-catalog__section">
             <div class="shop-catalog__wrap">
-              {!activeCollection ? (
-                <div class="catalog-empty" role="status">
+              {!activeCollection || missingCollection ? (
+                <div class="catalog-empty" role="status" data-catalog-diagnostic="catalog_collection_not_found">
                   <p>Esta coleção não foi encontrada ou não está disponível.</p>
                   <p>
                     <a class="catalog-btn" href={buildCatalogHref(hostOverride, "/catalogo")}>
@@ -244,13 +217,25 @@ const fontLoadUrl =
             <section class="shop-catalog__section">
               <div class="shop-catalog__wrap">
                 {lineRails.length === 0 ? (
-                  <div class="catalog-empty" role="status">
+                  <div
+                    class="catalog-empty"
+                    role="status"
+                    data-catalog-diagnostic={
+                      missingLine
+                        ? "catalog_line_not_found"
+                        : activeLine
+                          ? "catalog_line_empty"
+                          : undefined
+                    }
+                  >
                     <p>
-                      {activeLine
-                        ? "Nenhum produto encontrado neste contexto."
-                        : "Nenhum produto cadastrado ainda."}
+                      {missingLine
+                        ? "Esta linha não foi encontrada ou não está disponível."
+                        : activeLine
+                          ? "Nenhum produto encontrado neste contexto."
+                          : "Nenhum produto cadastrado ainda."}
                     </p>
-                    {(activeLine || effectiveCategory) && (
+                    {(activeLine || effectiveCategory || missingLine) && (
                       <p>
                         <a class="catalog-btn" href={buildCatalogHref(hostOverride, "/catalogo")}>
                           Limpar filtros
