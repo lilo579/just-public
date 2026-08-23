@@ -79,6 +79,10 @@ test("favicon prefers packaged tenant mark over logo for Marcelo/Rossana/Soraya"
     ["www.rossanamendonca.com.br", "/branding/rossana-mendonca/favicon.svg"],
     ["www.sorayabarbosa.com.br", "/branding/soraya-barbosa/favicon.svg"],
     ["3djewish.com.br", "/branding/3d-jewish/favicon.svg"],
+    ["celinapiresdorio.com.br", "/branding/celina-pires/favicon.svg"],
+    ["www.celinapiresdorio.com.br", "/branding/celina-pires/favicon.svg"],
+    ["treinecomflaviohenrique.com.br", "/branding/flavio-personal/favicon.svg"],
+    ["www.treinecomflaviohenrique.com.br", "/branding/flavio-personal/favicon.svg"],
   ]) {
     const seo = buildPublicHomepageSeo({
       host,
@@ -142,16 +146,16 @@ test("JUST packaged favicon defaults to SVG mark when Hub SEO unset", () => {
   assert.equal(seo.faviconUrl, "/branding/just/favicon.svg")
 })
 
-test("favicon follows Golden Master: explicit → packaged/ogImage → logos", () => {
-  const withOg = buildPublicHomepageSeo({
+test("favicon follows Golden Master: explicit → packaged → ogImage → logos", () => {
+  const packagedWinsOverOg = buildPublicHomepageSeo({
     host: "celinapiresdorio.com.br",
     canonical: primary("celinapiresdorio.com.br"),
     companyName: "Celina",
     branding: { logoUrl: "https://cdn.example/logo.png" },
     seo: { ogImage: "https://cdn.example/social-og.webp" },
   })
-  assert.equal(withOg.faviconUrl, "https://cdn.example/social-og.webp")
-  assert.equal(withOg.ogImage, "https://cdn.example/social-og.webp")
+  assert.equal(packagedWinsOverOg.faviconUrl, "/branding/celina-pires/favicon.svg")
+  assert.equal(packagedWinsOverOg.ogImage, "https://cdn.example/social-og.webp")
 
   const explicit = buildPublicHomepageSeo({
     host: "celinapiresdorio.com.br",
@@ -164,4 +168,14 @@ test("favicon follows Golden Master: explicit → packaged/ogImage → logos", (
     },
   })
   assert.equal(explicit.faviconUrl, "https://cdn.example/favicon.ico")
+
+  const unpackagedOgFallback = buildPublicHomepageSeo({
+    host: "unpacked-tenant.example.test",
+    canonical: primary("unpacked-tenant.example.test"),
+    companyName: "Unpackaged",
+    branding: { logoUrl: "https://cdn.example/logo.png" },
+    seo: { ogImage: "https://cdn.example/social-og.webp" },
+  })
+  assert.equal(unpackagedOgFallback.faviconUrl, "https://cdn.example/social-og.webp")
+  assert.equal(unpackagedOgFallback.ogImage, "https://cdn.example/social-og.webp")
 })
