@@ -76,6 +76,10 @@ const PACKAGED_FAVICON_SLUG_BY_HOST = Object.freeze({
   "3djewish.com.br": "3d-jewish",
   "www.justwebsites.com.br": "just",
   "justwebsites.com.br": "just",
+  "www.celinapiresdorio.com.br": "celina-pires",
+  "celinapiresdorio.com.br": "celina-pires",
+  "www.treinecomflaviohenrique.com.br": "flavio-personal",
+  "treinecomflaviohenrique.com.br": "flavio-personal",
 })
 
 /** Packs that ship favicon.ico only (no favicon.svg). */
