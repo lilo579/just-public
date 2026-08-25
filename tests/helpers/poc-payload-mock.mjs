@@ -44,7 +44,11 @@ export async function freePort() {
  * Routes by query `host`; never calls Hub/Supabase.
  * Each call records: timestamp, host, tenant, mode, status.
  */
-export function startCanonicalPayloadMock(extraHostFixtures = {}, extraTenantByHost = {}) {
+export function startCanonicalPayloadMock(
+  extraHostFixtures = {},
+  extraTenantByHost = {},
+  options = {},
+) {
   /**
    * @type {{
    *   timestamp: string
@@ -59,12 +63,52 @@ export function startCanonicalPayloadMock(extraHostFixtures = {}, extraTenantByH
    */
   const calls = []
 
+  const rpcProductsByHost = options.rpcProductsByHost ?? {}
+  const rpcErrorHosts = new Set(options.rpcErrorHosts ?? [])
+
   const server = http.createServer((req, res) => {
     const u = new URL(req.url ?? "/", "http://127.0.0.1")
-    const host = u.searchParams.get("host")
-    const mode = u.searchParams.get("mode")
     const timestamp = new Date().toISOString()
     const hasAuth = Boolean(req.headers.authorization)
+
+    if (u.pathname === "/rest/v1/rpc/public_get_products_by_host") {
+      /** @type {Buffer[]} */
+      const chunks = []
+      req.on("data", (chunk) => {
+        chunks.push(Buffer.from(chunk))
+      })
+      req.on("end", () => {
+        let pHost = ""
+        try {
+          const body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}")
+          pHost = typeof body?.p_host === "string" ? body.p_host.trim().toLowerCase() : ""
+        } catch {
+          pHost = ""
+        }
+        calls.push({
+          timestamp,
+          pathname: u.pathname,
+          host: pHost || null,
+          tenant: null,
+          tenantKey: null,
+          mode: "rpc",
+          status: rpcErrorHosts.has(pHost) ? 500 : 200,
+          hasAuth,
+        })
+        if (rpcErrorHosts.has(pHost)) {
+          res.writeHead(500, { "content-type": "application/json; charset=utf-8" })
+          res.end(JSON.stringify({ message: "rpc_failed", code: "rpc_failed" }))
+          return
+        }
+        const rows = rpcProductsByHost[pHost]
+        res.writeHead(200, { "content-type": "application/json; charset=utf-8" })
+        res.end(JSON.stringify(Array.isArray(rows) ? rows : []))
+      })
+      return
+    }
+
+    const host = u.searchParams.get("host")
+    const mode = u.searchParams.get("mode")
 
     /** @param {number} status @param {string} body @param {string|null} tenant @param {string|null} tenantKey */
     const respond = (status, body, tenant = null, tenantKey = null) => {

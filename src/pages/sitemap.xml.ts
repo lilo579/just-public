@@ -1,8 +1,10 @@
 import type { APIRoute } from "astro"
 import { isLeadIntakeSafeMode, resolveDeployEnv } from "../lib/runtimeEnv.js"
 import { resolvePackagedInstitutionalSite } from "../lib/resolvePackagedInstitutionalSite.js"
+import { chooseHomepageRenderer } from "../lib/publicHomepageHelpers.js"
+import { resolvePublicPresentationBinding } from "../lib/publicPresentationBinding.js"
+import { createPublicSupabaseClient } from "../lib/publicSupabase.js"
 import {
-  buildCanonicalUrl,
   CanonicalAuthorityError,
   canonicalAuthorityErrorResponse,
   requirePublicCanonical,
@@ -22,23 +24,26 @@ import {
   publicationFromPayload,
   shouldNoindexFromPublication,
 } from "../lib/publicationContract.js"
+import {
+  EMPTY_SITEMAP_XML,
+  buildSitemapXml,
+  collectPublicSitemapPaths,
+  loadF3CatalogProductRows,
+} from "../lib/publicSitemap.js"
 
 export const prerender = false
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
   const deployEnv = resolveDeployEnv(locals)
   if (isLeadIntakeSafeMode(deployEnv)) {
-    return new Response(
-      '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>',
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/xml; charset=utf-8",
-          "Cache-Control": "no-store",
-          "X-Robots-Tag": "noindex",
-        },
+    return new Response(EMPTY_SITEMAP_XML, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/xml; charset=utf-8",
+        "Cache-Control": "no-store",
+        "X-Robots-Tag": "noindex",
       },
-    )
+    })
   }
 
   const ctx =
@@ -107,38 +112,40 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       canonicalHost: canonical.host,
     })
   ) {
-    return new Response(
-      '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>',
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/xml; charset=utf-8",
-          "Cache-Control": publicationCacheControl(true),
-          "X-Robots-Tag": "noindex",
-        },
+    return new Response(EMPTY_SITEMAP_XML, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/xml; charset=utf-8",
+        "Cache-Control": publicationCacheControl(true),
+        "X-Robots-Tag": "noindex",
       },
-    )
+    })
   }
 
   const packaged = resolvePackagedInstitutionalSite(canonical.host)
-  const paths = packaged?.sitemapPaths?.length ? packaged.sitemapPaths : ["/"]
-  const urls = paths
-    .map((path) => {
-      const loc = buildCanonicalUrl(canonical, path)
-      const priority = path === "/" ? "1.0" : "0.6"
-      return `  <url>
-    <loc>${loc}</loc>
-    <changefreq>weekly</changefreq>
-    <priority>${priority}</priority>
-  </url>`
-    })
-    .join("\n")
+  let family = "f1"
+  /** @type {unknown[]} */
+  let productRows = []
+  // Publication gate above is fail-closed: unapproved hosts never reach this RPC.
+  if (!packaged && ctx.payload) {
+    const choice = chooseHomepageRenderer(ctx.payload)
+    family = resolvePublicPresentationBinding(ctx.payload, choice).family || "f1"
+    if (family === "f3") {
+      productRows = await loadF3CatalogProductRows({
+        supabase: createPublicSupabaseClient(locals),
+        host: canonical.host,
+        tenantId: ctx.tenantId,
+      })
+    }
+  }
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls}
-</urlset>
-`
+  const paths = collectPublicSitemapPaths({
+    packaged,
+    family,
+    productRows,
+    tenantId: ctx.tenantId,
+  })
+  const xml = buildSitemapXml(canonical, paths)
 
   return new Response(xml, {
     status: 200,

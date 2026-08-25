@@ -68,7 +68,7 @@ export function startWrangler(port, vars) {
  * @param {string} hostHeader
  * @param {string} [reqPath]
  */
-export function requestWithHost(port, hostHeader, reqPath = "/") {
+export function requestWithHost(port, hostHeader, reqPath = "/", extraHeaders = {}) {
   return new Promise((resolve, reject) => {
     const started = Date.now()
     const req = http.request(
@@ -77,7 +77,7 @@ export function requestWithHost(port, hostHeader, reqPath = "/") {
         port,
         path: reqPath,
         method: "GET",
-        headers: { Host: hostHeader },
+        headers: { Host: hostHeader, ...extraHeaders },
       },
       (res) => {
         let body = ""

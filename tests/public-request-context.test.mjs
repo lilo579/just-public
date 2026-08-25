@@ -101,6 +101,7 @@ test("structural: SEO authority paths must not invent request-host canonical", (
     "src/middleware.ts",
     "src/pages/robots.txt.ts",
     "src/pages/sitemap.xml.ts",
+    "src/lib/publicSitemap.js",
     "src/pages/index.astro",
   ]
 
