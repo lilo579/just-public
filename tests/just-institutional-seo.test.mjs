@@ -26,12 +26,15 @@ test("JUST_PUBLIC_ORIGIN authority helpers are removed from institutional SEO mo
   assert.equal(src.includes("resolveJustPublicOrigin"), false)
   const robots = readFileSync(join(root, "src/pages/robots.txt.ts"), "utf8")
   const sitemap = readFileSync(join(root, "src/pages/sitemap.xml.ts"), "utf8")
+  const publicSitemap = readFileSync(join(root, "src/lib/publicSitemap.js"), "utf8")
   assert.equal(robots.includes("resolveJustPublicOrigin"), false)
   assert.equal(sitemap.includes("resolveJustPublicOrigin"), false)
+  assert.equal(publicSitemap.includes("resolveJustPublicOrigin"), false)
   assert.equal(robots.includes("https://${host}"), false)
   assert.equal(sitemap.includes("https://${host}"), false)
   assert.match(robots, /OAI-SearchBot/)
-  assert.match(sitemap, /buildCanonicalUrl/)
+  assert.match(sitemap, /buildSitemapXml/)
+  assert.match(publicSitemap, /buildCanonicalUrl/)
 })
 
 test("OG image dimensions match pack file", () => {

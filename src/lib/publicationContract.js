@@ -1,6 +1,10 @@
 /**
  * ADR-SEO-001 publication contract v1 (Public consumer).
- * Flag default OFF: seven live tenants keep current indexing body.
+ *
+ * Code default when the Worker var is unset: OFF.
+ * Production `wrangler.jsonc` env.production freezes
+ * `SEO001_ENFORCE_PUBLICATION_INDEXING=true` into the uploaded Version.
+ * Preview/staging omit the key (safe-mode noindex still applies via DEPLOY_ENV).
  */
 
 import { getServerRuntimeString } from "./runtimeEnv.js"
