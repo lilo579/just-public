@@ -47,6 +47,63 @@ function locList(xml) {
   return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
 }
 
+function abortError() {
+  return new DOMException("The operation was aborted.", "AbortError")
+}
+
+/**
+ * Supabase PostgREST builder mock: rpc() returns a thenable with abortSignal(signal).
+ * @param {(signal: AbortSignal) => Promise<unknown>} handler
+ */
+function rpcClient(handler) {
+  return {
+    rpc() {
+      return {
+        abortSignal(signal) {
+          return handler(signal)
+        },
+      }
+    },
+  }
+}
+
+function immediateRpc(payload) {
+  return rpcClient(async (signal) => {
+    if (signal.aborted) throw abortError()
+    return payload
+  })
+}
+
+/**
+ * Slow RPC whose simulated work is cancelled when AbortSignal fires.
+ * @param {{
+ *   delayMs: number
+ *   payload: unknown
+ *   state: { rpcFinished?: boolean, aborted?: boolean, signal?: AbortSignal }
+ * }} input
+ */
+function hangingRpc(input) {
+  return rpcClient((signal) => {
+    input.state.signal = signal
+    return new Promise((resolve, reject) => {
+      const work = setTimeout(() => {
+        input.state.rpcFinished = true
+        resolve(input.payload)
+      }, input.delayMs)
+      const onAbort = () => {
+        clearTimeout(work)
+        input.state.aborted = true
+        reject(abortError())
+      }
+      if (signal.aborted) {
+        onAbort()
+        return
+      }
+      signal.addEventListener("abort", onAbort, { once: true })
+    })
+  })
+}
+
 test("sanitizePublicProductSlug fail-closes on query, path, and operator junk", () => {
   assert.equal(sanitizePublicProductSlug("bege-ouro-velho"), "bege-ouro-velho")
   assert.equal(sanitizePublicProductSlug("grande-24cm-x-24cm---cores-variadas"), "grande-24cm-x-24cm---cores-variadas")
@@ -185,14 +242,10 @@ test("each sitemap loc matches the page canonical builder and stays on HTTPS pri
 })
 
 test("loadF3CatalogProductRows fail-closes without identity, client, or RPC success", async () => {
-  const okClient = {
-    async rpc() {
-      return {
-        data: [{ tenant_id: F3_JEWISH_TENANT_ID, slug: "bege-ouro-velho" }],
-        error: null,
-      }
-    },
-  }
+  const okClient = immediateRpc({
+    data: [{ tenant_id: F3_JEWISH_TENANT_ID, slug: "bege-ouro-velho" }],
+    error: null,
+  })
   assert.deepEqual(
     await loadF3CatalogProductRows({
       supabase: okClient,
@@ -207,11 +260,7 @@ test("loadF3CatalogProductRows fail-closes without identity, client, or RPC succ
   )
   assert.deepEqual(
     await loadF3CatalogProductRows({
-      supabase: {
-        async rpc() {
-          return { data: null, error: { message: "boom" } }
-        },
-      },
+      supabase: immediateRpc({ data: null, error: { message: "boom" } }),
       host: F3_JEWISH_HOST,
       tenantId: F3_JEWISH_TENANT_ID,
     }),
@@ -228,21 +277,17 @@ test("XML loc values are escaped and product rows fail closed on invalid RPC pay
   assert.match(xml, /<loc>https:\/\/3djewish\.com\.br\/p\/bege-ouro-velho<\/loc>/)
 
   const mixed = await loadF3CatalogProductRows({
-    supabase: {
-      async rpc() {
-        return {
-          data: [
-            null,
-            "not-a-row",
-            { tenant_id: F3_JEWISH_TENANT_ID, slug: "bege-ouro-velho" },
-            { tenant_id: F3_JEWISH_TENANT_ID, slug: "bege-ouro-velho" },
-            { tenant_id: "other", slug: "foreign" },
-            ["array"],
-          ],
-          error: null,
-        }
-      },
-    },
+    supabase: immediateRpc({
+      data: [
+        null,
+        "not-a-row",
+        { tenant_id: F3_JEWISH_TENANT_ID, slug: "bege-ouro-velho" },
+        { tenant_id: F3_JEWISH_TENANT_ID, slug: "bege-ouro-velho" },
+        { tenant_id: "other", slug: "foreign" },
+        ["array"],
+      ],
+      error: null,
+    }),
     host: F3_JEWISH_HOST,
     tenantId: F3_JEWISH_TENANT_ID,
   })
@@ -253,19 +298,183 @@ test("XML loc values are escaped and product rows fail closed on invalid RPC pay
 
   assert.deepEqual(
     await loadF3CatalogProductRows({
-      supabase: {
-        async rpc() {
-          return { data: { slug: "not-an-array" }, error: null }
-        },
-      },
+      supabase: immediateRpc({ data: { slug: "not-an-array" }, error: null }),
       host: F3_JEWISH_HOST,
       tenantId: F3_JEWISH_TENANT_ID,
     }),
     [],
   )
 
+  const unordered = collectF3ProductPaths({
+    tenantId: F3_JEWISH_TENANT_ID,
+    rows: [
+      { tenant_id: F3_JEWISH_TENANT_ID, slug: "zebra" },
+      { tenant_id: F3_JEWISH_TENANT_ID, slug: "alpha" },
+      { tenant_id: F3_JEWISH_TENANT_ID, slug: "alpha" },
+    ],
+  })
+  assert.deepEqual(unordered, ["/p/alpha", "/p/zebra"])
+})
+
+test("approved F3 catalog load success still yields the 122 fixture URLs", async () => {
+  const rows = await loadF3CatalogProductRows({
+    supabase: immediateRpc({
+      data: rowsFor(F3_JEWISH_TENANT_ID, F3_JEWISH_PRODUCT_PATHS),
+      error: null,
+    }),
+    host: F3_JEWISH_HOST,
+    tenantId: F3_JEWISH_TENANT_ID,
+  })
+  const paths = collectPublicSitemapPaths({
+    family: "f3",
+    tenantId: F3_JEWISH_TENANT_ID,
+    productRows: rows,
+  })
+  assert.equal(paths.length, 122)
+  assert.deepEqual(paths, [...F3_JEWISH_SITEMAP_PATHS])
+  const xml = buildSitemapXml(jewishCanonical, paths)
+  assert.equal(locList(xml).length, 122)
+  assert.doesNotMatch(xml, /f3_catalog_rpc/)
+})
+
+test("fast catalog RPC completes and the abort timer is cleared", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] })
+  let aborted = false
+  /** @type {AbortSignal | null} */
+  let seen = null
+  const rows = await loadF3CatalogProductRows({
+    supabase: rpcClient(async (signal) => {
+      seen = signal
+      signal.addEventListener("abort", () => {
+        aborted = true
+      })
+      return {
+        data: [{ tenant_id: F3_JEWISH_TENANT_ID, slug: "bege-ouro-velho" }],
+        error: null,
+      }
+    }),
+    host: F3_JEWISH_HOST,
+    tenantId: F3_JEWISH_TENANT_ID,
+    timeoutMs: 4000,
+  })
+  t.mock.timers.tick(10_000)
+  assert.equal(aborted, false)
+  assert.equal(seen?.aborted, false)
+  assert.equal(rows.length, 1)
+})
+
+test("slow catalog RPC is aborted; simulated work does not finish", async () => {
+  const rejections = []
+  const onUnhandled = (reason) => {
+    rejections.push(reason)
+  }
+  process.on("unhandledRejection", onUnhandled)
+  const state = { rpcFinished: false, aborted: false }
+  try {
+    const timedOut = await loadF3CatalogProductRows({
+      supabase: hangingRpc({
+        delayMs: 5000,
+        payload: {
+          data: [{ tenant_id: F3_JEWISH_TENANT_ID, slug: "late-product" }],
+          error: null,
+        },
+        state,
+      }),
+      host: F3_JEWISH_HOST,
+      tenantId: F3_JEWISH_TENANT_ID,
+      timeoutMs: 20,
+    })
+    await new Promise((resolve) => setTimeout(resolve, 80))
+    assert.deepEqual(timedOut, [])
+    assert.equal(state.signal.aborted, true)
+    assert.equal(state.aborted, true)
+    assert.equal(state.rpcFinished, false)
+    assert.equal(rejections.length, 0)
+    assert.deepEqual(
+      collectPublicSitemapPaths({
+        family: "f3",
+        tenantId: F3_JEWISH_TENANT_ID,
+        productRows: timedOut,
+      }),
+      [...F3_CATALOG_STATIC_PATHS],
+    )
+  } finally {
+    process.off("unhandledRejection", onUnhandled)
+  }
+})
+
+test("concurrent catalog loads use independent abort signals", async () => {
+  /** @type {AbortSignal[]} */
+  const signals = []
+  const client = rpcClient(async (signal) => {
+    signals.push(signal)
+    if (signal.aborted) throw abortError()
+    return { data: [], error: null }
+  })
+  await Promise.all([
+    loadF3CatalogProductRows({
+      supabase: client,
+      host: "a.example.test",
+      tenantId: "00000000-0000-4000-8000-aaaa00000001",
+      timeoutMs: 4000,
+    }),
+    loadF3CatalogProductRows({
+      supabase: client,
+      host: "b.example.test",
+      tenantId: "00000000-0000-4000-8000-bbbb00000002",
+      timeoutMs: 4000,
+    }),
+  ])
+  assert.equal(signals.length, 2)
+  assert.notEqual(signals[0], signals[1])
+  assert.equal(signals[0].aborted, false)
+  assert.equal(signals[1].aborted, false)
+})
+
+test("aborting one tenant catalog RPC does not abort another", async () => {
+  const slow = { rpcFinished: false, aborted: false }
+  const fast = { rpcFinished: false, aborted: false }
+  const fastTenant = "00000000-0000-4000-8000-fast00000001"
+  const [slowRows, fastRows] = await Promise.all([
+    loadF3CatalogProductRows({
+      supabase: hangingRpc({
+        delayMs: 5000,
+        payload: { data: [{ tenant_id: "slow", slug: "slow-product" }], error: null },
+        state: slow,
+      }),
+      host: "slow.example.test",
+      tenantId: "00000000-0000-4000-8000-slow00000001",
+      timeoutMs: 20,
+    }),
+    loadF3CatalogProductRows({
+      supabase: hangingRpc({
+        delayMs: 5,
+        payload: { data: [{ tenant_id: fastTenant, slug: "fast-product" }], error: null },
+        state: fast,
+      }),
+      host: "fast.example.test",
+      tenantId: fastTenant,
+      timeoutMs: 4000,
+    }),
+  ])
+  await new Promise((resolve) => setTimeout(resolve, 80))
+  assert.deepEqual(slowRows, [])
+  assert.equal(slow.aborted, true)
+  assert.equal(slow.signal.aborted, true)
+  assert.equal(slow.rpcFinished, false)
+  assert.equal(fast.aborted, false)
+  assert.equal(fast.signal.aborted, false)
+  assert.equal(fast.rpcFinished, true)
+  assert.equal(fastRows.length, 1)
+  assert.deepEqual(
+    collectPublicSitemapPaths({ family: "f3", tenantId: fastTenant, productRows: fastRows }),
+    ["/", "/catalogo", "/sobre", "/contato", "/p/fast-product"],
+  )
+})
+
+test("RPC builders without abortSignal fail closed instead of racing a timer", async () => {
   const started = Date.now()
-  const timedOut = await loadF3CatalogProductRows({
+  const rows = await loadF3CatalogProductRows({
     supabase: {
       rpc() {
         return new Promise((resolve) => {
@@ -282,20 +491,10 @@ test("XML loc values are escaped and product rows fail closed on invalid RPC pay
     },
     host: F3_JEWISH_HOST,
     tenantId: F3_JEWISH_TENANT_ID,
-    timeoutMs: 20,
+    timeoutMs: 4000,
   })
-  assert.deepEqual(timedOut, [])
-  assert.ok(Date.now() - started < 150)
-
-  const unordered = collectF3ProductPaths({
-    tenantId: F3_JEWISH_TENANT_ID,
-    rows: [
-      { tenant_id: F3_JEWISH_TENANT_ID, slug: "zebra" },
-      { tenant_id: F3_JEWISH_TENANT_ID, slug: "alpha" },
-      { tenant_id: F3_JEWISH_TENANT_ID, slug: "alpha" },
-    ],
-  })
-  assert.deepEqual(unordered, ["/p/alpha", "/p/zebra"])
+  assert.deepEqual(rows, [])
+  assert.ok(Date.now() - started < 100)
 })
 
 test("factory sitemap code does not hardcode the 3D Jewish catalog snapshot", async () => {
@@ -309,4 +508,7 @@ test("factory sitemap code does not hardcode the 3D Jewish catalog snapshot", as
   assert.doesNotMatch(route, /3djewish|bege-ouro-velho|cobre-claro-flush/)
   assert.doesNotMatch(impl, /\/catalogo\?/)
   assert.match(impl, /F3_CATALOG_STATIC_PATHS/)
+  assert.match(impl, /AbortController/)
+  assert.match(impl, /abortSignal/)
+  assert.doesNotMatch(impl, /Promise\.race/)
 })

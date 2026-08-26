@@ -92,6 +92,25 @@ function locList(xml) {
   return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
 }
 
+/** Approved publication sitemap: XML, production HTML cache baseline, never noindex. */
+function assertApprovedSitemapHeaders(res) {
+  assert.equal(res.status, 200)
+  assert.match(String(res.headers["content-type"] || ""), /application\/xml/)
+  assert.match(String(res.headers["content-type"] || ""), /charset=utf-8/)
+  assert.match(String(res.headers["cache-control"] || ""), /max-age=0/)
+  assert.match(String(res.headers["cache-control"] || ""), /must-revalidate/)
+  assert.doesNotMatch(String(res.headers["cache-control"] || ""), /no-store/)
+  assert.doesNotMatch(String(res.headers["x-robots-tag"] || ""), /noindex/)
+}
+
+/** Publication-blocked sitemap: XML + noindex + no-store. */
+function assertNoindexSitemapHeaders(res) {
+  assert.equal(res.status, 200)
+  assert.match(String(res.headers["content-type"] || ""), /application\/xml/)
+  assert.match(String(res.headers["cache-control"] || ""), /no-store/)
+  assert.match(String(res.headers["x-robots-tag"] || ""), /noindex/)
+}
+
 function productRows(tenantId, paths) {
   return paths.map((productPath, index) => ({
     tenant_id: tenantId,
@@ -182,7 +201,7 @@ test("workerd F3 catalog sitemap is tenant-scoped; non-F3 and JUST stay unchange
   }
 
   const jewishSitemap = await requestWithHost(port, F3_JEWISH_HOST, "/sitemap.xml")
-  assert.equal(jewishSitemap.status, 200)
+  assertApprovedSitemapHeaders(jewishSitemap)
   const jewishLocs = locList(jewishSitemap.body)
   assert.deepEqual(jewishLocs.slice(0, 4), [
     `${F3_JEWISH_ORIGIN}/`,
@@ -206,12 +225,15 @@ test("workerd F3 catalog sitemap is tenant-scoped; non-F3 and JUST stay unchange
   }
 
   const rpcErrorSitemap = await requestWithHost(port, F3_RPC_ERROR_HOST, "/sitemap.xml")
+  assertApprovedSitemapHeaders(rpcErrorSitemap)
   assert.deepEqual(locList(rpcErrorSitemap.body), [
     `https://${F3_RPC_ERROR_HOST}/`,
     `https://${F3_RPC_ERROR_HOST}/catalogo`,
     `https://${F3_RPC_ERROR_HOST}/sobre`,
     `https://${F3_RPC_ERROR_HOST}/contato`,
   ])
+  assert.doesNotMatch(rpcErrorSitemap.body, /<loc>[^<]*\/p\//)
+  assert.doesNotMatch(rpcErrorSitemap.body, /f3_catalog_rpc/)
 
   const f1Sitemap = await requestWithHost(port, TENANT_ALPHA.host, "/sitemap.xml")
   assert.equal(f1Sitemap.status, 200)
@@ -346,14 +368,13 @@ test("workerd F3 sitemap is empty when publication is missing, invalid, revoked,
   ]
   for (const host of blocked) {
     const sitemap = await requestWithHost(port, host, "/sitemap.xml")
-    assert.equal(sitemap.status, 200)
+    assertNoindexSitemapHeaders(sitemap)
     assert.match(
       sitemap.body,
       /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9"><\/urlset>/,
     )
     assert.doesNotMatch(sitemap.body, /<loc>/)
     assert.doesNotMatch(sitemap.body, /should-not-appear/)
-    assert.match(sitemap.headers["x-robots-tag"] || "", /noindex/)
   }
 
   const rpcHosts = mock.calls.filter((call) => call.mode === "rpc").map((call) => call.host)
@@ -399,13 +420,12 @@ test("workerd preview sitemap stays empty noindex even for an approved F3 tenant
   await wrangler.ready()
 
   const sitemap = await requestWithHost(port, F3_JEWISH_HOST, "/sitemap.xml")
-  assert.equal(sitemap.status, 200)
+  assertNoindexSitemapHeaders(sitemap)
   assert.match(
     sitemap.body,
     /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9"><\/urlset>/,
   )
   assert.doesNotMatch(sitemap.body, /<loc>/)
-  assert.match(sitemap.headers["x-robots-tag"] || "", /noindex/)
 
   const robots = await requestWithHost(port, F3_JEWISH_HOST, "/robots.txt")
   assert.match(robots.body, /Disallow: \//)

@@ -200,18 +200,27 @@ export function collectPublicSitemapPaths(input) {
 }
 
 /**
- * @param {number} ms
- * @param {string} message
+ * @param {unknown} err
+ * @returns {boolean}
  */
-function timeoutReject(ms, message) {
-  return new Promise((_, reject) => {
-    setTimeout(() => reject(new Error(message)), ms)
-  })
+function isAbortLikeError(err) {
+  if (!err || typeof err !== "object") return false
+  const name = "name" in err ? String(err.name) : ""
+  return name === "AbortError" || name === "TimeoutError"
+}
+
+/**
+ * Structured observability only — never rendered into sitemap XML.
+ * @param {"f3_catalog_rpc_timeout" | "f3_catalog_rpc_aborted" | "f3_catalog_rpc_failed"} event
+ * @param {string} host
+ */
+function logCatalogRpcEvent(event, host) {
+  console.info(JSON.stringify({ event, host }))
 }
 
 /**
  * Host-scoped public catalog RPC. Empty on missing identity, client, timeout, or RPC error.
- * Never caches rows across requests or hosts.
+ * Never caches rows across requests or hosts. Each call owns a fresh AbortController.
  *
  * @param {{
  *   supabase?: { rpc?: Function } | null
@@ -233,17 +242,47 @@ export async function loadF3CatalogProductRows(input) {
     return []
   }
 
+  const controller = new AbortController()
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let timeoutId = null
+  let timedOut = false
+
+  const clearTimer = () => {
+    if (timeoutId == null) return
+    clearTimeout(timeoutId)
+    timeoutId = null
+  }
+
+  timeoutId = setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, timeoutMs)
+
   try {
-    const result = await Promise.race([
-      supabase.rpc("public_get_products_by_host", { p_host: host }),
-      timeoutReject(timeoutMs, "f3_catalog_rpc_timeout"),
-    ])
+    const builder = supabase.rpc("public_get_products_by_host", { p_host: host })
+    if (!builder || typeof builder.abortSignal !== "function") {
+      logCatalogRpcEvent("f3_catalog_rpc_failed", host)
+      return []
+    }
+
+    const result = await builder.abortSignal(controller.signal)
+    if (controller.signal.aborted) {
+      logCatalogRpcEvent(timedOut ? "f3_catalog_rpc_timeout" : "f3_catalog_rpc_aborted", host)
+      return []
+    }
     if (!result || typeof result !== "object") return []
     const { data, error } = /** @type {{ data?: unknown, error?: unknown }} */ (result)
     if (error || !Array.isArray(data)) return []
     return data.filter((row) => row && typeof row === "object" && !Array.isArray(row))
-  } catch {
+  } catch (err) {
+    if (timedOut || controller.signal.aborted || isAbortLikeError(err)) {
+      logCatalogRpcEvent(timedOut ? "f3_catalog_rpc_timeout" : "f3_catalog_rpc_aborted", host)
+    } else {
+      logCatalogRpcEvent("f3_catalog_rpc_failed", host)
+    }
     return []
+  } finally {
+    clearTimer()
   }
 }
 
