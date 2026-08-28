@@ -1,0 +1,2257 @@
+{
+  "tenantBrand": "3D Jewish",
+  "host": "3djewish.com.br",
+  "capturedAt": "2026-08-27T00:56:48+00:00",
+  "products": [
+    {
+      "productId": "07443d1b-8b88-41d5-96e2-ee68efb7f528",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "potes-kear-d10cmxa30cm",
+      "canonicalUrl": "https://3djewish.com.br/p/potes-kear-d10cmxa30cm",
+      "name": "Potes Keará (D:10 cmXA:3 cm)",
+      "lineName": "Chaguim",
+      "categoryName": "Chaguim",
+      "description": "Chaguim Potes Keará (D:10 cmXA:3 cm)",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/07443d1b-8b88-41d5-96e2-ee68efb7f528/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/07443d1b-8b88-41d5-96e2-ee68efb7f528/1768160682878.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "0885ea4c-386c-428c-b8ed-48a1a756dab2",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "rosa-beb-branco",
+      "canonicalUrl": "https://3djewish.com.br/p/rosa-beb-branco",
+      "name": "Rosa Bebê & Branco",
+      "lineName": "Natlan Bambu",
+      "categoryName": "Natlan",
+      "description": "Natlan Bambu Rosa Bebê & Branco",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/0885ea4c-386c-428c-b8ed-48a1a756dab2/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/0885ea4c-386c-428c-b8ed-48a1a756dab2/1768104542591.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "09aa9123-2638-408d-be4a-f50b2eeae30a",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "natlan-textura-matz",
+      "canonicalUrl": "https://3djewish.com.br/p/natlan-textura-matz",
+      "name": "Natlan Textura Matzá",
+      "lineName": "Chaguim",
+      "categoryName": "Chaguim",
+      "description": "Chaguim Natlan Textura Matzá",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/09aa9123-2638-408d-be4a-f50b2eeae30a/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/09aa9123-2638-408d-be4a-f50b2eeae30a/1768160655607.png"
+      ],
+      "price": 100.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "0b54b8bb-a852-49cd-bf04-07271f69696b",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "kear",
+      "canonicalUrl": "https://3djewish.com.br/p/kear",
+      "name": "Keará",
+      "lineName": "Chaguim",
+      "categoryName": "Chaguim",
+      "description": "Chaguim Keará",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/0b54b8bb-a852-49cd-bf04-07271f69696b/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/0b54b8bb-a852-49cd-bf04-07271f69696b/1768160742424.png"
+      ],
+      "price": 110.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "0ed87c7b-82c1-4919-8927-23d3fb9ecf29",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "ros-gold-inox",
+      "canonicalUrl": "https://3djewish.com.br/p/ros-gold-inox",
+      "name": "Rosê Gold & Inox",
+      "lineName": "Natlan Botonê",
+      "categoryName": "Natlan",
+      "description": "Natlan Botnê Rosê Gold & Inox",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/0ed87c7b-82c1-4919-8927-23d3fb9ecf29/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/0ed87c7b-82c1-4919-8927-23d3fb9ecf29/1768103157269.png"
+      ],
+      "price": 150.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "0ef15777-5dcd-464f-a6db-3d4affc36a60",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "perolado-azul-metlico",
+      "canonicalUrl": "https://3djewish.com.br/p/perolado-azul-metlico",
+      "name": "Perolado & Azul Metálico",
+      "lineName": "Natlan Grego",
+      "categoryName": "Natlan",
+      "description": "Natlan Grego Branco Azul Metálico",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/0ef15777-5dcd-464f-a6db-3d4affc36a60/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/0ef15777-5dcd-464f-a6db-3d4affc36a60/1768094173300.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "0ef3f301-baf4-4ccb-beff-8d3bd6c6cf99",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "marinho-ouro-claro",
+      "canonicalUrl": "https://3djewish.com.br/p/marinho-ouro-claro",
+      "name": "Marinho & Ouro Claro",
+      "lineName": "Distribuidor de Vinho",
+      "categoryName": "Distribuidor de Vinho",
+      "description": "Distribuidor de Vinho Marinho & Ouro Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/0ef3f301-baf4-4ccb-beff-8d3bd6c6cf99/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/0ef3f301-baf4-4ccb-beff-8d3bd6c6cf99/1768149284501.png"
+      ],
+      "price": 290.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "1047b64c-f6c3-4f96-ad7e-c904fbd5d66d",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "placa-bem-vindos-sucot-etrog",
+      "canonicalUrl": "https://3djewish.com.br/p/placa-bem-vindos-sucot-etrog",
+      "name": "Placa Bem-Vindos Sucot (Etrog)",
+      "lineName": "Chaguim",
+      "categoryName": "Chaguim",
+      "description": "Chaguim Placa Bem-Vindos Sucot",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/1047b64c-f6c3-4f96-ad7e-c904fbd5d66d/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/1047b64c-f6c3-4f96-ad7e-c904fbd5d66d/1768160799674.png"
+      ],
+      "price": 50.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "14a2606c-1ec9-4ebb-8349-9fcfb52fa48c",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "preto-cobre-claro",
+      "canonicalUrl": "https://3djewish.com.br/p/preto-cobre-claro",
+      "name": "Preto & Cobre Claro",
+      "lineName": "Natlan Roma",
+      "categoryName": "Natlan",
+      "description": "Natlan Roma Preto & Cobre Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/14a2606c-1ec9-4ebb-8349-9fcfb52fa48c/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/14a2606c-1ec9-4ebb-8349-9fcfb52fa48c/1768148802655.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "194b5f87-a701-4462-ab3e-a4e102083762",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "inox",
+      "canonicalUrl": "https://3djewish.com.br/p/inox",
+      "name": "Inox",
+      "lineName": "Natlan Veneza",
+      "categoryName": "Natlan",
+      "description": "Natlan Veneza Inox",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/194b5f87-a701-4462-ab3e-a4e102083762/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/194b5f87-a701-4462-ab3e-a4e102083762/1768104377087.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "19980d86-66fe-47a1-b9b7-75585bf61511",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "natlan-mosaico",
+      "canonicalUrl": "https://3djewish.com.br/p/natlan-mosaico",
+      "name": "Natlan Mosaico",
+      "lineName": "Natlan Mosaico",
+      "categoryName": "Natlan",
+      "description": "Areia",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/19980d86-66fe-47a1-b9b7-75585bf61511/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/19980d86-66fe-47a1-b9b7-75585bf61511/1769905181352.webp"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "1ce23eeb-fea6-4b76-a478-748e2169a3ee",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "porta-matz",
+      "canonicalUrl": "https://3djewish.com.br/p/porta-matz",
+      "name": "Porta Matzá",
+      "lineName": "Chaguim",
+      "categoryName": "Chaguim",
+      "description": "Chaguim Porta Matzá",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/1ce23eeb-fea6-4b76-a478-748e2169a3ee/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/1ce23eeb-fea6-4b76-a478-748e2169a3ee/1768160626874.png"
+      ],
+      "price": 65.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "1e130ea1-571a-4872-a41c-2bdc1c9616a4",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "branco-perolado",
+      "canonicalUrl": "https://3djewish.com.br/p/branco-perolado",
+      "name": "Branco Perolado",
+      "lineName": "Natlan Sextavado",
+      "categoryName": "Natlan",
+      "description": "Natlan Sextavado Branco Perolado",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/1e130ea1-571a-4872-a41c-2bdc1c9616a4/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/1e130ea1-571a-4872-a41c-2bdc1c9616a4/1768104081146.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "1f732a04-d557-4b1d-ac3f-f88a3d100cc5",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "preto-cobre-claro-2",
+      "canonicalUrl": "https://3djewish.com.br/p/preto-cobre-claro-2",
+      "name": "Preto & Cobre Claro",
+      "lineName": "Natlan Grego",
+      "categoryName": "Natlan",
+      "description": "Natlan Grego Preto & Cobre Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/1f732a04-d557-4b1d-ac3f-f88a3d100cc5/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/1f732a04-d557-4b1d-ac3f-f88a3d100cc5/1768093828740.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "21480e61-bbc8-44c0-a771-bfaa87adadba",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-beb-marinho-branco",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-beb-marinho-branco",
+      "name": "Azul Bebê-Marinho-Branco",
+      "lineName": "Natlan Derma",
+      "categoryName": "Natlan",
+      "description": "Natlan Derma Azul Bebê-Marinho-Branco",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/21480e61-bbc8-44c0-a771-bfaa87adadba/1768103831922.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "23bdd6b3-da46-4c8b-be33-20950745049c",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "inox-preto",
+      "canonicalUrl": "https://3djewish.com.br/p/inox-preto",
+      "name": "Inox & Preto",
+      "lineName": "Natlan Roma",
+      "categoryName": "Natlan",
+      "description": "Natlan Roma Inox & Preto",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/23bdd6b3-da46-4c8b-be33-20950745049c/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/23bdd6b3-da46-4c8b-be33-20950745049c/1768148876502.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "24b1f2db-a93e-4193-8ea1-8812ae22cbaa",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "prata",
+      "canonicalUrl": "https://3djewish.com.br/p/prata",
+      "name": "Prata",
+      "lineName": "Natlan Veneza",
+      "categoryName": "Natlan",
+      "description": "Natlan Veneza Prata",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/24b1f2db-a93e-4193-8ea1-8812ae22cbaa/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/24b1f2db-a93e-4193-8ea1-8812ae22cbaa/1768104251825.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "288bf8cb-3740-45e5-8a84-8e65d169fbcd",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "mezuza-multicolor---tons-vinhoprata",
+      "canonicalUrl": "https://3djewish.com.br/p/mezuza-multicolor---tons-vinhoprata",
+      "name": "Mezuzá Multicolor - Tons vinho/prata",
+      "lineName": "Mezuzá Multicolor",
+      "categoryName": "Mezuzá",
+      "description": "Personalize sua Mezuzá - Escolha quatro cores",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/288bf8cb-3740-45e5-8a84-8e65d169fbcd/1782745900532.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/288bf8cb-3740-45e5-8a84-8e65d169fbcd/1782745901057.webp"
+      ],
+      "price": 70.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "294e3fe1-e0a5-4e5d-b485-6f63ae3ebfd7",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "personalizados-2",
+      "canonicalUrl": "https://3djewish.com.br/p/personalizados-2",
+      "name": "Personalizados 2",
+      "lineName": "Personalizados",
+      "categoryName": "Personalizados",
+      "description": "Exemplos de Logo",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/294e3fe1-e0a5-4e5d-b485-6f63ae3ebfd7/1770300811103.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/294e3fe1-e0a5-4e5d-b485-6f63ae3ebfd7/1770821101452.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/294e3fe1-e0a5-4e5d-b485-6f63ae3ebfd7/0f269e13-fbf3-40e1-9edc-ea2d817fcc5b.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/294e3fe1-e0a5-4e5d-b485-6f63ae3ebfd7/1779980529397.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/294e3fe1-e0a5-4e5d-b485-6f63ae3ebfd7/1779980529862.webp"
+      ],
+      "price": 150.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "29980ca1-e2a9-44c8-b99a-5c7ff065e15b",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "marinho-ouro-claro-2",
+      "canonicalUrl": "https://3djewish.com.br/p/marinho-ouro-claro-2",
+      "name": "Marinho & Ouro Claro",
+      "lineName": "Kossot",
+      "categoryName": "Kossot",
+      "description": "Kos Haste Marinho & Ouro Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/29980ca1-e2a9-44c8-b99a-5c7ff065e15b/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/29980ca1-e2a9-44c8-b99a-5c7ff065e15b/1768149744398.webp"
+      ],
+      "price": 90.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "2ae063ef-4df9-415f-88fc-bb2c17f26bee",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "prata-cobre-claro",
+      "canonicalUrl": "https://3djewish.com.br/p/prata-cobre-claro",
+      "name": "Prata & Cobre Claro",
+      "lineName": "Kossot",
+      "categoryName": "Kossot",
+      "description": "Kossot Prata & Cobre Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/2ae063ef-4df9-415f-88fc-bb2c17f26bee/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/2ae063ef-4df9-415f-88fc-bb2c17f26bee/1768149446704.png"
+      ],
+      "price": 80.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "2f1db044-9a9a-4b28-8574-b170b06c7995",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "grande-24cm-x-24cm---cores-variadas",
+      "canonicalUrl": "https://3djewish.com.br/p/grande-24cm-x-24cm---cores-variadas",
+      "name": "Grande (24cm x 24cm) - Cores Variadas",
+      "lineName": "Stander",
+      "categoryName": "Stander",
+      "description": "Stander com Cores Variadas - Tamanho Grande (24cm x 24cm) - 5 Posições de Inclinação",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/2f1db044-9a9a-4b28-8574-b170b06c7995/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/2f1db044-9a9a-4b28-8574-b170b06c7995/1768433628817.png",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/2f1db044-9a9a-4b28-8574-b170b06c7995/1768433629136.png",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/2f1db044-9a9a-4b28-8574-b170b06c7995/1768433629751.png",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/2f1db044-9a9a-4b28-8574-b170b06c7995/1768433630132.png",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/2f1db044-9a9a-4b28-8574-b170b06c7995/1768433630588.png",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/2f1db044-9a9a-4b28-8574-b170b06c7995/1768433631045.png"
+      ],
+      "price": 130.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "2f3425ce-e8e5-41bd-b148-ce7e48622683",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "prata-2",
+      "canonicalUrl": "https://3djewish.com.br/p/prata-2",
+      "name": "Prata",
+      "lineName": "Natlan Geo",
+      "categoryName": "Natlan",
+      "description": "Natlan Geo Prata",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/2f3425ce-e8e5-41bd-b148-ce7e48622683/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/2f3425ce-e8e5-41bd-b148-ce7e48622683/1768149093011.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "345c93bf-032d-4822-9394-f50397283706",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "verde-ametista",
+      "canonicalUrl": "https://3djewish.com.br/p/verde-ametista",
+      "name": "Verde & Ametista",
+      "lineName": "Natlan Roma",
+      "categoryName": "Natlan",
+      "description": "Natlan Roma Verde & Ametista",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/345c93bf-032d-4822-9394-f50397283706/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/345c93bf-032d-4822-9394-f50397283706/1768148997984.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "35a34073-0ec1-4b10-9ced-ef66832e737d",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-marinho",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-marinho",
+      "name": "Azul Marinho",
+      "lineName": "Natlan Veneza",
+      "categoryName": "Natlan",
+      "description": "Natlan Veneza Azul Marinho",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/35a34073-0ec1-4b10-9ced-ef66832e737d/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/35a34073-0ec1-4b10-9ced-ef66832e737d/1768104302329.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "36365452-0569-40a9-87b8-bb3d50e945dc",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "marinho-ouro-claro-3",
+      "canonicalUrl": "https://3djewish.com.br/p/marinho-ouro-claro-3",
+      "name": "Marinho & Ouro Claro",
+      "lineName": "Kossot",
+      "categoryName": "Kossot",
+      "description": "Kos Haste Marinho & Ouro Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/36365452-0569-40a9-87b8-bb3d50e945dc/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/36365452-0569-40a9-87b8-bb3d50e945dc/1768149724137.webp"
+      ],
+      "price": 90.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "36fe2c10-b36a-4423-b6a4-47a10e320530",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "marinho-prata",
+      "canonicalUrl": "https://3djewish.com.br/p/marinho-prata",
+      "name": "Marinho & Prata",
+      "lineName": "Kossot",
+      "categoryName": "Kossot",
+      "description": "Kossot Marinho & Prata",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/36fe2c10-b36a-4423-b6a4-47a10e320530/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/36fe2c10-b36a-4423-b6a4-47a10e320530/1768149400815.png"
+      ],
+      "price": 80.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "3eba2130-523f-4df9-bc93-699a50eb04a9",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "inox-ros-gold",
+      "canonicalUrl": "https://3djewish.com.br/p/inox-ros-gold",
+      "name": "Inox + Rosê Gold",
+      "lineName": "Kossot",
+      "categoryName": "Kossot",
+      "description": "Kossot  Inox + Rosê Gold",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/3eba2130-523f-4df9-bc93-699a50eb04a9/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/3eba2130-523f-4df9-bc93-699a50eb04a9/1768149425338.png"
+      ],
+      "price": 80.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "3f29379f-87d9-489e-a133-816ecc55e757",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-marinho-ouro",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-marinho-ouro",
+      "name": "Azul Marinho & Ouro",
+      "lineName": "Natlan Sextavado",
+      "categoryName": "Natlan",
+      "description": "Natlan Sextavado Azul Marinho & Ouro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/3f29379f-87d9-489e-a133-816ecc55e757/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/3f29379f-87d9-489e-a133-816ecc55e757/1768104022076.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "40c175a9-71a7-42b8-93e2-c0dbe2c0eea8",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "preto",
+      "canonicalUrl": "https://3djewish.com.br/p/preto",
+      "name": "Preto",
+      "lineName": "Abajur Shabat",
+      "categoryName": "Abajur Shabat",
+      "description": "Abajur Shabat Preto",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/40c175a9-71a7-42b8-93e2-c0dbe2c0eea8/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/40c175a9-71a7-42b8-93e2-c0dbe2c0eea8/1768161277345.png"
+      ],
+      "price": 180.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "457c6d19-4529-4255-9d34-7367ba84600b",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul",
+      "canonicalUrl": "https://3djewish.com.br/p/azul",
+      "name": "Azul",
+      "lineName": "Abajur Shabat",
+      "categoryName": "Abajur Shabat",
+      "description": "Abajur Shabat Azul",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/457c6d19-4529-4255-9d34-7367ba84600b/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/457c6d19-4529-4255-9d34-7367ba84600b/1768161203724.png"
+      ],
+      "price": 180.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "45aedba9-aebb-41be-b393-f52b304529d3",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "mezuza-multicolor",
+      "canonicalUrl": "https://3djewish.com.br/p/mezuza-multicolor",
+      "name": "Mezuzá Multicolor - Tons azuis",
+      "lineName": "Mezuzá Multicolor",
+      "categoryName": "Mezuzá",
+      "description": "Personalize sua Mezuzá escolhendo 4 cores",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/45aedba9-aebb-41be-b393-f52b304529d3/1782745389743.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/45aedba9-aebb-41be-b393-f52b304529d3/1782745390435.webp"
+      ],
+      "price": 70.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "465d0f06-123d-4fa3-a525-3cc410cf3843",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "personalizado-1",
+      "canonicalUrl": "https://3djewish.com.br/p/personalizado-1",
+      "name": "Personalizado 1",
+      "lineName": "Personalizados",
+      "categoryName": "Personalizados",
+      "description": "Exemplos de Logo",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/465d0f06-123d-4fa3-a525-3cc410cf3843/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/465d0f06-123d-4fa3-a525-3cc410cf3843/1769103346906.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/465d0f06-123d-4fa3-a525-3cc410cf3843/1769103347171.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/465d0f06-123d-4fa3-a525-3cc410cf3843/1769103347316.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/465d0f06-123d-4fa3-a525-3cc410cf3843/1769103347516.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/465d0f06-123d-4fa3-a525-3cc410cf3843/1769103347765.webp"
+      ],
+      "price": 150.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "46bb9823-caf6-43dd-a5e0-53bd30f7f408",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "pink",
+      "canonicalUrl": "https://3djewish.com.br/p/pink",
+      "name": "Pink",
+      "lineName": "Natlan Sextavado",
+      "categoryName": "Natlan",
+      "description": "Natlan Sextavado Pink",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/46bb9823-caf6-43dd-a5e0-53bd30f7f408/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/46bb9823-caf6-43dd-a5e0-53bd30f7f408/1768104056506.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "4de5c843-fbb0-4c27-81bc-d598a3aa9ea1",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "marinho-ouro-claro-4",
+      "canonicalUrl": "https://3djewish.com.br/p/marinho-ouro-claro-4",
+      "name": "Marinho & Ouro Claro",
+      "lineName": "Kossot",
+      "categoryName": "Kossot",
+      "description": "Cosset Marinho & Ouro Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/4de5c843-fbb0-4c27-81bc-d598a3aa9ea1/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/4de5c843-fbb0-4c27-81bc-d598a3aa9ea1/1768149379381.png"
+      ],
+      "price": 80.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "4f662e5c-6637-467e-8451-8eb860a8062a",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "branco-perolado-2",
+      "canonicalUrl": "https://3djewish.com.br/p/branco-perolado-2",
+      "name": "Branco Perolado",
+      "lineName": "Natlan Mosaico",
+      "categoryName": "Natlan",
+      "description": "Natlan Mosaico",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/4f662e5c-6637-467e-8451-8eb860a8062a/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/4f662e5c-6637-467e-8451-8eb860a8062a/1768149048830.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "4f7ceac4-7565-4e00-8f0e-dbba3698a61f",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "tons-de-rosa",
+      "canonicalUrl": "https://3djewish.com.br/p/tons-de-rosa",
+      "name": "Tons de Rosa",
+      "lineName": "Natlan Derma",
+      "categoryName": "Natlan",
+      "description": "Natlan Derma Tons de Rosa",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/4f7ceac4-7565-4e00-8f0e-dbba3698a61f/1768103657235.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "5026bccd-a02a-487d-8f2a-d397702820dc",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "perolado-ouro-velho",
+      "canonicalUrl": "https://3djewish.com.br/p/perolado-ouro-velho",
+      "name": "Perolado & Ouro Velho",
+      "lineName": "Natlan Grego",
+      "categoryName": "Natlan",
+      "description": "Branco Ouro Velho",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/5026bccd-a02a-487d-8f2a-d397702820dc/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/5026bccd-a02a-487d-8f2a-d397702820dc/1768090821479.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "51ab2afc-cad5-4ff8-868b-0744c1cb1ca0",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-metlico",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-metlico",
+      "name": "Azul Metálico",
+      "lineName": "Natlan Clássico",
+      "categoryName": "Natlan",
+      "description": "Natlan Classico",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/51ab2afc-cad5-4ff8-868b-0744c1cb1ca0/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/51ab2afc-cad5-4ff8-868b-0744c1cb1ca0/1768747087253.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "51fca544-4fb7-475c-a798-9c8a7dbf5343",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "etrog-enfeite-suc",
+      "canonicalUrl": "https://3djewish.com.br/p/etrog-enfeite-suc",
+      "name": "Etrog Enfeite Sucá",
+      "lineName": "Chaguim",
+      "categoryName": "Chaguim",
+      "description": "Chaguim Etrog Enfeite Sucá",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/51fca544-4fb7-475c-a798-9c8a7dbf5343/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/51fca544-4fb7-475c-a798-9c8a7dbf5343/1768160911811.png"
+      ],
+      "price": 40.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "520aa89f-0065-4bdb-824d-71c799b955b7",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "tricolor-escolha-livre",
+      "canonicalUrl": "https://3djewish.com.br/p/tricolor-escolha-livre",
+      "name": "Tricolor (escolha livre)",
+      "lineName": "Natlan Clássico",
+      "categoryName": "Natlan",
+      "description": "Natan Clássico",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/520aa89f-0065-4bdb-824d-71c799b955b7/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/520aa89f-0065-4bdb-824d-71c799b955b7/1768747368652.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "54b08f1f-0f93-4137-9c82-295469f72296",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "cobre-escuro",
+      "canonicalUrl": "https://3djewish.com.br/p/cobre-escuro",
+      "name": "Cobre Escuro",
+      "lineName": "Natlan Botonê",
+      "categoryName": "Natlan",
+      "description": "Natlan Botonê Cobre Escuro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/54b08f1f-0f93-4137-9c82-295469f72296/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/54b08f1f-0f93-4137-9c82-295469f72296/1768103492475.png"
+      ],
+      "price": 150.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "55213eb0-99f1-431a-baec-4d18b0e51a08",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "bege-azul-marsala",
+      "canonicalUrl": "https://3djewish.com.br/p/bege-azul-marsala",
+      "name": "Bege-Azul-Marsala",
+      "lineName": "Natlan Derma",
+      "categoryName": "Natlan",
+      "description": "Natlan Derma Bege-Azul-Marsala",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/55213eb0-99f1-431a-baec-4d18b0e51a08/1768103763714.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "5e6bf7d4-5ca1-4cd5-836f-80a64eaf5ab3",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "branco",
+      "canonicalUrl": "https://3djewish.com.br/p/branco",
+      "name": "Branco",
+      "lineName": "Abajur Shabat",
+      "categoryName": "Abajur Shabat",
+      "description": "Abajur Shabat Branco",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/5e6bf7d4-5ca1-4cd5-836f-80a64eaf5ab3/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/5e6bf7d4-5ca1-4cd5-836f-80a64eaf5ab3/1768161235351.png"
+      ],
+      "price": 180.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "604359a7-6a9f-43fe-ac94-9de8ade96f31",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "branco-perolado-3",
+      "canonicalUrl": "https://3djewish.com.br/p/branco-perolado-3",
+      "name": "Branco Perolado",
+      "lineName": "Natlan Veneza",
+      "categoryName": "Natlan",
+      "description": "Natlan Veneza Branco Perolado",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/604359a7-6a9f-43fe-ac94-9de8ade96f31/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/604359a7-6a9f-43fe-ac94-9de8ade96f31/1768104325752.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "60bff932-03ee-4f63-b9ff-d8ba24e4d5e4",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "degrad-verde-ametista",
+      "canonicalUrl": "https://3djewish.com.br/p/degrad-verde-ametista",
+      "name": "Degradê Verde & Ametista",
+      "lineName": "Kossot",
+      "categoryName": "Kossot",
+      "description": "Kos Haste Degradê Verde & Ametista",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/60bff932-03ee-4f63-b9ff-d8ba24e4d5e4/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/60bff932-03ee-4f63-b9ff-d8ba24e4d5e4/1768149807687.webp"
+      ],
+      "price": 90.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "61b8ad08-c636-4219-a98e-446fb4f63c43",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "pequeno-18cm-x-18cm---cores-variadas",
+      "canonicalUrl": "https://3djewish.com.br/p/pequeno-18cm-x-18cm---cores-variadas",
+      "name": "Pequeno (18cm x 18cm) - Cores Variadas",
+      "lineName": "Stander",
+      "categoryName": "Stander",
+      "description": "Stander com Cores Variadas - Tamanho Pequeno (18cmx 18cm) - 5 Posições de Inclinação",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/61b8ad08-c636-4219-a98e-446fb4f63c43/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/61b8ad08-c636-4219-a98e-446fb4f63c43/1768433447380.png",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/61b8ad08-c636-4219-a98e-446fb4f63c43/1768433448062.png",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/61b8ad08-c636-4219-a98e-446fb4f63c43/1768433448438.png",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/61b8ad08-c636-4219-a98e-446fb4f63c43/1768433448864.png",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/61b8ad08-c636-4219-a98e-446fb4f63c43/1768433449286.png",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/61b8ad08-c636-4219-a98e-446fb4f63c43/1768433449745.png"
+      ],
+      "price": 90.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "62607eca-ffb6-4558-8360-99591c119e13",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "preto-nude",
+      "canonicalUrl": "https://3djewish.com.br/p/preto-nude",
+      "name": "Preto & Nude",
+      "lineName": "Natlan Roma",
+      "categoryName": "Natlan",
+      "description": "Natlan Roma Preto & Nude",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/62607eca-ffb6-4558-8360-99591c119e13/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/62607eca-ffb6-4558-8360-99591c119e13/1768148828364.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "630af801-de58-4a9e-ac17-87eedfb1c7d9",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "preto-cobre-claro-3",
+      "canonicalUrl": "https://3djewish.com.br/p/preto-cobre-claro-3",
+      "name": "Preto & Cobre Claro",
+      "lineName": "Maym Acharonim",
+      "categoryName": "Maym Acharonim",
+      "description": "Maym Acharonim Preto & Cobre Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/630af801-de58-4a9e-ac17-87eedfb1c7d9/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/630af801-de58-4a9e-ac17-87eedfb1c7d9/1768149914195.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "6492d5c6-e516-4a10-b115-54ee4647a26e",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "yim-eskachech-cobre-escuro",
+      "canonicalUrl": "https://3djewish.com.br/p/yim-eskachech-cobre-escuro",
+      "name": "Yim Eskachech Cobre Escuro",
+      "lineName": "Chaguim",
+      "categoryName": "Chaguim",
+      "description": "Placa Yim Eskachech Cobre Escuro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/6492d5c6-e516-4a10-b115-54ee4647a26e/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/6492d5c6-e516-4a10-b115-54ee4647a26e/1768161061579.png"
+      ],
+      "price": 110.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "665c63eb-b66b-44be-895e-efa45a538a66",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-titnio",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-titnio",
+      "name": "Azul Titânio",
+      "lineName": "Natlan Sextavado",
+      "categoryName": "Natlan",
+      "description": "Natlan Sextavado Azul Titanium",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/665c63eb-b66b-44be-895e-efa45a538a66/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/665c63eb-b66b-44be-895e-efa45a538a66/1768103941012.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "66c3133d-a872-4c0f-94a1-927dad48ce20",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "natlan-elegance",
+      "canonicalUrl": "https://3djewish.com.br/p/natlan-elegance",
+      "name": "Natlan Elegance",
+      "lineName": "Natlan Elegance",
+      "categoryName": "Natlan",
+      "description": "Cor Inox com borda Cobre",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/66c3133d-a872-4c0f-94a1-927dad48ce20/1780846329821.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/66c3133d-a872-4c0f-94a1-927dad48ce20/1780846330540.webp"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "6a1b5bba-affa-443a-8fd5-55408deb05e8",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "marsala",
+      "canonicalUrl": "https://3djewish.com.br/p/marsala",
+      "name": "Marsala",
+      "lineName": "Natlan Clássico",
+      "categoryName": "Natlan",
+      "description": "Natlan Clássico",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/6a1b5bba-affa-443a-8fd5-55408deb05e8/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/6a1b5bba-affa-443a-8fd5-55408deb05e8/1768747563944.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "6f959d8e-cc5b-4648-ad3b-9bf56926a713",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "mostarda",
+      "canonicalUrl": "https://3djewish.com.br/p/mostarda",
+      "name": "Mostarda",
+      "lineName": "Natlan Clássico",
+      "categoryName": "Natlan",
+      "description": "Natlan Clássico",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/6f959d8e-cc5b-4648-ad3b-9bf56926a713/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/6f959d8e-cc5b-4648-ad3b-9bf56926a713/1768747418110.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "70d919f7-78b6-41f9-9bbd-1a8d8a2a188c",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-marinho-gold",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-marinho-gold",
+      "name": "Azul Marinho & Gold",
+      "lineName": "Natlan Bambu",
+      "categoryName": "Natlan",
+      "description": "Natlan Bambu Azul Marinho & Gold",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/70d919f7-78b6-41f9-9bbd-1a8d8a2a188c/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/70d919f7-78b6-41f9-9bbd-1a8d8a2a188c/1768104915775.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "7298ddc4-2b86-43e1-b1fc-3394e66bc18d",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "cobre-claro",
+      "canonicalUrl": "https://3djewish.com.br/p/cobre-claro",
+      "name": "Cobre Claro",
+      "lineName": "Natlan Kaspy",
+      "categoryName": "Natlan",
+      "description": "Natlan Kaspy Cobre Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/7298ddc4-2b86-43e1-b1fc-3394e66bc18d/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/7298ddc4-2b86-43e1-b1fc-3394e66bc18d/1768105627035.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "7644370b-b3d9-414e-908c-967d7a30aa10",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "natlan-veneza",
+      "canonicalUrl": "https://3djewish.com.br/p/natlan-veneza",
+      "name": "Rosê Gold",
+      "lineName": "Natlan Veneza",
+      "categoryName": "Natlan",
+      "description": "",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/7644370b-b3d9-414e-908c-967d7a30aa10/1782074356613.webp"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "78acbebc-291c-46e3-aac9-1ab29796f083",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "cobre",
+      "canonicalUrl": "https://3djewish.com.br/p/cobre",
+      "name": "Cobre",
+      "lineName": "Natlan Mosaico",
+      "categoryName": "Natlan",
+      "description": "",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/78acbebc-291c-46e3-aac9-1ab29796f083/36845a99-561e-4709-bd16-6a9a2778ec5e.webp"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "78e2579e-4018-42dc-a062-ecf288c90c40",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-titnio-2",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-titnio-2",
+      "name": "Azul Titânio",
+      "lineName": "Kossot",
+      "categoryName": "Kossot",
+      "description": "Kossot Azul Titânio",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/78e2579e-4018-42dc-a062-ecf288c90c40/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/78e2579e-4018-42dc-a062-ecf288c90c40/1768149470917.png"
+      ],
+      "price": 80.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "78ed3d0b-a5cd-417c-91a5-efc7d2761dbd",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "nude-preto",
+      "canonicalUrl": "https://3djewish.com.br/p/nude-preto",
+      "name": "Nude & Preto",
+      "lineName": "Natlan Roma",
+      "categoryName": "Natlan",
+      "description": "Natlan Roma Nude & Preto",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/78ed3d0b-a5cd-417c-91a5-efc7d2761dbd/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/78ed3d0b-a5cd-417c-91a5-efc7d2761dbd/1768148851190.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "7b09ab2f-7508-4e47-8688-eb54f232384c",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "preto-ouro-velho",
+      "canonicalUrl": "https://3djewish.com.br/p/preto-ouro-velho",
+      "name": "Preto & Ouro Velho",
+      "lineName": "Maym Acharonim",
+      "categoryName": "Maym Acharonim",
+      "description": "Maym Acharonim Preto & Ouro Velho",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/7b09ab2f-7508-4e47-8688-eb54f232384c/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/7b09ab2f-7508-4e47-8688-eb54f232384c/1768149936657.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "7ca7f085-6f55-40ae-9b48-af0854852f5d",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "rosa-beb",
+      "canonicalUrl": "https://3djewish.com.br/p/rosa-beb",
+      "name": "Rosa Bebê",
+      "lineName": "Natlan com Bacia",
+      "categoryName": "Natlan",
+      "description": "Natlan com Bacia Rosa Bebê",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/7ca7f085-6f55-40ae-9b48-af0854852f5d/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/7ca7f085-6f55-40ae-9b48-af0854852f5d/1768149171073.png"
+      ],
+      "price": 230.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "7e11bddb-79ea-4ea9-97f0-ab900b6e8ac0",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "degrad-azul-beb",
+      "canonicalUrl": "https://3djewish.com.br/p/degrad-azul-beb",
+      "name": "Degradê Azul Bebê",
+      "lineName": "Natlan Roma",
+      "categoryName": "Natlan",
+      "description": "Natlan Roma Degradê Azul Bebê",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/7e11bddb-79ea-4ea9-97f0-ab900b6e8ac0/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/7e11bddb-79ea-4ea9-97f0-ab900b6e8ac0/1768148903204.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "859640d0-f8e0-413d-a602-a31bfdc9d79c",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "yim-eshkachech-acrlico-espelhado",
+      "canonicalUrl": "https://3djewish.com.br/p/yim-eshkachech-acrlico-espelhado",
+      "name": "Yim Eshkachech Acrílico Espelhado",
+      "lineName": "Chaguim",
+      "categoryName": "Chaguim",
+      "description": "Placa Yim Eshkachech Acrílico Espelhado",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/859640d0-f8e0-413d-a602-a31bfdc9d79c/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/859640d0-f8e0-413d-a602-a31bfdc9d79c/1768161101438.png"
+      ],
+      "price": 150.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "86b65933-26e0-4511-ac81-3e4cd27806a6",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-titnio-flush",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-titnio-flush",
+      "name": "Azul Titânio Flush",
+      "lineName": "Natlan Roma",
+      "categoryName": "Natlan",
+      "description": "Natlan Roma Azul Titânio Flush",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/86b65933-26e0-4511-ac81-3e4cd27806a6/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/86b65933-26e0-4511-ac81-3e4cd27806a6/1768148955660.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "8b230d7e-a8ca-400f-94ed-8e1886ef1038",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "prata-cobre-claro-2",
+      "canonicalUrl": "https://3djewish.com.br/p/prata-cobre-claro-2",
+      "name": "Prata & Cobre Claro",
+      "lineName": "Kossot",
+      "categoryName": "Kossot",
+      "description": "Kos com Pratinho Prata & Cobre Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/8b230d7e-a8ca-400f-94ed-8e1886ef1038/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/8b230d7e-a8ca-400f-94ed-8e1886ef1038/1768149536905.png"
+      ],
+      "price": 90.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "8b4358c5-651d-4956-a452-fd5dc2fae54c",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "vinho-preto",
+      "canonicalUrl": "https://3djewish.com.br/p/vinho-preto",
+      "name": "Vinho & Preto",
+      "lineName": "Natlan Clássico",
+      "categoryName": "Natlan",
+      "description": "Natlan Clássico Vinho & Preto",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/8b4358c5-651d-4956-a452-fd5dc2fae54c/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/8b4358c5-651d-4956-a452-fd5dc2fae54c/1768105176171.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "8bb6ba31-5880-406d-bbae-d2792b7f479f",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "porta-retrato-ahava",
+      "canonicalUrl": "https://3djewish.com.br/p/porta-retrato-ahava",
+      "name": "Porta Retrato AHAVÁ",
+      "lineName": "Diversos",
+      "categoryName": "Diversos",
+      "description": "",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/8bb6ba31-5880-406d-bbae-d2792b7f479f/1778094912488.webp"
+      ],
+      "price": 60.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "8dfe6531-c92c-4029-99f6-268693c92b4d",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-titnio-3",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-titnio-3",
+      "name": "Azul Titânio",
+      "lineName": "Natlan Clássico",
+      "categoryName": "Natlan",
+      "description": "Natlan Clássico Azul Titânio",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/8dfe6531-c92c-4029-99f6-268693c92b4d/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/8dfe6531-c92c-4029-99f6-268693c92b4d/1768105150633.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "952e8664-4ff1-412e-b2d9-8935c1a58725",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "cobre-claro-2",
+      "canonicalUrl": "https://3djewish.com.br/p/cobre-claro-2",
+      "name": "Cobre Claro",
+      "lineName": "Natlan Grego",
+      "categoryName": "Natlan",
+      "description": "Natlan Grego Cobre Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/952e8664-4ff1-412e-b2d9-8935c1a58725/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/952e8664-4ff1-412e-b2d9-8935c1a58725/1768094212552.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "955f4085-4b84-4438-a551-67d33062d983",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "enfeite-jarrinho",
+      "canonicalUrl": "https://3djewish.com.br/p/enfeite-jarrinho",
+      "name": "Enfeite (jarrinho)",
+      "lineName": "Diversos",
+      "categoryName": "Diversos",
+      "description": "3 enfeites de mesa em forma de Estrela de David impresso em 4 cores (livre escolha)\nEstrela:\nPeq. 57X63X100 mm (40,00)\nMédio 68X75X120 mm (60,00)\nGrande 80X88X140 mm (80,00)",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/955f4085-4b84-4438-a551-67d33062d983/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/955f4085-4b84-4438-a551-67d33062d983/1768751404945.png"
+      ],
+      "price": 180.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "95add748-0fa4-4550-82fa-e87db6702f44",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "preto-ouro-velho-2",
+      "canonicalUrl": "https://3djewish.com.br/p/preto-ouro-velho-2",
+      "name": "Preto & Ouro Velho",
+      "lineName": "Natlan Grego",
+      "categoryName": "Natlan",
+      "description": "Natlan Grego Preto & Ouro Velho",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/95add748-0fa4-4550-82fa-e87db6702f44/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/95add748-0fa4-4550-82fa-e87db6702f44/1768094759828.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "9bd1caab-bb09-4cd3-a30c-b98f56489612",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "bege-ouro-velho",
+      "canonicalUrl": "https://3djewish.com.br/p/bege-ouro-velho",
+      "name": "Bege & Ouro Velho",
+      "lineName": "Natlan Bambu",
+      "categoryName": "Natlan",
+      "description": "Natlan Bambu Bege & Ouro Velho",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/9bd1caab-bb09-4cd3-a30c-b98f56489612/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/9bd1caab-bb09-4cd3-a30c-b98f56489612/1768104566805.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "9d0339af-0b0a-432f-ba91-d988c2f4623c",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "rainbow",
+      "canonicalUrl": "https://3djewish.com.br/p/rainbow",
+      "name": "Rainbow",
+      "lineName": "Natlan com Bacia",
+      "categoryName": "Natlan",
+      "description": "Natlan com Bacia Rainbow",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/9d0339af-0b0a-432f-ba91-d988c2f4623c/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/9d0339af-0b0a-432f-ba91-d988c2f4623c/1768149142647.png"
+      ],
+      "price": 230.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "9fe5ff85-28c2-461d-bf63-947c95b72e26",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "porta-lpis",
+      "canonicalUrl": "https://3djewish.com.br/p/porta-lpis",
+      "name": "Porta Lápis",
+      "lineName": "Diversos",
+      "categoryName": "Diversos",
+      "description": "Personalizável com o nome e cores desejados",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/9fe5ff85-28c2-461d-bf63-947c95b72e26/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/9fe5ff85-28c2-461d-bf63-947c95b72e26/1768747725346.webp"
+      ],
+      "price": 55.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "a210571c-f3e4-4c7f-858b-2470890a9874",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "cobre-claro-3",
+      "canonicalUrl": "https://3djewish.com.br/p/cobre-claro-3",
+      "name": "Cobre Claro",
+      "lineName": "Natlan Clássico",
+      "categoryName": "Natlan",
+      "description": "Natlan Clássico Cobre Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/a210571c-f3e4-4c7f-858b-2470890a9874/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/a210571c-f3e4-4c7f-858b-2470890a9874/1768105125706.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "a2e390ee-310c-405b-9d38-cc6bb26892fc",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "vale-presente",
+      "canonicalUrl": "https://3djewish.com.br/p/vale-presente",
+      "name": "Vale presente",
+      "lineName": "Diversos",
+      "categoryName": "Diversos",
+      "description": "Presenteie com carinho e proporcione a liberdade de escolha.",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/a2e390ee-310c-405b-9d38-cc6bb26892fc/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/a2e390ee-310c-405b-9d38-cc6bb26892fc/1768754891045.webp"
+      ],
+      "price": null,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "a5e41a34-27b2-44b2-b863-66ccc1f3ec21",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "inox-2",
+      "canonicalUrl": "https://3djewish.com.br/p/inox-2",
+      "name": "Inox",
+      "lineName": "Maym Acharonim",
+      "categoryName": "Maym Acharonim",
+      "description": "Maym Acharonim Inox",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/a5e41a34-27b2-44b2-b863-66ccc1f3ec21/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/a5e41a34-27b2-44b2-b863-66ccc1f3ec21/1768149889659.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "a8a8e6e6-d7bf-48e9-a544-085cf8d36b0e",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "prata-e-cinza",
+      "canonicalUrl": "https://3djewish.com.br/p/prata-e-cinza",
+      "name": "Prata e Cinza",
+      "lineName": "Natlan Derma",
+      "categoryName": "Natlan",
+      "description": "Natlan Derma Prata e Cinza",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/a8a8e6e6-d7bf-48e9-a544-085cf8d36b0e/1768103678210.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "a8bc3f0f-1445-4634-b344-a6e17af7d4c8",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "branco-perolado-4",
+      "canonicalUrl": "https://3djewish.com.br/p/branco-perolado-4",
+      "name": "Branco Perolado",
+      "lineName": "Natlan Botonê",
+      "categoryName": "Natlan",
+      "description": "Natlan Botonê Branco Perolado",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/a8bc3f0f-1445-4634-b344-a6e17af7d4c8/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/a8bc3f0f-1445-4634-b344-a6e17af7d4c8/1768103089565.png"
+      ],
+      "price": 150.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "a90ec14f-7df8-4993-a7aa-577683f4350d",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "perolado-ouro-velho-2",
+      "canonicalUrl": "https://3djewish.com.br/p/perolado-ouro-velho-2",
+      "name": "Perolado & Ouro Velho",
+      "lineName": "Natlan Roma",
+      "categoryName": "Natlan",
+      "description": "Natlan Roma Perolado & Ouro Velho",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/a90ec14f-7df8-4993-a7aa-577683f4350d/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/a90ec14f-7df8-4993-a7aa-577683f4350d/1768148975065.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "b0811bcc-b529-434c-ae47-c928cdb40547",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "branco-perolado-5",
+      "canonicalUrl": "https://3djewish.com.br/p/branco-perolado-5",
+      "name": "Branco Perolado",
+      "lineName": "Natlan Clássico",
+      "categoryName": "Natlan",
+      "description": "Natlan Clássico Branco Perolado",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/b0811bcc-b529-434c-ae47-c928cdb40547/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/b0811bcc-b529-434c-ae47-c928cdb40547/1768105087066.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "ba9c9e75-ef2a-4493-8a12-e55f9cbda378",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-titnio-4",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-titnio-4",
+      "name": "Azul Titânio",
+      "lineName": "Natlan Botonê",
+      "categoryName": "Natlan",
+      "description": "Natlan Botonê Azul Titânio",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/ba9c9e75-ef2a-4493-8a12-e55f9cbda378/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/ba9c9e75-ef2a-4493-8a12-e55f9cbda378/1768103457447.png"
+      ],
+      "price": 150.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "bcb7d00b-dd27-448c-8909-222f7ee7162e",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-titnio-5",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-titnio-5",
+      "name": "Azul Titânio",
+      "lineName": "Natlan com Bacia",
+      "categoryName": "Natlan",
+      "description": "Natlan com Bacia Azul Titânio",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/bcb7d00b-dd27-448c-8909-222f7ee7162e/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/bcb7d00b-dd27-448c-8909-222f7ee7162e/1768149198168.png"
+      ],
+      "price": 230.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "c0f1d57d-b379-41db-8cd9-f7562c72dbe4",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "prata-3",
+      "canonicalUrl": "https://3djewish.com.br/p/prata-3",
+      "name": "Prata",
+      "lineName": "Natlan Kaspy",
+      "categoryName": "Natlan",
+      "description": "Natlan Kaspy Prata",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/c0f1d57d-b379-41db-8cd9-f7562c72dbe4/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/c0f1d57d-b379-41db-8cd9-f7562c72dbe4/1768105329397.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "c223e0e4-088c-4f51-8675-b43a8d708479",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "rainbow-2",
+      "canonicalUrl": "https://3djewish.com.br/p/rainbow-2",
+      "name": "Rainbow",
+      "lineName": "Natlan Derma",
+      "categoryName": "Natlan",
+      "description": "Natlan Derma",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/c223e0e4-088c-4f51-8675-b43a8d708479/1768103632816.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "c2cbae0d-5ceb-4731-9a2d-d3f8c21c716a",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "degrad-cinza-preto",
+      "canonicalUrl": "https://3djewish.com.br/p/degrad-cinza-preto",
+      "name": "Degradê Cinza & Preto",
+      "lineName": "Natlan Grego",
+      "categoryName": "Natlan",
+      "description": "Natlan Grego Degradê Cinza & Preto",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/c2cbae0d-5ceb-4731-9a2d-d3f8c21c716a/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/c2cbae0d-5ceb-4731-9a2d-d3f8c21c716a/1768094809925.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "c307dcba-580f-4ca9-90b9-1db93165eb0c",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "vinho-preto-2",
+      "canonicalUrl": "https://3djewish.com.br/p/vinho-preto-2",
+      "name": "Vinho & Preto",
+      "lineName": "Natlan Botonê",
+      "categoryName": "Natlan",
+      "description": "Natlan Botonê Vinho & Preto",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/c307dcba-580f-4ca9-90b9-1db93165eb0c/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/c307dcba-580f-4ca9-90b9-1db93165eb0c/1768103424242.png"
+      ],
+      "price": 150.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "c3846b53-19de-4aa6-9403-698eb47c0b2d",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "rosa-chiclete-branco",
+      "canonicalUrl": "https://3djewish.com.br/p/rosa-chiclete-branco",
+      "name": "Rosa Chiclete & Branco",
+      "lineName": "Natlan Bambu",
+      "categoryName": "Natlan",
+      "description": "Natlan Bambu Rosa Chiclete & Branco",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/c3846b53-19de-4aa6-9403-698eb47c0b2d/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/c3846b53-19de-4aa6-9403-698eb47c0b2d/1768104617267.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "c5617687-28b1-4c4c-9f4d-7dd79a3645e6",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "peas-corrente-suc",
+      "canonicalUrl": "https://3djewish.com.br/p/peas-corrente-suc",
+      "name": "Peças Corrente Sucá",
+      "lineName": "Chaguim",
+      "categoryName": "Chaguim",
+      "description": "Chaguim Peças Corrente Sucá",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/c5617687-28b1-4c4c-9f4d-7dd79a3645e6/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/c5617687-28b1-4c4c-9f4d-7dd79a3645e6/1768160938812.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "c98f1539-1a74-4c83-a6df-f7c470e9a77e",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "meleira",
+      "canonicalUrl": "https://3djewish.com.br/p/meleira",
+      "name": "Meleira",
+      "lineName": "Chaguim",
+      "categoryName": "Chaguim",
+      "description": "Chaguim Meleira",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/c98f1539-1a74-4c83-a6df-f7c470e9a77e/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/c98f1539-1a74-4c83-a6df-f7c470e9a77e/1768160980536.png"
+      ],
+      "price": 80.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "ce4fcc54-b25c-45cf-9aec-b067ee5a7b35",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "madeira-ouro-velho",
+      "canonicalUrl": "https://3djewish.com.br/p/madeira-ouro-velho",
+      "name": "Madeira & Ouro Velho",
+      "lineName": "Natlan Grego",
+      "categoryName": "Natlan",
+      "description": "Natlan Grego Madeira & Ouro Velho",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/ce4fcc54-b25c-45cf-9aec-b067ee5a7b35/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/ce4fcc54-b25c-45cf-9aec-b067ee5a7b35/1768094678449.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "cea6c236-df17-4aa9-a63f-37fc7a2d8b73",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "cobre-claro-flush",
+      "canonicalUrl": "https://3djewish.com.br/p/cobre-claro-flush",
+      "name": "Cobre Claro Flush",
+      "lineName": "Natlan Roma",
+      "categoryName": "Natlan",
+      "description": "Natlan Roma Cobre Claro Flush",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/cea6c236-df17-4aa9-a63f-37fc7a2d8b73/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/cea6c236-df17-4aa9-a63f-37fc7a2d8b73/1768148933676.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "cf1bccb2-8546-4457-95e4-10c1d26a9bd0",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "areia-cobre",
+      "canonicalUrl": "https://3djewish.com.br/p/areia-cobre",
+      "name": "Areia & Cobre",
+      "lineName": "Castiçal Shofar",
+      "categoryName": "Castiçal",
+      "description": "",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/cf1bccb2-8546-4457-95e4-10c1d26a9bd0/41cfa1ad-4e7a-4eac-9eea-b1ee2bde2fdf.webp"
+      ],
+      "price": 150.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "cf38a063-0795-4ed9-8054-4ecadd473459",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "preto-2",
+      "canonicalUrl": "https://3djewish.com.br/p/preto-2",
+      "name": "Preto",
+      "lineName": "Natlan Veneza",
+      "categoryName": "Natlan",
+      "description": "Natlan Veneza Preto",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/cf38a063-0795-4ed9-8054-4ecadd473459/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/cf38a063-0795-4ed9-8054-4ecadd473459/1770380667145.webp"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "d0e9e4b5-5763-4916-9a62-60b2579ad56a",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "marinho-ouro-claro-5",
+      "canonicalUrl": "https://3djewish.com.br/p/marinho-ouro-claro-5",
+      "name": "Marinho & Ouro Claro",
+      "lineName": "Kossot",
+      "categoryName": "Kossot",
+      "description": "Kos com Pratinho Marinho & Ouro Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/d0e9e4b5-5763-4916-9a62-60b2579ad56a/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/d0e9e4b5-5763-4916-9a62-60b2579ad56a/1768149572951.png"
+      ],
+      "price": 90.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "d2b41020-35a0-45a4-a98e-8901fc7d73e4",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "chanuki-prata",
+      "canonicalUrl": "https://3djewish.com.br/p/chanuki-prata",
+      "name": "Chanukiá Prata",
+      "lineName": "Chaguim",
+      "categoryName": "Chaguim",
+      "description": "Chaguim Chanukiá Prata",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/d2b41020-35a0-45a4-a98e-8901fc7d73e4/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/d2b41020-35a0-45a4-a98e-8901fc7d73e4/1768161153042.png"
+      ],
+      "price": 170.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "d4ff0e7e-9637-4fac-b286-3825e6bf57df",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "branco-perolado-6",
+      "canonicalUrl": "https://3djewish.com.br/p/branco-perolado-6",
+      "name": "Branco Perolado",
+      "lineName": "Natlan Kaspy",
+      "categoryName": "Natlan",
+      "description": "Natlan Kaspy Branco Perolado",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/d4ff0e7e-9637-4fac-b286-3825e6bf57df/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/d4ff0e7e-9637-4fac-b286-3825e6bf57df/1768105538350.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "d85bd7f1-5420-420f-9265-c6e15a0b5172",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-marinho-2",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-marinho-2",
+      "name": "Azul Marinho",
+      "lineName": "Distribuidor de Vinho",
+      "categoryName": "Distribuidor de Vinho",
+      "description": "Distribuidor de Vinho Azul Marinho",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/d85bd7f1-5420-420f-9265-c6e15a0b5172/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/d85bd7f1-5420-420f-9265-c6e15a0b5172/1768149247954.png"
+      ],
+      "price": 290.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "dac58ac8-3342-440b-b856-0165b919a66b",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "natlan-leil-hasseder",
+      "canonicalUrl": "https://3djewish.com.br/p/natlan-leil-hasseder",
+      "name": "Natlan Leil Hasseder",
+      "lineName": "Chaguim",
+      "categoryName": "Chaguim",
+      "description": "Chaguim Natlan Leil Hasseder",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/dac58ac8-3342-440b-b856-0165b919a66b/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/dac58ac8-3342-440b-b856-0165b919a66b/1768160707143.png"
+      ],
+      "price": 100.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "dadee727-1df8-4c5c-bc66-e5d5a61ea159",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-marinho-ouro-claro",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-marinho-ouro-claro",
+      "name": "Azul Marinho & Ouro Claro",
+      "lineName": "Natlan Derma",
+      "categoryName": "Natlan",
+      "description": "Natlan Derma Azul Marinho & Ouro Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/dadee727-1df8-4c5c-bc66-e5d5a61ea159/1768103810315.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "dd27e91f-30fc-4176-9f05-aaf0ee1edb11",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "inoxros-gold-cobre-claro",
+      "canonicalUrl": "https://3djewish.com.br/p/inoxros-gold-cobre-claro",
+      "name": "Inox+Rosê Gold & Cobre Claro",
+      "lineName": "Maym Acharonim",
+      "categoryName": "Maym Acharonim",
+      "description": "Maym Acharonim Inox+Rosê Gold & Cobre Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/dd27e91f-30fc-4176-9f05-aaf0ee1edb11/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/dd27e91f-30fc-4176-9f05-aaf0ee1edb11/1768149858325.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "de2df550-3872-4946-874c-7636c91cb321",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "placa-bem-vindos-sucot-suc",
+      "canonicalUrl": "https://3djewish.com.br/p/placa-bem-vindos-sucot-suc",
+      "name": "Placa Bem-Vindos Sucot (Sucá)",
+      "lineName": "Chaguim",
+      "categoryName": "Chaguim",
+      "description": "Chaguim Placa Bem-Vindos Sucot",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/de2df550-3872-4946-874c-7636c91cb321/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/de2df550-3872-4946-874c-7636c91cb321/1768160855598.png"
+      ],
+      "price": 50.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "e311ed10-61e6-4269-bd0e-bf1669e28969",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "keara-slim",
+      "canonicalUrl": "https://3djewish.com.br/p/keara-slim",
+      "name": "Keará Slim",
+      "lineName": "Chaguim",
+      "categoryName": "Chaguim",
+      "description": "Keará para Pessach Linda e leve (Bicolor cores personalizadas)\nDiâmetro 24 cm\nPeso 100 g (aproximadamente)",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/e311ed10-61e6-4269-bd0e-bf1669e28969/1773765476546.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/e311ed10-61e6-4269-bd0e-bf1669e28969/1773765476826.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/e311ed10-61e6-4269-bd0e-bf1669e28969/1773765477088.webp"
+      ],
+      "price": 110.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "e3f6a366-4360-4e37-8d53-3093532d22ab",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "inox-marsala",
+      "canonicalUrl": "https://3djewish.com.br/p/inox-marsala",
+      "name": "Inox & Marsala",
+      "lineName": "Natlan Bambu",
+      "categoryName": "Natlan",
+      "description": "Natlan Bambu Inox & Marsala",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/e3f6a366-4360-4e37-8d53-3093532d22ab/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/e3f6a366-4360-4e37-8d53-3093532d22ab/1768104661075.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "e4018893-2e2d-405c-b069-e3f31e858f74",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "natlan-clssico",
+      "canonicalUrl": "https://3djewish.com.br/p/natlan-clssico",
+      "name": "Natlan Clássico",
+      "lineName": "Natlan Clássico",
+      "categoryName": "Natlan",
+      "description": "Cor Crema",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/e4018893-2e2d-405c-b069-e3f31e858f74/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/e4018893-2e2d-405c-b069-e3f31e858f74/1770300670141.webp"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "e7ff4331-d35b-4448-88dd-5c3f5a827f84",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-titneo",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-titneo",
+      "name": "Azul Titâneo",
+      "lineName": "Natlan Veneza",
+      "categoryName": "Natlan",
+      "description": "Natlan Veneza Azul Titâneo",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/e7ff4331-d35b-4448-88dd-5c3f5a827f84/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/e7ff4331-d35b-4448-88dd-5c3f5a827f84/1768104403349.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "ee2783c8-db4b-4cf3-9155-81bfecefbe24",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "rosa",
+      "canonicalUrl": "https://3djewish.com.br/p/rosa",
+      "name": "Rosa",
+      "lineName": "Abajur Shabat",
+      "categoryName": "Abajur Shabat",
+      "description": "Abajur Shabat Rosa",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/ee2783c8-db4b-4cf3-9155-81bfecefbe24/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/ee2783c8-db4b-4cf3-9155-81bfecefbe24/1768161252888.png"
+      ],
+      "price": 180.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "eef844ec-ed2f-4ed2-a723-3a61b2c7a924",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-titnio-6",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-titnio-6",
+      "name": "Azul Titânio",
+      "lineName": "Natlan Kaspy",
+      "categoryName": "Natlan",
+      "description": "Natlan Kaspy Azul Titânio",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/eef844ec-ed2f-4ed2-a723-3a61b2c7a924/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/eef844ec-ed2f-4ed2-a723-3a61b2c7a924/1768105510886.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "f1954fe9-ed9c-464e-8399-67acd46b5425",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "degrad-prata-ouro",
+      "canonicalUrl": "https://3djewish.com.br/p/degrad-prata-ouro",
+      "name": "Degradê Prata & Ouro",
+      "lineName": "Kossot",
+      "categoryName": "Kossot",
+      "description": "Kos Haste Degradê Prata & Ouro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/f1954fe9-ed9c-464e-8399-67acd46b5425/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/f1954fe9-ed9c-464e-8399-67acd46b5425/1768149783755.webp"
+      ],
+      "price": 90.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "f2b011de-149b-4b3c-a8c9-093814e2fd79",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "degrad-azul-beb-2",
+      "canonicalUrl": "https://3djewish.com.br/p/degrad-azul-beb-2",
+      "name": "Degradê Azul Bebê",
+      "lineName": "Natlan Grego",
+      "categoryName": "Natlan",
+      "description": "Natlan Grego Degradê Azul Bebê",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/f2b011de-149b-4b3c-a8c9-093814e2fd79/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/f2b011de-149b-4b3c-a8c9-093814e2fd79/1768094653366.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "f43b2ec0-ecc0-405e-88ff-0c8745fb5a73",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "branco-perolado-azul-titnio",
+      "canonicalUrl": "https://3djewish.com.br/p/branco-perolado-azul-titnio",
+      "name": "Branco Perolado & Azul Titânio",
+      "lineName": "Natlan Bambu",
+      "categoryName": "Natlan",
+      "description": "Natlan Bambu Branco Perolado & Azul Titânio",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/f43b2ec0-ecc0-405e-88ff-0c8745fb5a73/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/f43b2ec0-ecc0-405e-88ff-0c8745fb5a73/1768104964347.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "f44088d9-cefb-40a3-b762-47548b035959",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "bege",
+      "canonicalUrl": "https://3djewish.com.br/p/bege",
+      "name": "Bege",
+      "lineName": "Natlan Sextavado",
+      "categoryName": "Natlan",
+      "description": "Natlan Sextavado Bege",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/f44088d9-cefb-40a3-b762-47548b035959/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/f44088d9-cefb-40a3-b762-47548b035959/1768103992201.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "f979c05b-b6ee-461c-8f47-2361197c6969",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "cobre-claro-4",
+      "canonicalUrl": "https://3djewish.com.br/p/cobre-claro-4",
+      "name": "Cobre Claro",
+      "lineName": "Natlan Veneza",
+      "categoryName": "Natlan",
+      "description": "Natlan Veneza Cobre Claro",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/f979c05b-b6ee-461c-8f47-2361197c6969/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/f979c05b-b6ee-461c-8f47-2361197c6969/1768104277565.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "fb79d6eb-8dc4-4511-942f-55306bd231b5",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "azul-titnio-verde",
+      "canonicalUrl": "https://3djewish.com.br/p/azul-titnio-verde",
+      "name": "Azul Titânio & Verde",
+      "lineName": "Natlan Bambu",
+      "categoryName": "Natlan",
+      "description": "Natlan Bambu Azul Titânio & Verde",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/fb79d6eb-8dc4-4511-942f-55306bd231b5/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/fb79d6eb-8dc4-4511-942f-55306bd231b5/1768104492965.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "fbe569aa-fbf0-4953-b07a-380906942576",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "cinza-marsala",
+      "canonicalUrl": "https://3djewish.com.br/p/cinza-marsala",
+      "name": "Cinza & Marsala",
+      "lineName": "Natlan Bambu",
+      "categoryName": "Natlan",
+      "description": "Natlan Bambu Cinza & Marsala",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/fbe569aa-fbf0-4953-b07a-380906942576/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/fbe569aa-fbf0-4953-b07a-380906942576/1768104590740.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "fc466e7e-d668-4dc0-89c5-0d664056920f",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "natlan-roma",
+      "canonicalUrl": "https://3djewish.com.br/p/natlan-roma",
+      "name": "Natlan Roma",
+      "lineName": "Natlan Roma",
+      "categoryName": "Natlan",
+      "description": "Bege",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/fc466e7e-d668-4dc0-89c5-0d664056920f/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/fc466e7e-d668-4dc0-89c5-0d664056920f/1769170356941.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    },
+    {
+      "productId": "fd141bbc-323b-41dd-b477-7acc4a0e71b2",
+      "tenantId": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+      "slug": "verde-ametista-2",
+      "canonicalUrl": "https://3djewish.com.br/p/verde-ametista-2",
+      "name": "Verde & Ametista",
+      "lineName": "Natlan Kaspy",
+      "categoryName": "Natlan",
+      "description": "Natlan Kaspy Verde & Ametista",
+      "images": [
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/fd141bbc-323b-41dd-b477-7acc4a0e71b2/main.webp",
+        "https://ehondnpqztvybvgsjnxe.supabase.co/storage/v1/object/public/product-images/76a96afa-80f9-4782-a08d-e869e79d7d84/fd141bbc-323b-41dd-b477-7acc4a0e71b2/1768105428406.png"
+      ],
+      "price": 140.0,
+      "brand": "3D Jewish",
+      "visible": true,
+      "catalogEnabled": true,
+      "tenantActive": true
+    }
+  ]
+}
