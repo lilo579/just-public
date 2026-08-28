@@ -51,6 +51,8 @@ Join: ` · `. Title automático: `{effectiveProductName} | {brand}`.
 2. Description existente se informativa (≥ 2 palavras e não igual só à line ou só ao name).
 3. Senão, composição factual dos tokens de identidade. Sem benefícios inventados.
 
+Campos de **descrição** (`description` factual e `seoDescriptionOverride`) têm política própria: TAB, LF e CRLF são whitespace editorial e saem como espaço simples (`displayText`). Continuam rejeitados os demais C0/C1, bidi/invisíveis, markup/entidades perigosas, schemes ofuscados e o valor que ficar vazio após a normalização. **Identity/title** (`identityLabelOverride`, `seoTitleOverride`, `name`, `lineName`, …) continuam single-line: TAB/LF/CR são `*_control`.
+
 ### Overrides
 
 Ausência de override é o fluxo normal. Os três campos são independentes:
@@ -61,7 +63,7 @@ Ausência de override é o fluxo normal. Os três campos são independentes:
 | `seoTitleOverride` | Avançado, opcional | Substitui somente o title SEO (não H1, não og:title, não alt) | Title automático permanece |
 | `seoDescriptionOverride` | Avançado, opcional | Substitui meta, og e JSON-LD description | Descrição automática permanece |
 
-Validação de override e de campos factuais (`name`, `lineName`, `brand`, `categoryName`, `publicProductCode`, `variantAttributes`, `description`): **plain text**, rejeita sem sanitizar. NFC para display após passar. Detecção de scheme usa decode de entidades (incluindo `&colon;`) + NFKC (U+FF1A) e nunca é publicada. Limites em **pontos de código**. Rejeita `<` `>`, C0/C1, bidi, ZWSP/BOM, `javascript:` / `vbscript:` / `data:` / `file:` ofuscados, e URL em identity/title. Identidade obrigatória inválida (`name`) → `needs_input`. Atributo opcional inválido → ignorado e registrado. Description inválida → composição factual. `Solar` / `Anelar` são válidos; `Kossot · Marinho & Ouro Claro · Cosset` é restatement. Separadores de restatement: espaço, `·`, hífen estrutural, dois-pontos, `/ | ; ,` e equivalentes Unicode.
+Validação de override e de campos factuais (`name`, `lineName`, `brand`, `categoryName`, `publicProductCode`, `variantAttributes`, `description`): **plain text**, rejeita sem sanitizar. NFC para display após passar. Detecção de scheme usa decode de entidades (incluindo `&colon;`) + NFKC (U+FF1A) e nunca é publicada. Limites em **pontos de código**. Rejeita `<` `>`, C0/C1 (exceto TAB/LF/CR em descrição), bidi, ZWSP/BOM, `javascript:` / `vbscript:` / `data:` / `file:` ofuscados, e URL em identity/title. Identidade obrigatória inválida (`name`) → `needs_input`. Atributo opcional inválido → ignorado e registrado. Description inválida → composição factual. `Solar` / `Anelar` são válidos; `Kossot · Marinho & Ouro Claro · Cosset` é restatement. Separadores de restatement: espaço, `·`, hífen estrutural, dois-pontos, `/ | ; ,` e equivalentes Unicode.
 
 Imagens e canonical: validador HTTPS próprio (não plain text). Só `https:` sem credenciais, host não vazio, sem schemes perigosos. Itens inválidos são descartados um a um. **Imagem ausente não bloqueia indexação** na v1: `missing_valid_image` é `qualityWarning`. JSON-LD é emitido sem `image`. Dedup determinístico por `URL.href`. Canonical inválida é bloqueante.
 
@@ -96,7 +98,7 @@ Métricas de `needs_input` (não tratar possibilidade teórica como resolução 
 | Bucket | O que entra | Efeito no `state` |
 |---|---|---|
 | `blockingErrors` | Identidade duplicada, `name` obrigatório inválido, canonical/slug inválidos ou duplicados, `not_public` | `needs_input` ou `suspended` |
-| `qualityWarnings` | Imagem ausente/inválida, atributo opcional ignorado, description inválida com composição factual | Não muda indexação |
+| `qualityWarnings` | Imagem ausente/inválida, atributo opcional ignorado, description inválida com composição factual, offers inválido/omitido | Não muda indexação |
 | `overrideErrors` | Override recusado; valor automático permanece | Não bloqueia se o automático for válido |
 
 Indexação orgânica ≠ rich result:
@@ -110,9 +112,20 @@ Indexação orgânica ≠ rich result:
 
 ### JSON-LD proposto (só `auto_ready` / `override_ready`)
 
-Product com `url` = canonical própria, `productID` estável = `productId`. Sem `sku` / `gtin` / `mpn` inventados. `offers` só com preço numérico **e** `currency` **e** `availability` factuais. Sem isso, omitir `offers` (BRL de display não conta).
+Product com `url` = canonical própria, `productID` estável = `productId`. Sem `sku` / `gtin` / `mpn` inventados. `offers` só depois de validar **todos** os campos: `price` finito não negativo com serialização decimal estável; `priceCurrency` ISO 4217 suportado no formato canônico (maiúsculas); `availability` só da allowlist `https://schema.org/...` (nunca copiar a entrada). URL arbitrária, outro host, `http:`, `javascript:`, `data:`, domínio semelhante, status desconhecido, moeda inválida, NaN/Infinity/preço negativo → omitir `offers` e registrar `qualityWarning` (`offers_price` / `offers_currency` / `offers_availability`). Erro de offers **não** bloqueia indexação orgânica. Sem os três campos válidos, omitir `offers`.
+
+JSON-LD **não** é emitido com `url` vazio: estado indexável exige canonical válida; senão `needs_input` e `jsonLd === null`.
 
 ### Estados
+
+Estado é derivado **por último**, nesta ordem:
+
+1. suspenso/inativo (`visible` / `catalogEnabled` / `tenantActive` falsos) → `suspended`
+2. senão, se `blockingErrors.length > 0` → `needs_input`
+3. senão, se `identityLabelOverride` aceito → `override_ready`
+4. senão → `auto_ready`
+
+`indexingProposed`, `inSitemapProposed` e `jsonLdProposed` só depois desse estado. Qualquer `blockingError` implica `needs_input` (ou `suspended` se inativo) e indexação/sitemap falsos. Canonical ou slug inválidos nunca são superados por override. Label aceito com outro blocking error permanece `needs_input`.
 
 | Estado | Indexação proposta | Sitemap proposto | Robots proposto |
 |---|---|---|---|
@@ -136,3 +149,5 @@ Não importar o compilador em `[slug].astro`, `sitemap.xml.ts`, `robots.txt.ts` 
 ## Schema SQL
 
 `ops/seo001/product-publication-state.PREPARED.sql` — **PREPARED / não aplicado**.
+
+Colunas de diagnóstico alinhadas ao contrato do compilador: `blocking_errors`, `quality_warnings`, `override_errors` (jsonb). Sem `validation_errors` ambíguo.

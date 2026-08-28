@@ -247,6 +247,20 @@ test("3D Jewish 118: description removed from identity; 112 auto_ready / 6 needs
   )
   assert.ok(needs.every((r) => r.needsInputPrompt === report.needsInputPrompt))
 
+  const lfIdentityNames = new Set(["Diversos · Enfeite (jarrinho)", "Chaguim · Keará Slim"])
+  let lfSeen = 0
+  for (const row of report.products) {
+    if (!lfIdentityNames.has(row.effectiveProductName)) continue
+    lfSeen += 1
+    assert.equal(row.state, "auto_ready", row.effectiveProductName)
+    assert.equal(row.qualityWarnings.includes("description_control"), false, row.effectiveProductName)
+    assert.ok(row.metaDescription.length > 0, row.effectiveProductName)
+    assert.equal(row.metaDescription.includes("\n"), false, row.effectiveProductName)
+    assert.equal(row.metaDescription.includes("\r"), false, row.effectiveProductName)
+    assert.equal(row.metaDescription.includes("\t"), false, row.effectiveProductName)
+  }
+  assert.equal(lfSeen, 2)
+
   for (const row of report.products) {
     if (row.jsonLd) {
       assert.equal("sku" in row.jsonLd, false)
@@ -271,6 +285,7 @@ test("compiler source never uses description for identity and has no tenant bran
   assert.equal(/if\s*\(\s*(tenant|host|slug|segment)/i.test(src), false)
   assert.equal(src.includes("preencher SEO"), false)
   assert.equal(src.includes("unsafeText"), false)
+  assert.equal(src.includes("identityLabelAccepted && !ctx.colliding"), false)
   assert.match(src, /HTML_ESCAPE_REQUIRED/)
   assert.match(src, /Never use set:html/)
 })
@@ -293,6 +308,10 @@ test("prepared SQL remains not applied", () => {
   assert.match(sql, /identity_label_override/)
   assert.match(sql, /seo_title_override/)
   assert.match(sql, /seo_description_override/)
+  assert.match(sql, /blocking_errors jsonb/)
+  assert.match(sql, /quality_warnings jsonb/)
+  assert.match(sql, /override_errors jsonb/)
+  assert.equal(sql.includes("validation_errors"), false)
   assert.equal(/\btitle text\b/.test(sql), false)
 })
 
@@ -893,6 +912,236 @@ test("collisionMatrix groups Café/Cafe/NFC/NFD as one identity key", () => {
   assert.equal(keys[0], identityKey("Natlan · Café"))
   assert.equal(report.collisionMatrix[keys[0]].productIds.length, 3)
   assert.ok(report.collisionMatrix[keys[0]].displays.length >= 1)
+})
+
+function assertNotIndexable(row, label) {
+  assert.equal(row.indexingProposed, false, label)
+  assert.equal(row.inSitemapProposed, false, label)
+  assert.equal(row.jsonLdProposed, false, label)
+  assert.equal(row.jsonLd, null, label)
+  assert.equal(row.robotsProposed, "noindex,follow", label)
+}
+
+function assertIndexableJsonLd(row, label) {
+  assert.ok(row.state === "auto_ready" || row.state === "override_ready", label)
+  assert.equal(row.indexingProposed, true, label)
+  assert.equal(row.inSitemapProposed, true, label)
+  assert.equal(row.jsonLdProposed, true, label)
+  assert.ok(row.jsonLd, label)
+  assert.ok(String(row.jsonLd.url).length > 0, label)
+  assert.equal(row.jsonLd.url.startsWith("https:"), true, label)
+}
+
+test("combinatorial: collision + valid override cannot beat invalid canonical", () => {
+  const [a, b] = collidingPair(
+    { identityLabelOverride: "Cosset", canonicalUrl: "javascript:alert(1)" },
+    {},
+  )
+  const rows = compileCatalogSeoV1([a, b])
+  const map = byId(rows)
+  const labeled = map[a.productId]
+  assert.equal(labeled.identityLabelAccepted, true)
+  assert.equal(labeled.effectiveProductName, "Twin · Azul · Cosset")
+  assert.equal(labeled.state, "needs_input")
+  assert.notEqual(labeled.state, "override_ready")
+  assert.ok(labeled.blockingErrors.includes("canonical_scheme") || labeled.blockingErrors.includes("missing_canonical"))
+  assert.ok(labeled.blockingErrors.length > 0)
+  assertNotIndexable(labeled, "override+bad-canonical")
+  assert.equal(map[b.productId].state, "needs_input")
+})
+
+test("combinatorial: collision + valid override cannot beat missing slug", () => {
+  const [a, b] = collidingPair({ identityLabelOverride: "Cosset", slug: "" }, {})
+  const rows = compileCatalogSeoV1([a, b])
+  const labeled = byId(rows)[a.productId]
+  assert.equal(labeled.identityLabelAccepted, true)
+  assert.equal(labeled.state, "needs_input")
+  assert.ok(labeled.blockingErrors.includes("missing_slug"))
+  assertNotIndexable(labeled, "override+missing-slug")
+})
+
+test("combinatorial: valid override + missing image stays override_ready", () => {
+  const [a, b] = collidingPair({ identityLabelOverride: "Cosset", images: [] }, {})
+  const rows = compileCatalogSeoV1([a, b])
+  const labeled = byId(rows)[a.productId]
+  assert.equal(labeled.state, "override_ready")
+  assert.ok(labeled.qualityWarnings.includes("missing_valid_image"))
+  assert.equal(labeled.blockingErrors.includes("missing_valid_image"), false)
+  assertIndexableJsonLd(labeled, "override+missing-image")
+  assert.equal("image" in labeled.jsonLd, false)
+})
+
+test("combinatorial: valid override + another blockingError stays needs_input", () => {
+  const [a, b] = collidingPair(
+    { identityLabelOverride: "Cosset", canonicalUrl: "http://adv.example.test/p/s-00d1" },
+    {},
+  )
+  const rows = compileCatalogSeoV1([a, b])
+  const labeled = byId(rows)[a.productId]
+  assert.equal(labeled.identityLabelAccepted, true)
+  assert.equal(labeled.state, "needs_input")
+  assert.ok(labeled.blockingErrors.includes("canonical_scheme") || labeled.blockingErrors.includes("missing_canonical"))
+  assertNotIndexable(labeled, "override+http-canonical")
+})
+
+test("combinatorial: invalid override + valid automatic stays auto_ready", () => {
+  const unique = advProduct("33333333-3333-4333-8333-0000000000v1", {
+    name: "Unico",
+    lineName: "Linha",
+    identityLabelOverride: "javascript:alert(1)",
+    seoTitleOverride: "<script>x</script>",
+    seoDescriptionOverride: "javascript:alert(1)",
+  })
+  const row = compileCatalogSeoV1([unique])[0]
+  assert.equal(row.state, "auto_ready")
+  assert.equal(row.effectiveProductName, "Linha · Unico")
+  assert.equal(row.indexingProposed, true)
+  assert.equal(row.seoTitleOverrideRejected, true)
+  assert.equal(row.seoDescriptionOverrideRejected, true)
+  assert.equal(row.seoTitle.includes("script"), false)
+  assert.equal(String(row.metaDescription).includes("javascript:"), false)
+})
+
+test("combinatorial: suspended + valid override stays suspended", () => {
+  const rows = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000v2", {
+      identityLabelOverride: "Cosset",
+      visible: false,
+    }),
+    advProduct("33333333-3333-4333-8333-0000000000v3"),
+  ])
+  const map = byId(rows)
+  assert.equal(map["33333333-3333-4333-8333-0000000000v2"].state, "suspended")
+  assert.equal(map["33333333-3333-4333-8333-0000000000v2"].indexingProposed, false)
+  assert.notEqual(map["33333333-3333-4333-8333-0000000000v2"].state, "override_ready")
+  assertNotIndexable(map["33333333-3333-4333-8333-0000000000v2"], "suspended+override")
+  assert.equal(map["33333333-3333-4333-8333-0000000000v3"].state, "auto_ready")
+})
+
+test("offers: all fields validated; adversarial values omit offers and do not noindex", () => {
+  const base = {
+    name: "Unico",
+    lineName: "Linha",
+    price: 10,
+    currency: "BRL",
+    availability: "https://schema.org/InStock",
+  }
+  const ok = compileCatalogSeoV1([advProduct("33333333-3333-4333-8333-0000000000o1", base)])[0]
+  assert.equal(ok.state, "auto_ready")
+  assert.equal(ok.jsonLd.offers.price, "10")
+  assert.equal(ok.jsonLd.offers.priceCurrency, "BRL")
+  assert.equal(ok.jsonLd.offers.availability, "https://schema.org/InStock")
+  assert.equal(ok.structuredDataComplete, true)
+
+  const lowerCurrency = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000o2", { ...base, currency: "brl" }),
+  ])[0]
+  assert.equal(lowerCurrency.jsonLd.offers.priceCurrency, "BRL")
+
+  const probes = [
+    ["javascript:alert(1)", "offers_availability"],
+    ["data:text/html,x", "offers_availability"],
+    ["http://schema.org/InStock", "offers_availability"],
+    ["https://schema.org.evil.com/InStock", "offers_availability"],
+    ["https://www.schema.org/InStock", "offers_availability"],
+    ["https://schemaorg.com/InStock", "offers_availability"],
+    ["https://schema.org/UnknownStatus", "offers_availability"],
+    ["InStock", "offers_availability"],
+  ]
+  let i = 0
+  for (const [availability, reason] of probes) {
+    i += 1
+    const row = compileCatalogSeoV1([
+      advProduct(`33333333-3333-4333-8333-0000000001${String(i).padStart(2, "0")}`, {
+        ...base,
+        availability,
+      }),
+    ])[0]
+    assert.equal(row.state, "auto_ready", availability)
+    assert.equal(row.indexingProposed, true, availability)
+    assert.equal("offers" in row.jsonLd, false, availability)
+    assert.ok(row.qualityWarnings.includes(reason), `${availability} -> ${row.qualityWarnings}`)
+    assert.equal(JSON.stringify(row.jsonLd).includes("javascript:"), false, availability)
+  }
+
+  const badCurrency = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000o3", { ...base, currency: "REAL" }),
+  ])[0]
+  assert.equal("offers" in badCurrency.jsonLd, false)
+  assert.ok(badCurrency.qualityWarnings.includes("offers_currency"))
+  assert.equal(badCurrency.indexingProposed, true)
+
+  for (const [price, id] of [
+    [Number.NaN, "33333333-3333-4333-8333-0000000000o4"],
+    [Number.POSITIVE_INFINITY, "33333333-3333-4333-8333-0000000000o5"],
+    [-1, "33333333-3333-4333-8333-0000000000o6"],
+  ]) {
+    const row = compileCatalogSeoV1([advProduct(id, { ...base, price })])[0]
+    assert.equal(row.state, "auto_ready", String(price))
+    assert.equal("offers" in row.jsonLd, false, String(price))
+    assert.ok(row.qualityWarnings.includes("offers_price"), String(price))
+    assert.equal(row.indexingProposed, true, String(price))
+  }
+})
+
+test("description editorial whitespace accepted; identity/title stay single-line", () => {
+  const factual = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000w1", {
+      name: "Unico",
+      lineName: "Linha",
+      description: "Peça artesanal\ncom detalhe\r\nem cobre\te acabamento.",
+    }),
+  ])[0]
+  assert.equal(factual.state, "auto_ready")
+  assert.equal(factual.qualityWarnings.includes("description_control"), false)
+  assert.equal(factual.metaDescription, "Peça artesanal com detalhe em cobre e acabamento.")
+  assert.equal(factual.jsonLd.description, "Peça artesanal com detalhe em cobre e acabamento.")
+
+  const override = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000w2", {
+      name: "Unico",
+      lineName: "Linha",
+      seoDescriptionOverride: "Override factual\ncom quebra\r\ne\ttab.",
+    }),
+  ])[0]
+  assert.equal(override.seoDescriptionOverrideAccepted, true)
+  assert.equal(override.metaDescription, "Override factual com quebra e tab.")
+
+  const bel = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000w3", {
+      name: "Unico",
+      lineName: "Linha",
+      description: "Peça artesanal\u0007com bel.",
+    }),
+  ])[0]
+  assert.ok(bel.qualityWarnings.includes("description_control"))
+  assert.equal(String(bel.metaDescription).includes("\u0007"), false)
+
+  const bidi = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000w4", {
+      name: "Unico",
+      lineName: "Linha",
+      description: "Peça artesanal\u202Ecom bidi.",
+    }),
+  ])[0]
+  assert.ok(bidi.qualityWarnings.includes("description_control"))
+
+  const titleLf = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000w5", {
+      name: "Unico",
+      lineName: "Linha",
+      seoTitleOverride: "Titulo com\nquebra",
+    }),
+  ])[0]
+  assert.equal(titleLf.seoTitleOverrideRejected, true)
+  assert.ok(titleLf.overrideErrors.includes("seo_title_control"))
+
+  const labelLf = compileCatalogSeoV1(
+    collidingPair({ identityLabelOverride: "Cosset\nExtra" }),
+  ).find((r) => r.productId.endsWith("d1"))
+  assert.equal(labelLf.identityLabelRejected, true)
+  assert.ok(labelLf.overrideErrors.includes("identity_label_control"))
+  assert.equal(labelLf.state, "needs_input")
 })
 
 

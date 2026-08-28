@@ -20,7 +20,9 @@ CREATE TABLE IF NOT EXISTS public.product_publication_state (
   state text NOT NULL CHECK (
     state IN ('auto_ready', 'override_ready', 'needs_input', 'suspended')
   ),
-  validation_errors jsonb NOT NULL DEFAULT '[]'::jsonb,
+  blocking_errors jsonb NOT NULL DEFAULT '[]'::jsonb,
+  quality_warnings jsonb NOT NULL DEFAULT '[]'::jsonb,
+  override_errors jsonb NOT NULL DEFAULT '[]'::jsonb,
   missing_fields text[] NOT NULL DEFAULT '{}',
   indexing_enabled boolean NOT NULL,
   computed_at timestamptz NOT NULL,

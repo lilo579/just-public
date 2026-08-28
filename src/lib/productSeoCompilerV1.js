@@ -150,7 +150,8 @@ function compactForDetection(s) {
 /**
  * @param {number} cp
  */
-function isForbiddenControl(cp) {
+function isForbiddenControl(cp, allowEditorialWhitespace = false) {
+  if (allowEditorialWhitespace && (cp === 0x09 || cp === 0x0a || cp === 0x0d)) return false
   if (cp <= 0x1f) return true
   if (cp >= 0x7f && cp <= 0x9f) return true
   if (cp >= 0x202a && cp <= 0x202e) return true
@@ -187,17 +188,18 @@ function hasDangerousScheme(compact) {
  * Future HTML boundary: always escape. Never use set:html / innerHTML.
  *
  * @param {unknown} raw
- * @param {{ maxCodePoints: number, kind: string, rejectUri: boolean }} opts
+ * @param {{ maxCodePoints: number, kind: string, rejectUri: boolean, allowEditorialWhitespace?: boolean }} opts
  */
 export function validateOverridePlainText(raw, opts) {
   if (raw == null || String(raw).trim() === "") return { present: false }
   const original = String(raw)
   const decoded = decodeHtmlEntities(original)
+  const allowEditorial = Boolean(opts.allowEditorialWhitespace)
   for (const source of [original, decoded]) {
     for (const ch of source) {
       const cp = ch.codePointAt(0)
       if (cp === 0x3c || cp === 0x3e) return { present: true, ok: false, reason: `${opts.kind}_markup` }
-      if (isForbiddenControl(cp)) return { present: true, ok: false, reason: `${opts.kind}_control` }
+      if (isForbiddenControl(cp, allowEditorial)) return { present: true, ok: false, reason: `${opts.kind}_control` }
     }
   }
   const compact = compactForDetection(original)
@@ -267,6 +269,127 @@ export function acceptPublicImages(rawImages) {
     accepted.push(check.value)
   }
   return { images: accepted, errors, missing: accepted.length === 0 }
+}
+
+const SUPPORTED_CURRENCIES = Object.freeze([
+  "BRL",
+  "USD",
+  "EUR",
+  "GBP",
+  "ARS",
+  "CLP",
+  "COP",
+  "MXN",
+  "PEN",
+  "UYU",
+  "CAD",
+  "AUD",
+  "NZD",
+  "JPY",
+  "CNY",
+  "CHF",
+  "SEK",
+  "NOK",
+  "DKK",
+  "PLN",
+  "CZK",
+  "ZAR",
+  "INR",
+  "KRW",
+  "SGD",
+  "HKD",
+  "AED",
+  "SAR",
+  "TRY",
+])
+
+const SCHEMA_AVAILABILITY = Object.freeze([
+  "https://schema.org/InStock",
+  "https://schema.org/OutOfStock",
+  "https://schema.org/PreOrder",
+  "https://schema.org/BackOrder",
+  "https://schema.org/LimitedAvailability",
+  "https://schema.org/Discontinued",
+  "https://schema.org/SoldOut",
+  "https://schema.org/OnlineOnly",
+  "https://schema.org/InStoreOnly",
+  "https://schema.org/PreSale",
+])
+
+function serializeStableDecimal(n) {
+  if (!Number.isFinite(n) || n < 0) return null
+  if (Object.is(n, -0)) n = 0
+  const s = Number.isInteger(n) ? String(n) : String(n)
+  if (!/^[0-9]+(\.[0-9]+)?$/.test(s)) return null
+  return s
+}
+
+function acceptPrice(raw) {
+  if (raw == null || raw === "") return { present: false }
+  if (typeof raw === "number") {
+    const serialized = serializeStableDecimal(raw)
+    if (serialized == null) return { present: true, ok: false, reason: "offers_price" }
+    return { present: true, ok: true, value: serialized }
+  }
+  if (typeof raw !== "string" && typeof raw !== "number") {
+    return { present: true, ok: false, reason: "offers_price" }
+  }
+  const s = String(raw).trim()
+  if (!s) return { present: false }
+  if (!/^[0-9]+(\.[0-9]+)?$/.test(s)) return { present: true, ok: false, reason: "offers_price" }
+  const n = Number(s)
+  if (!Number.isFinite(n) || n < 0) return { present: true, ok: false, reason: "offers_price" }
+  return { present: true, ok: true, value: s }
+}
+
+function acceptCurrency(raw) {
+  if (raw == null || String(raw).trim() === "") return { present: false }
+  const canonical = String(raw).trim().toUpperCase()
+  if (!SUPPORTED_CURRENCIES.includes(canonical)) return { present: true, ok: false, reason: "offers_currency" }
+  return { present: true, ok: true, value: canonical }
+}
+
+function acceptAvailability(raw) {
+  if (raw == null || String(raw).trim() === "") return { present: false }
+  const original = String(raw).trim()
+  if (hasForbiddenControls(original) || hasDangerousScheme(compactForDetection(original))) {
+    return { present: true, ok: false, reason: "offers_availability" }
+  }
+  let parsed
+  try {
+    parsed = new URL(original)
+  } catch {
+    return { present: true, ok: false, reason: "offers_availability" }
+  }
+  if (parsed.protocol !== "https:") return { present: true, ok: false, reason: "offers_availability" }
+  if (parsed.username || parsed.password) return { present: true, ok: false, reason: "offers_availability" }
+  if (parsed.hostname !== "schema.org") return { present: true, ok: false, reason: "offers_availability" }
+  if (parsed.search || parsed.hash) return { present: true, ok: false, reason: "offers_availability" }
+  const canonical = `https://schema.org${parsed.pathname}`
+  if (!SCHEMA_AVAILABILITY.includes(canonical)) return { present: true, ok: false, reason: "offers_availability" }
+  return { present: true, ok: true, value: canonical }
+}
+
+function acceptOffers(input) {
+  const price = acceptPrice(input.price)
+  const currency = acceptCurrency(input.currency)
+  const availability = acceptAvailability(input.availability)
+  const warnings = []
+  if (price.present && !price.ok) warnings.push(price.reason)
+  if (currency.present && !currency.ok) warnings.push(currency.reason)
+  if (availability.present && !availability.ok) warnings.push(availability.reason)
+  if (price.ok && currency.ok && availability.ok) {
+    return {
+      offers: {
+        "@type": "Offer",
+        price: price.value,
+        priceCurrency: currency.value,
+        availability: availability.value,
+      },
+      warnings,
+    }
+  }
+  return { offers: null, warnings }
 }
 
 /**
@@ -375,9 +498,15 @@ function composeDescription(effective, desc, line, name, category) {
  * @param {string} kind
  * @param {number} max
  * @param {boolean} rejectUri
+ * @param {{ allowEditorialWhitespace?: boolean }} [extra]
  */
-function takePlain(raw, kind, max, rejectUri) {
-  const check = validateOverridePlainText(raw, { maxCodePoints: max, kind, rejectUri })
+function takePlain(raw, kind, max, rejectUri, extra = {}) {
+  const check = validateOverridePlainText(raw, {
+    maxCodePoints: max,
+    kind,
+    rejectUri,
+    allowEditorialWhitespace: extra.allowEditorialWhitespace,
+  })
   if (!check.present) return { value: "", invalid: false, reason: null }
   if (!check.ok) return { value: "", invalid: true, reason: check.reason }
   return { value: check.value, invalid: false, reason: null }
@@ -395,7 +524,9 @@ function readFacts(input) {
   const categoryName = takePlain(input.categoryName, "categoryName", FACTUAL_NAME_MAX, true)
   const publicProductCode = takePlain(input.publicProductCode, "publicProductCode", FACTUAL_NAME_MAX, true)
   const brand = takePlain(input.brand, "brand", FACTUAL_NAME_MAX, true)
-  const description = takePlain(input.description, "description", FACTUAL_DESC_MAX, false)
+  const description = takePlain(input.description, "description", FACTUAL_DESC_MAX, false, {
+    allowEditorialWhitespace: true,
+  })
   if (name.invalid) blockingErrors.push(name.reason)
   if (lineName.invalid) qualityWarnings.push(lineName.reason)
   if (categoryName.invalid) qualityWarnings.push(categoryName.reason)
@@ -421,6 +552,8 @@ function readFacts(input) {
 
   const imagesResult = acceptPublicImages(input.images)
   qualityWarnings.push(...imagesResult.errors)
+  const offersResult = acceptOffers(input)
+  qualityWarnings.push(...offersResult.warnings)
 
   return {
     name: name.value,
@@ -434,6 +567,7 @@ function readFacts(input) {
     canonicalUrl,
     images: imagesResult.images,
     missingValidImage: imagesResult.missing,
+    offers: offersResult.offers,
     identityRequiredInvalid: name.invalid,
     blockingErrors,
     qualityWarnings,
@@ -747,34 +881,24 @@ function finalizeRow(row, ctx) {
   if (facts.missingValidImage) qualityWarnings.push("missing_valid_image")
   if (!autoDesc && effective) qualityWarnings.push("empty_effective_description")
 
-  let state = "auto_ready"
-  if (blockingErrors.includes("not_public")) state = "suspended"
-  else if (facts.identityRequiredInvalid || blockingErrors.includes("identity_invalid")) state = "needs_input"
-  else if (ctx.identityLabelAccepted && !ctx.colliding) state = "override_ready"
-  else if (ctx.colliding || blockingErrors.includes("duplicate_effective_name")) state = "needs_input"
-  else if (
-    blockingErrors.includes("empty_effective_name") ||
-    blockingErrors.includes("missing_slug") ||
-    blockingErrors.includes("missing_canonical") ||
-    blockingErrors.includes("duplicate_slug") ||
-    blockingErrors.includes("duplicate_canonical")
-  ) {
-    state = "needs_input"
-  }
+  let state
+  if (!visible || !catalogEnabled || !tenantActive) state = "suspended"
+  else if (blockingErrors.length > 0) state = "needs_input"
+  else if (ctx.identityLabelAccepted) state = "override_ready"
+  else state = "auto_ready"
 
   const indexingProposed = state === "auto_ready" || state === "override_ready"
-  const jsonLd = indexingProposed
-    ? buildJsonLd({
-        name: effective,
-        description: autoDesc,
-        canonicalUrl: facts.canonicalUrl,
-        productId: displayText(p.productId),
-        images,
-        price: p.price,
-        currency: p.currency,
-        availability: p.availability,
-      })
-    : null
+  const jsonLd =
+    indexingProposed && facts.canonicalUrl
+      ? buildJsonLd({
+          name: effective,
+          description: autoDesc,
+          canonicalUrl: facts.canonicalUrl,
+          productId: displayText(p.productId),
+          images,
+          offers: facts.offers,
+        })
+      : null
   const complete = isStructuredDataComplete(jsonLd)
 
   const structuredResolutionCandidate =
@@ -820,8 +944,13 @@ function finalizeRow(row, ctx) {
  * @param {number} max
  * @param {string} kind
  */
-function validateSeoOverride(raw, max, kind, rejectUri) {
-  return validateOverridePlainText(raw, { maxCodePoints: max, kind, rejectUri })
+function validateSeoOverride(raw, max, kind, rejectUri, extra = {}) {
+  return validateOverridePlainText(raw, {
+    maxCodePoints: max,
+    kind,
+    rejectUri,
+    allowEditorialWhitespace: extra.allowEditorialWhitespace,
+  })
 }
 
 /**
@@ -834,7 +963,9 @@ function applySeoFieldOverrides(automatic, rows) {
   return automatic.map((auto, i) => {
     const input = rows[i].input
     const titleCheck = validateSeoOverride(input.seoTitleOverride, SEO_TITLE_MAX, "seo_title", true)
-    const descCheck = validateSeoOverride(input.seoDescriptionOverride, SEO_DESC_MAX, "seo_description", false)
+    const descCheck = validateSeoOverride(input.seoDescriptionOverride, SEO_DESC_MAX, "seo_description", false, {
+      allowEditorialWhitespace: true,
+    })
     const overrideErrors = [...auto.overrideErrors]
     let seoTitle = auto.seoTitle
     let metaDescription = auto.metaDescription
@@ -901,9 +1032,7 @@ function isStructuredDataComplete(jsonLd) {
  *   canonicalUrl: string
  *   productId: string
  *   images: string[]
- *   price: unknown
- *   currency: unknown
- *   availability: unknown
+ *   offers: Record<string, unknown> | null
  * }} args
  */
 function buildJsonLd(args) {
@@ -917,17 +1046,7 @@ function buildJsonLd(args) {
     productID: args.productId,
   }
   if (args.images.length) jsonLd.image = args.images
-  const priceNum = args.price == null || args.price === "" ? NaN : Number(args.price)
-  const currency = displayText(args.currency)
-  const availability = displayText(args.availability)
-  if (Number.isFinite(priceNum) && currency && availability) {
-    jsonLd.offers = {
-      "@type": "Offer",
-      price: priceNum,
-      priceCurrency: currency,
-      availability,
-    }
-  }
+  if (args.offers) jsonLd.offers = args.offers
   return jsonLd
 }
 
