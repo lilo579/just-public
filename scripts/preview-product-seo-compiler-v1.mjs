@@ -31,14 +31,23 @@ const slim = {
   byState: report.byState,
   collisionMatrix: report.collisionMatrix,
   needsInputPrompt: report.needsInputPrompt,
-  couldResolveWithStructuredAttributeOrIdentityLabel:
-    report.couldResolveWithStructuredAttributeOrIdentityLabel,
+  needsInputCount: report.needsInputCount,
+  hasStructuredResolutionCandidate: report.hasStructuredResolutionCandidate,
+  requiresIdentityLabelOrNewAttribute: report.requiresIdentityLabelOrNewAttribute,
+  indexingProposedCount: report.indexingProposedCount,
+  inSitemapProposedCount: report.inSitemapProposedCount,
+  jsonLdProposedCount: report.jsonLdProposedCount,
+  structuredDataCompleteCount: report.structuredDataCompleteCount,
+  richResultEligibleCount: report.richResultEligibleCount,
+  qualityWarningProductCount: report.qualityWarningProductCount,
   needsInput: report.products
     .filter((row) => row.state === "needs_input")
     .map((row) => ({
       productId: row.productId,
       effectiveProductName: row.effectiveProductName,
-      errors: row.errors,
+      errors: row.blockingErrors,
+      qualityWarnings: row.qualityWarnings,
+      overrideErrors: row.overrideErrors,
       prompt: row.needsInputPrompt,
     })),
 }

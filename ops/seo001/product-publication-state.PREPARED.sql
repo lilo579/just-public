@@ -27,12 +27,15 @@ CREATE TABLE IF NOT EXISTS public.product_publication_state (
   PRIMARY KEY (tenant_id, product_id)
 );
 
--- Override avançado opcional. Inválido => rejeitar; estado automático permanece.
+-- Overrides v1: três campos independentes. Ausência é o fluxo normal.
+-- Inválido => rejeitar aquele campo; o valor automático permanece.
+-- Não usar o contrato legado title + description.
 CREATE TABLE IF NOT EXISTS public.product_seo_overrides (
   tenant_id uuid NOT NULL,
   product_id uuid NOT NULL,
-  title text,
-  description text,
+  identity_label_override text,
+  seo_title_override text,
+  seo_description_override text,
   updated_at timestamptz NOT NULL DEFAULT now(),
   updated_by uuid,
   PRIMARY KEY (tenant_id, product_id)

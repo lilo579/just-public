@@ -11,8 +11,10 @@ import {
   compileProductSeoV1,
   countCodePoints,
   identityKey,
+  isIdentityRestatement,
   previewCatalogSeoReportOnly,
   stableStringify,
+  validatePublicHttpsUrl,
 } from "../src/lib/productSeoCompilerV1.js"
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..")
@@ -108,7 +110,7 @@ test("seo title and description overrides are independent; invalid keeps automat
 
   const tooLong = compileProductSeoV1({ ...target, seoTitleOverride: "A".repeat(80) }, catalog)
   assert.equal(tooLong.seoTitle, auto.seoTitle)
-  assert.ok(tooLong.errors.includes("seo_title_too_long"))
+  assert.ok(tooLong.overrideErrors.includes("seo_title_too_long"))
 })
 
 test("alpha: structured variants, collision-local, suspended; description does not identify", () => {
@@ -211,7 +213,15 @@ test("3D Jewish 118: description removed from identity; 112 auto_ready / 6 needs
   assert.equal(report.byState.override_ready, 0)
   assert.equal(report.byState.suspended, 0)
   assert.equal(report.needsInputPrompt, "Precisamos diferenciar estes produtos. Informe o tipo, modelo ou outra característica real.")
-  assert.equal(report.couldResolveWithStructuredAttributeOrIdentityLabel, 6)
+  assert.equal(report.needsInputCount, 6)
+  assert.equal(report.hasStructuredResolutionCandidate, 0)
+  assert.equal(report.requiresIdentityLabelOrNewAttribute, 6)
+  assert.equal(report.indexingProposedCount, 112)
+  assert.equal(report.inSitemapProposedCount, 112)
+  assert.equal(report.jsonLdProposedCount, 112)
+  assert.equal(report.structuredDataCompleteCount, 0)
+  assert.equal(report.richResultEligibleCount, 0)
+  assert.equal("couldResolveWithStructuredAttributeOrIdentityLabel" in report, false)
   assert.equal(report.needsInputPrompt.includes("preencher SEO"), false)
 
   const idToSlug = Object.fromEntries(jewishFix.products.map((p) => [p.productId, p.slug]))
@@ -256,7 +266,7 @@ test("compiler source never uses description for identity and has no tenant bran
   const identityBlock = src.slice(src.indexOf("function variantExtras"), src.indexOf("export function compileProductSeoV1"))
   assert.equal(identityBlock.includes("description"), false)
   assert.match(src, /applyStrict\(\(row\) => variantExtras/)
-  assert.match(src, /applyStrict\(\(row\) => displayText\(row\.input\.categoryName\)\)/)
+  assert.match(src, /applyStrict\(\(row\) => row\.facts\.categoryName\)/)
   assert.equal(/3djewish|just\.com|flavio|rossana|soraya|celina|marcelo/i.test(src), false)
   assert.equal(/if\s*\(\s*(tenant|host|slug|segment)/i.test(src), false)
   assert.equal(src.includes("preencher SEO"), false)
@@ -280,6 +290,10 @@ test("prepared SQL remains not applied", () => {
   const sql = readFileSync(join(root, "ops/seo001/product-publication-state.PREPARED.sql"), "utf8")
   assert.match(sql, /NÃO APLICADO|not applied/i)
   assert.equal(sql.includes("product_publication_state"), true)
+  assert.match(sql, /identity_label_override/)
+  assert.match(sql, /seo_title_override/)
+  assert.match(sql, /seo_description_override/)
+  assert.equal(/\btitle text\b/.test(sql), false)
 })
 
 function advProduct(id, fields) {
@@ -430,7 +444,7 @@ test("adversarial: two identical identityLabelOverride stay needs_input", () => 
   ])
   assert.ok(rows.every((r) => r.state === "needs_input"))
   assert.ok(rows.every((r) => r.identityLabelRejected))
-  assert.ok(rows.every((r) => r.errors.includes("identity_label_duplicate")))
+  assert.ok(rows.every((r) => r.overrideErrors.includes("identity_label_duplicate")))
   assert.ok(rows.every((r) => r.effectiveProductName === "Twin · Azul"))
 })
 
@@ -520,6 +534,11 @@ test("adversarial: plain-text policy rejects dangerous overrides and keeps autom
     ["\uFEFFCosset", ["seo_title_control"]],
     ["https://evil.example/x", ["seo_title_uri"]],
     ["http://evil.example/x", ["seo_title_uri"]],
+    ["javascript&colon;alert(1)", ["seo_title_scheme"]],
+    ["vbscript&colon;msg", ["seo_title_scheme"]],
+    ["data&colon;text/html,x", ["seo_title_scheme"]],
+    ["javascript\uFF1Aalert(1)", ["seo_title_scheme"]],
+    ["DATA\uFF1Atext/html,x", ["seo_title_scheme"]],
   ]
   for (const [value, reasons] of probes) {
     const rows = compileCatalogSeoV1(collidingPair({ seoTitleOverride: value }))
@@ -527,8 +546,8 @@ test("adversarial: plain-text policy rejects dangerous overrides and keeps autom
     assert.equal(a.seoTitleOverrideRejected, true, value)
     assert.equal(a.seoTitle, auto.seoTitle, value)
     assert.ok(
-      reasons.some((reason) => a.errors.includes(reason)),
-      `${value} -> ${reasons.join("|")} in ${a.errors}`,
+      reasons.some((reason) => a.overrideErrors.includes(reason)),
+      `${value} -> ${reasons.join("|")} in ${a.overrideErrors}`,
     )
   }
 
@@ -546,8 +565,8 @@ test("adversarial: plain-text policy rejects dangerous overrides and keeps autom
     assert.equal(a.state, "needs_input", value)
     assert.equal(a.effectiveProductName, auto.effectiveProductName, value)
     assert.ok(
-      reasons.some((reason) => a.errors.includes(reason)),
-      `${value} -> ${reasons.join("|")} in ${a.errors}`,
+      reasons.some((reason) => a.overrideErrors.includes(reason)),
+      `${value} -> ${reasons.join("|")} in ${a.overrideErrors}`,
     )
   }
 
@@ -578,7 +597,7 @@ test("adversarial: Unicode length uses code points, never slices", () => {
   ).find((r) => r.productId.endsWith("d1"))
   assert.equal(over.seoTitleOverrideRejected, true)
   assert.equal(over.seoTitle, auto.seoTitle)
-  assert.ok(over.errors.includes("seo_title_too_long"))
+  assert.ok(over.overrideErrors.includes("seo_title_too_long"))
 })
 
 test("adversarial: Cosset accepted; full restatement rejected; Ouro is not a false positive", () => {
@@ -604,7 +623,7 @@ test("adversarial: Cosset accepted; full restatement rejected; Ouro is not a fal
   const rA = restated.find((r) => r.productId === a.productId)
   assert.equal(rA.state, "needs_input")
   assert.equal(rA.effectiveProductName, "Kossot · Marinho & Ouro Claro")
-  assert.ok(rA.errors.includes("identity_label_restatement"))
+  assert.ok(rA.overrideErrors.includes("identity_label_restatement"))
 
   const ouro = compileCatalogSeoV1([
     { ...a, identityLabelOverride: "Ouro" },
@@ -612,6 +631,213 @@ test("adversarial: Cosset accepted; full restatement rejected; Ouro is not a fal
   ])
   assert.equal(ouro.find((r) => r.productId === a.productId).state, "override_ready")
   assert.equal(ouro.find((r) => r.productId === a.productId).effectiveProductName, "Kossot · Marinho & Ouro Claro · Ouro")
+})
+
+test("adversarial: Solar/Anelar accepted; restatement requires a real token boundary", () => {
+  const solA = advProduct("33333333-3333-4333-8333-0000000000s1", {
+    name: "Sol",
+    lineName: "",
+    categoryName: "",
+    identityLabelOverride: "Solar",
+  })
+  const solB = advProduct("33333333-3333-4333-8333-0000000000s2", {
+    name: "Sol",
+    lineName: "",
+    categoryName: "",
+  })
+  const solar = compileCatalogSeoV1([solA, solB])
+  assert.equal(solar.find((r) => r.productId === solA.productId).state, "override_ready")
+  assert.equal(solar.find((r) => r.productId === solA.productId).effectiveProductName, "Sol · Solar")
+
+  const anelA = advProduct("33333333-3333-4333-8333-0000000000s3", {
+    name: "Anel",
+    lineName: "",
+    categoryName: "",
+    identityLabelOverride: "Anelar",
+  })
+  const anelB = advProduct("33333333-3333-4333-8333-0000000000s4", {
+    name: "Anel",
+    lineName: "",
+    categoryName: "",
+  })
+  const anelar = compileCatalogSeoV1([anelA, anelB])
+  assert.equal(anelar.find((r) => r.productId === anelA.productId).state, "override_ready")
+  assert.equal(anelar.find((r) => r.productId === anelA.productId).effectiveProductName, "Anel · Anelar")
+
+  assert.equal(isIdentityRestatement("Solar", ["Sol"]), false)
+  assert.equal(isIdentityRestatement("Anelar", ["Anel"]), false)
+  assert.equal(isIdentityRestatement("Kossot · Marinho & Ouro Claro · Cosset", ["Kossot", "Marinho & Ouro Claro"]), true)
+
+  const boundaries = ["Sol · Extra", "Sol: Extra", "Sol：Extra", "Sol - Extra", "Sol | Extra", "Sol / Extra"]
+  for (const label of boundaries) {
+    assert.equal(isIdentityRestatement(label, ["Sol"]), true, label)
+  }
+
+  const restated = compileCatalogSeoV1([
+    { ...solA, identityLabelOverride: "Sol · Extra" },
+    solB,
+  ])
+  assert.equal(restated.find((r) => r.productId === solA.productId).state, "needs_input")
+  assert.ok(restated.find((r) => r.productId === solA.productId).overrideErrors.includes("identity_label_restatement"))
+})
+
+test("adversarial: tenant structured fields never emit unsafe text", () => {
+  const unique = advProduct("33333333-3333-4333-8333-0000000000t1", {
+    name: "<script>alert(1)</script>",
+    lineName: "Linha",
+    description: "Peça artesanal única.",
+  })
+  const badName = compileCatalogSeoV1([unique])[0]
+  assert.equal(badName.state, "needs_input")
+  assert.ok(badName.blockingErrors.includes("identity_invalid"))
+  assert.equal(String(badName.effectiveProductName).includes("<"), false)
+  assert.equal(String(badName.seoTitle).includes("<script>"), false)
+  assert.equal(JSON.stringify(badName).includes("<script>"), false)
+
+  const jsName = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000t2", {
+      name: "javascript:alert(1)",
+      lineName: "Linha",
+    }),
+  ])[0]
+  assert.equal(jsName.state, "needs_input")
+  assert.equal(String(jsName.effectiveProductName).includes("javascript:"), false)
+
+  const badBrand = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000t3", {
+      name: "Unico",
+      lineName: "Linha",
+      brand: "javascript:alert(1)",
+    }),
+  ])[0]
+  assert.equal(badBrand.state, "auto_ready")
+  assert.ok(badBrand.qualityWarnings.includes("brand_scheme"))
+  assert.equal(badBrand.seoTitle, "Linha · Unico")
+  assert.equal(badBrand.seoTitle.includes("javascript"), false)
+
+  const badDesc = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000t4", {
+      name: "Unico",
+      lineName: "Linha",
+      description: "javascript:alert(1)",
+    }),
+  ])[0]
+  assert.ok(badDesc.qualityWarnings.includes("description_scheme"))
+  assert.equal(String(badDesc.metaDescription).includes("javascript:"), false)
+  assert.ok(badDesc.metaDescription.includes("Linha"))
+})
+
+test("adversarial: images validate every item; only https public URLs enter JSON-LD", () => {
+  const mixed = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000i1", {
+      name: "Unico",
+      lineName: "Linha",
+      images: [
+        "https://cdn.example.test/ok.webp",
+        "javascript:alert(1)",
+        "http://cdn.example.test/insecure.webp",
+        "https://user:pass@cdn.example.test/creds.webp",
+        "https://cdn.example.test/ok.webp",
+        "data:text/html,x",
+      ],
+    }),
+  ])[0]
+  assert.equal(mixed.state, "auto_ready")
+  assert.deepEqual(mixed.jsonLd.image, ["https://cdn.example.test/ok.webp"])
+  assert.ok(mixed.qualityWarnings.includes("image_scheme") || mixed.qualityWarnings.includes("image_credentials"))
+  assert.equal(JSON.stringify(mixed.jsonLd).includes("javascript:"), false)
+  assert.equal(JSON.stringify(mixed.jsonLd).includes("user:pass"), false)
+
+  const none = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000i2", {
+      name: "Unico",
+      lineName: "Linha",
+      images: ["javascript:alert(1)", "http://cdn.example.test/x.webp", "file:///etc/passwd"],
+    }),
+  ])[0]
+  assert.equal(none.state, "auto_ready")
+  assert.ok(none.qualityWarnings.includes("missing_valid_image"))
+  assert.equal(none.indexingProposed, true)
+  assert.equal(none.inSitemapProposed, true)
+  assert.equal(none.jsonLdProposed, true)
+  assert.equal("image" in none.jsonLd, false)
+  assert.equal(none.structuredDataComplete, false)
+  assert.equal(validatePublicHttpsUrl("https://cdn.example.test/a.webp").ok, true)
+  assert.equal(validatePublicHttpsUrl("javascript:alert(1)").ok, false)
+})
+
+test("indexing vs quality: missing image does not noindex; canonical and identity still block", () => {
+  const noImage = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000q1", {
+      name: "Unico",
+      lineName: "Linha",
+      images: [],
+    }),
+  ])[0]
+  assert.equal(noImage.state, "auto_ready")
+  assert.equal(noImage.indexingProposed, true)
+  assert.equal(noImage.inSitemapProposed, true)
+  assert.equal(noImage.jsonLdProposed, true)
+  assert.equal(noImage.robotsProposed, "index,follow")
+  assert.ok(noImage.qualityWarnings.includes("missing_valid_image"))
+  assert.equal(noImage.blockingErrors.includes("missing_valid_image"), false)
+  assert.equal("image" in noImage.jsonLd, false)
+  assert.equal(noImage.structuredDataComplete, false)
+  assert.equal(noImage.richResultEligible, false)
+
+  const colliding = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000q2", { images: ["https://cdn.example.test/ok.webp"] }),
+    advProduct("33333333-3333-4333-8333-0000000000q3", { images: ["https://cdn.example.test/ok.webp"] }),
+  ])
+  assert.ok(colliding.every((r) => r.state === "needs_input"))
+  assert.ok(colliding.every((r) => r.blockingErrors.includes("duplicate_effective_name")))
+  assert.ok(colliding.every((r) => r.indexingProposed === false))
+  assert.ok(colliding.every((r) => r.inSitemapProposed === false))
+
+  const badOverrideNoImage = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000q4", {
+      name: "Unico",
+      lineName: "Linha",
+      images: [],
+      seoTitleOverride: "javascript:alert(1)",
+    }),
+  ])[0]
+  assert.equal(badOverrideNoImage.state, "auto_ready")
+  assert.equal(badOverrideNoImage.indexingProposed, true)
+  assert.ok(badOverrideNoImage.overrideErrors.includes("seo_title_scheme"))
+  assert.ok(badOverrideNoImage.qualityWarnings.includes("missing_valid_image"))
+  assert.equal(badOverrideNoImage.seoTitle.includes("javascript"), false)
+
+  const badCanon = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000q5", {
+      name: "Unico",
+      lineName: "Linha",
+      canonicalUrl: "javascript:alert(1)",
+    }),
+  ])[0]
+  assert.equal(badCanon.state, "needs_input")
+  assert.ok(badCanon.blockingErrors.includes("canonical_scheme") || badCanon.blockingErrors.includes("missing_canonical"))
+  assert.equal(badCanon.indexingProposed, false)
+  assert.equal(badCanon.jsonLd, null)
+
+  const suspended = compileCatalogSeoV1([
+    advProduct("33333333-3333-4333-8333-0000000000q6", {
+      name: "Unico",
+      lineName: "Linha",
+      images: ["https://cdn.example.test/ok.webp"],
+      visible: false,
+    }),
+  ])[0]
+  assert.equal(suspended.state, "suspended")
+  assert.equal(suspended.indexingProposed, false)
+  assert.equal(suspended.inSitemapProposed, false)
+  assert.equal(suspended.jsonLd, null)
+})
+
+test("catalog order does not change compiled result", () => {
+  const a = compileCatalogSeoV1(jewishFix.products)
+  const b = compileCatalogSeoV1([...jewishFix.products].reverse())
+  assert.equal(stableStringify(a), stableStringify(b))
 })
 
 test("fingerprint table: tenantId excluded; every included field can change the hash", () => {

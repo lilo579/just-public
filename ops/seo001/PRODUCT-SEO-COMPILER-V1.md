@@ -61,7 +61,9 @@ Ausência de override é o fluxo normal. Os três campos são independentes:
 | `seoTitleOverride` | Avançado, opcional | Substitui somente o title SEO (não H1, não og:title, não alt) | Title automático permanece |
 | `seoDescriptionOverride` | Avançado, opcional | Substitui meta, og e JSON-LD description | Descrição automática permanece |
 
-Validação de override: **plain text**, rejeita sem sanitizar. NFC para display após passar. Limites em **pontos de código** (70 title, 320 description, 80 identity label). Rejeita `<` `>`, C0/C1, bidi (U+202A–U+202E, U+2066–U+2069), ZWSP/BOM e equivalentes de ocultação, entidades HTML de markup, `javascript:` / `vbscript:` / `data:` mesmo ofuscados, e URL/esquema URI em identity/title. Acentos e emojis válidos passam. `identityLabelOverride` que restabelece a identidade-base (`Kossot · Marinho & Ouro Claro · Cosset`) é recusado; `Cosset` é válido. Palavra que só coincide por substring dentro de um token mais longo (`Ouro` em `Marinho & Ouro Claro`) não é restatement.
+Validação de override e de campos factuais (`name`, `lineName`, `brand`, `categoryName`, `publicProductCode`, `variantAttributes`, `description`): **plain text**, rejeita sem sanitizar. NFC para display após passar. Detecção de scheme usa decode de entidades (incluindo `&colon;`) + NFKC (U+FF1A) e nunca é publicada. Limites em **pontos de código**. Rejeita `<` `>`, C0/C1, bidi, ZWSP/BOM, `javascript:` / `vbscript:` / `data:` / `file:` ofuscados, e URL em identity/title. Identidade obrigatória inválida (`name`) → `needs_input`. Atributo opcional inválido → ignorado e registrado. Description inválida → composição factual. `Solar` / `Anelar` são válidos; `Kossot · Marinho & Ouro Claro · Cosset` é restatement. Separadores de restatement: espaço, `·`, hífen estrutural, dois-pontos, `/ | ; ,` e equivalentes Unicode.
+
+Imagens e canonical: validador HTTPS próprio (não plain text). Só `https:` sem credenciais, host não vazio, sem schemes perigosos. Itens inválidos são descartados um a um. **Imagem ausente não bloqueia indexação** na v1: `missing_valid_image` é `qualityWarning`. JSON-LD é emitido sem `image`. Dedup determinístico por `URL.href`. Canonical inválida é bloqueante.
 
 **HTML futuro:** todo valor exige escaping no boundary. Nunca `set:html`, `innerHTML` ou equivalente.
 
@@ -80,6 +82,31 @@ SHA-256 do JSON canônico das **entradas que alteram o resultado**. Sem `compute
 | `compilerVersion`, `productId`, `slug`, `canonicalUrl`, `name`, `lineName`, `categoryName`, `description`, `variantAttributes`, `publicProductCode`, `images`, `price`, `currency`, `availability`, `brand`, `visible`, `catalogEnabled`, `tenantActive`, `identityLabelOverride`, `seoTitleOverride`, `seoDescriptionOverride` | `tenantId`, `host`, `computedAt`, `override` (objeto legado) |
 
 A matriz de colisão agrupa pela **mesma chave** de identidade (NFC→NFD, sem marcas, minúsculas). Displays (`Café` vs `Cafe`) são só apresentação.
+
+Métricas de `needs_input` (não tratar possibilidade teórica como resolução conhecida):
+
+| Campo | Significado |
+|---|---|
+| `needsInputCount` | Quantos produtos estão `needs_input` |
+| `hasStructuredResolutionCandidate` | Colisão em que o grupo já tem extra estruturado só em parte das linhas (ação concreta: completar o atributo/código) |
+| `requiresIdentityLabelOrNewAttribute` | Colisão sem extra estruturado aplicável; falta fato novo ou `identityLabelOverride` |
+
+### Taxonomia de resultados
+
+| Bucket | O que entra | Efeito no `state` |
+|---|---|---|
+| `blockingErrors` | Identidade duplicada, `name` obrigatório inválido, canonical/slug inválidos ou duplicados, `not_public` | `needs_input` ou `suspended` |
+| `qualityWarnings` | Imagem ausente/inválida, atributo opcional ignorado, description inválida com composição factual | Não muda indexação |
+| `overrideErrors` | Override recusado; valor automático permanece | Não bloqueia se o automático for válido |
+
+Indexação orgânica ≠ rich result:
+
+| Campo | Significado |
+|---|---|
+| `indexingProposed` | `auto_ready` / `override_ready` → index,follow e sitemap |
+| `inSitemapProposed` | Igual a `indexingProposed` |
+| `jsonLdProposed` | JSON-LD Product proposto quando indexável, mesmo sem image/offers |
+| `structuredDataComplete` / `richResultEligible` | Diagnóstico: name+url+description+image+offers. Ausência de image/offers/review **não** gera noindex |
 
 ### JSON-LD proposto (só `auto_ready` / `override_ready`)
 

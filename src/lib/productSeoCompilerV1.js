@@ -22,6 +22,15 @@ const UUID_RE =
 const SEO_TITLE_MAX = 70
 const SEO_DESC_MAX = 320
 const IDENTITY_LABEL_MAX = 80
+const FACTUAL_NAME_MAX = 120
+const FACTUAL_DESC_MAX = 2000
+
+/**
+ * Documented identity-token separators: whitespace, middle dot, structural
+ * hyphen/dash, colon (including fullwidth), slash, pipe, comma, semicolon.
+ */
+const TOKEN_SPLIT_RE = /[\s\u00b7\u2022|:;,/\-\u2010-\u2015\u2212\uFF1A\uFF0F\uFF0C]+/u
+const TOKEN_LEAD_SEP_RE = /^[\s\u00b7\u2022|:;,/\-\u2010-\u2015\u2212\uFF1A\uFF0F\uFF0C]+/u
 
 /** Fingerprint includes only inputs that can change compiled output. */
 export const FINGERPRINT_INCLUDED = Object.freeze([
@@ -61,9 +70,13 @@ const NAMED_ENTITIES = {
   amp: "&",
   quot: '"',
   apos: "'",
+  colon: ":",
+  nbsp: " ",
+  tab: "\t",
+  newline: "\n",
 }
 
-const DANGEROUS_SCHEMES = ["javascript", "vbscript", "data"]
+const DANGEROUS_SCHEMES = ["javascript", "vbscript", "data", "file"]
 const URI_LIKE = /^(https?|ftp|mailto|file|tel):/i
 const SCHEME_SLASH = /^[a-z][a-z0-9+.-]*:\/\//i
 
@@ -123,10 +136,14 @@ function decodeHtmlEntities(s) {
   })
 }
 
-/** Detection-only compact form. Never used as output. */
+/**
+ * Detection-only compact form. Never used as published display.
+ * NFKC folds fullwidth punctuation (U+FF1A → ":") after entity decode.
+ */
 function compactForDetection(s) {
   return decodeHtmlEntities(String(s))
-    .replace(/[\u0000-\u0020\u007F-\u009F\u00A0\u200B\u200C\uFEFF\u2060\u00AD]/g, "")
+    .normalize("NFKC")
+    .replace(/[\u0000-\u0020\u007F-\u009F\u00A0\u200B-\u200F\u202A-\u202E\u2060\u2066-\u2069\uFEFF\u00AD\u061C]/g, "")
     .toLowerCase()
 }
 
@@ -144,11 +161,26 @@ function isForbiddenControl(cp) {
   return false
 }
 
+function hasForbiddenControls(s) {
+  for (const ch of String(s)) {
+    if (isForbiddenControl(ch.codePointAt(0))) return true
+  }
+  return false
+}
+
+function hasDangerousScheme(compact) {
+  for (const scheme of DANGEROUS_SCHEMES) {
+    if (compact.includes(`${scheme}:`)) return true
+  }
+  return false
+}
+
 /**
- * Plain-text policy for overrides. Rejects; never sanitizes.
+ * Plain-text policy. Rejects; never sanitizes.
  *
  * Unicode: detection runs on the original string and on HTML-entity-decoded
- * form. Accepted display is NFC + collapsed whitespace only after the value
+ * form. Scheme detection uses a compact NFKC form that is never published.
+ * Accepted display is NFC + collapsed whitespace only after the value
  * passes. Limits use NFC code points (`[...str].length`), never UTF-16
  * `String.length`. Dangerous input is ignored; the automatic value stays.
  *
@@ -169,9 +201,7 @@ export function validateOverridePlainText(raw, opts) {
     }
   }
   const compact = compactForDetection(original)
-  for (const scheme of DANGEROUS_SCHEMES) {
-    if (compact.includes(`${scheme}:`)) return { present: true, ok: false, reason: `${opts.kind}_scheme` }
-  }
+  if (hasDangerousScheme(compact)) return { present: true, ok: false, reason: `${opts.kind}_scheme` }
   if (opts.rejectUri) {
     if (URI_LIKE.test(compact) || SCHEME_SLASH.test(compact) || compact.startsWith("//")) {
       return { present: true, ok: false, reason: `${opts.kind}_uri` }
@@ -182,6 +212,61 @@ export function validateOverridePlainText(raw, opts) {
   if (isUuidToken(value)) return { present: true, ok: false, reason: `${opts.kind}_uuid` }
   if (countCodePoints(value) > opts.maxCodePoints) return { present: true, ok: false, reason: `${opts.kind}_too_long` }
   return { present: true, ok: true, value }
+}
+
+/**
+ * HTTPS public URL for images and canonical. Never uses validateOverridePlainText.
+ * Detection-only compact/NFKC is not published.
+ *
+ * @param {unknown} raw
+ * @param {string} kind
+ */
+export function validatePublicHttpsUrl(raw, kind = "image") {
+  if (raw == null || String(raw).trim() === "") return { present: false }
+  const original = String(raw)
+  if (hasForbiddenControls(original) || hasForbiddenControls(decodeHtmlEntities(original))) {
+    return { present: true, ok: false, reason: `${kind}_control` }
+  }
+  const compact = compactForDetection(original)
+  if (hasDangerousScheme(compact)) return { present: true, ok: false, reason: `${kind}_scheme` }
+  if (compact.startsWith("http:") && !compact.startsWith("https:")) {
+    return { present: true, ok: false, reason: `${kind}_scheme` }
+  }
+  let parsed
+  try {
+    parsed = new URL(original.trim())
+  } catch {
+    return { present: true, ok: false, reason: `${kind}_invalid` }
+  }
+  if (parsed.protocol !== "https:") return { present: true, ok: false, reason: `${kind}_scheme` }
+  if (parsed.username !== "" || parsed.password !== "") {
+    return { present: true, ok: false, reason: `${kind}_credentials` }
+  }
+  if (!parsed.hostname) return { present: true, ok: false, reason: `${kind}_host` }
+  if (hasForbiddenControls(parsed.href)) return { present: true, ok: false, reason: `${kind}_control` }
+  return { present: true, ok: true, value: parsed.href }
+}
+
+/**
+ * @param {unknown[]} rawImages
+ */
+export function acceptPublicImages(rawImages) {
+  const errors = []
+  const accepted = []
+  const seen = new Set()
+  const list = Array.isArray(rawImages) ? rawImages : []
+  for (const item of list) {
+    const check = validatePublicHttpsUrl(item, "image")
+    if (!check.present) continue
+    if (!check.ok) {
+      errors.push(check.reason)
+      continue
+    }
+    if (seen.has(check.value)) continue
+    seen.add(check.value)
+    accepted.push(check.value)
+  }
+  return { images: accepted, errors, missing: accepted.length === 0 }
 }
 
 /**
@@ -200,22 +285,45 @@ function redundant(token, existing) {
 }
 
 /**
- * Label restates the base identity. Does not flag a short legitimate word
- * that merely occurs inside a longer token (e.g. "Ouro" inside "Marinho & Ouro Claro").
+ * Split on documented separators after identityKey + NFKC (detection of
+ * fullwidth punctuation). Not used as published text.
+ * @param {string} value
+ */
+function identityTokenParts(value) {
+  return key(value)
+    .normalize("NFKC")
+    .split(TOKEN_SPLIT_RE)
+    .filter(Boolean)
+}
+
+/**
+ * Label restates the base identity. Lexical prefixes without a separator
+ * (Solar vs Sol, Anelar vs Anel) are not restatement.
  *
  * @param {string} label
  * @param {string[]} tokens
  */
-function isIdentityRestatement(label, tokens) {
-  const lk = key(label)
+export function isIdentityRestatement(label, tokens) {
+  const lk = key(label).normalize("NFKC")
   const base = joinName(tokens)
-  const bk = key(base)
+  const bk = key(base).normalize("NFKC")
   if (!lk) return true
   if (bk && lk === bk) return true
-  if (bk && lk.startsWith(bk)) return true
-  const tokenKeys = tokens.map((t) => key(t)).filter(Boolean)
+  if (bk && lk.startsWith(bk) && lk.length > bk.length && TOKEN_LEAD_SEP_RE.test(lk.slice(bk.length))) {
+    return true
+  }
+  const tokenKeys = tokens.map((t) => key(t).normalize("NFKC")).filter(Boolean)
   if (tokenKeys.some((tk) => lk === tk)) return true
-  if (tokenKeys.length >= 2 && tokenKeys.every((tk) => lk.includes(tk))) return true
+  const baseParts = identityTokenParts(base)
+  const labelParts = identityTokenParts(label)
+  if (
+    baseParts.length >= 1 &&
+    labelParts.length >= baseParts.length &&
+    baseParts.every((part, i) => labelParts[i] === part) &&
+    (labelParts.length > baseParts.length || baseParts.length >= 2)
+  ) {
+    return true
+  }
   return false
 }
 
@@ -262,10 +370,74 @@ function composeDescription(effective, desc, line, name, category) {
   return parts.length ? parts.join(" ") : effective
 }
 
-/** @param {unknown} url */
-function validImage(url) {
-  const u = displayText(url)
-  return u.startsWith("https://") || u.startsWith("http://")
+/**
+ * @param {unknown} raw
+ * @param {string} kind
+ * @param {number} max
+ * @param {boolean} rejectUri
+ */
+function takePlain(raw, kind, max, rejectUri) {
+  const check = validateOverridePlainText(raw, { maxCodePoints: max, kind, rejectUri })
+  if (!check.present) return { value: "", invalid: false, reason: null }
+  if (!check.ok) return { value: "", invalid: true, reason: check.reason }
+  return { value: check.value, invalid: false, reason: null }
+}
+
+/**
+ * Factual tenant fields: invalid values never enter H1/title/meta/OG/alt/JSON-LD.
+ * @param {Record<string, unknown>} input
+ */
+function readFacts(input) {
+  const blockingErrors = []
+  const qualityWarnings = []
+  const name = takePlain(input.name, "name", FACTUAL_NAME_MAX, true)
+  const lineName = takePlain(input.lineName, "lineName", FACTUAL_NAME_MAX, true)
+  const categoryName = takePlain(input.categoryName, "categoryName", FACTUAL_NAME_MAX, true)
+  const publicProductCode = takePlain(input.publicProductCode, "publicProductCode", FACTUAL_NAME_MAX, true)
+  const brand = takePlain(input.brand, "brand", FACTUAL_NAME_MAX, true)
+  const description = takePlain(input.description, "description", FACTUAL_DESC_MAX, false)
+  if (name.invalid) blockingErrors.push(name.reason)
+  if (lineName.invalid) qualityWarnings.push(lineName.reason)
+  if (categoryName.invalid) qualityWarnings.push(categoryName.reason)
+  if (publicProductCode.invalid) qualityWarnings.push(publicProductCode.reason)
+  if (brand.invalid) qualityWarnings.push(brand.reason)
+  if (description.invalid) qualityWarnings.push(description.reason)
+
+  const variantAttributes = []
+  const structured = Array.isArray(input.variantAttributes) ? input.variantAttributes : []
+  for (const attr of structured) {
+    const item = takePlain(attr, "variantAttributes", FACTUAL_NAME_MAX, true)
+    if (item.invalid) {
+      qualityWarnings.push(item.reason)
+      continue
+    }
+    if (item.value) variantAttributes.push(item.value)
+  }
+
+  const canonical = validatePublicHttpsUrl(input.canonicalUrl, "canonical")
+  let canonicalUrl = ""
+  if (canonical.present && canonical.ok) canonicalUrl = canonical.value
+  else if (canonical.present) blockingErrors.push(canonical.reason)
+
+  const imagesResult = acceptPublicImages(input.images)
+  qualityWarnings.push(...imagesResult.errors)
+
+  return {
+    name: name.value,
+    nameInvalid: name.invalid,
+    lineName: lineName.value,
+    categoryName: categoryName.value,
+    publicProductCode: publicProductCode.value,
+    brand: brand.value,
+    description: description.value,
+    variantAttributes,
+    canonicalUrl,
+    images: imagesResult.images,
+    missingValidImage: imagesResult.missing,
+    identityRequiredInvalid: name.invalid,
+    blockingErrors,
+    qualityWarnings,
+  }
 }
 
 /** @param {Record<string, unknown>} input */
@@ -297,11 +469,11 @@ function fingerprintInput(input) {
   }
 }
 
-/** @param {Record<string, unknown>} input */
-function pass1Tokens(input) {
+/** @param {{ lineName: string, name: string }} facts */
+function pass1Tokens(facts) {
   const tokens = []
-  addToken(tokens, input.lineName)
-  addToken(tokens, input.name)
+  addToken(tokens, facts.lineName)
+  addToken(tokens, facts.name)
   return tokens
 }
 
@@ -312,11 +484,10 @@ function isPublicInput(input) {
 
 /**
  * Structured variant extras only. Description is never an identity token.
- * @param {Record<string, unknown>} input
+ * @param {{ variantAttributes: string[] }} facts
  */
-function variantExtras(input) {
-  const structured = Array.isArray(input.variantAttributes) ? input.variantAttributes : []
-  return structured.map((attr) => displayText(attr)).filter((t) => t && !isUuidToken(t))
+function variantExtras(facts) {
+  return facts.variantAttributes.filter((t) => t && !isUuidToken(t))
 }
 
 /**
@@ -344,10 +515,15 @@ export function compileProductSeoV1(input, catalog) {
  * @returns {ReturnType<typeof finalizeRow>[]}
  */
 export function compileCatalogSeoV1(inputs) {
-  const rows = (Array.isArray(inputs) ? inputs : []).map((p) => ({
-    input: p,
-    tokens: pass1Tokens(p),
-  }))
+  const rows = (Array.isArray(inputs) ? inputs : []).map((p) => {
+    const facts = readFacts(p)
+    return {
+      input: p,
+      facts,
+      tokens: pass1Tokens(facts),
+      structuredResolutionCandidate: false,
+    }
+  })
 
   const identityKeyOf = (i) => key(joinName(rows[i].tokens))
 
@@ -371,7 +547,14 @@ export function compileCatalogSeoV1(inputs) {
           .map((t) => displayText(t))
           .filter((t) => t && !isUuidToken(t) && !redundant(t, rows[i].tokens))
       })
-      if (planned.some((list) => list.length === 0)) continue
+      if (planned.some((list) => list.length === 0)) {
+        if (planned.some((list) => list.length > 0)) {
+          idxs.forEach((i) => {
+            rows[i].structuredResolutionCandidate = true
+          })
+        }
+        continue
+      }
       idxs.forEach((i, j) => {
         for (const token of planned[j]) addToken(rows[i].tokens, token)
       })
@@ -394,10 +577,10 @@ export function compileCatalogSeoV1(inputs) {
     }
   }
 
-  applyStrict((row) => variantExtras(row.input))
-  applyStrict((row) => displayText(row.input.categoryName))
+  applyStrict((row) => variantExtras(row.facts))
+  applyStrict((row) => row.facts.categoryName)
   applyStrict((row) => {
-    const code = displayText(row.input.publicProductCode)
+    const code = row.facts.publicProductCode
     return isUuidToken(code) ? "" : code
   })
 
@@ -414,7 +597,7 @@ export function compileCatalogSeoV1(inputs) {
   const canonOwners = new Map()
   for (const p of rows) {
     const s = key(p.input.slug)
-    const c = key(p.input.canonicalUrl)
+    const c = key(p.facts.canonicalUrl || p.input.canonicalUrl)
     if (s) slugOwners.set(s, (slugOwners.get(s) || 0) + 1)
     if (c) canonOwners.set(c, (canonOwners.get(c) || 0) + 1)
   }
@@ -425,7 +608,8 @@ export function compileCatalogSeoV1(inputs) {
       identityLabelAccepted: Boolean(row.identityLabelAccepted),
       identityLabelReject: row.identityLabelReject || null,
       slugDup: (slugOwners.get(key(row.input.slug)) || 0) > 1,
-      canonDup: (canonOwners.get(key(row.input.canonicalUrl)) || 0) > 1,
+      canonDup: (canonOwners.get(key(row.facts.canonicalUrl || row.input.canonicalUrl)) || 0) > 1,
+      structuredResolutionCandidate: Boolean(row.structuredResolutionCandidate),
     }),
   )
 
@@ -526,61 +710,64 @@ function applyIdentityLabels(rows, originallyColliding, identityKeyOf) {
 }
 
 /**
- * @param {{ input: Record<string, unknown>, tokens: string[], identityLabelAccepted?: boolean, identityLabelReject?: string }} row
- * @param {{ colliding: boolean, identityLabelAccepted: boolean, identityLabelReject: string | null, slugDup: boolean, canonDup: boolean }} ctx
+ * @param {{ input: Record<string, unknown>, facts: ReturnType<typeof readFacts>, tokens: string[], identityLabelAccepted?: boolean, identityLabelReject?: string, structuredResolutionCandidate?: boolean }} row
+ * @param {{ colliding: boolean, identityLabelAccepted: boolean, identityLabelReject: string | null, slugDup: boolean, canonDup: boolean, structuredResolutionCandidate: boolean }} ctx
  */
 function finalizeRow(row, ctx) {
   const p = row.input
+  const facts = row.facts
   const tokens = row.tokens
-  const effective = joinName(tokens) || displayText(p.name)
-  const brand = displayText(p.brand)
+  const effective = joinName(tokens)
+  const brand = facts.brand
   const autoDesc = composeDescription(
     effective,
-    displayText(p.description),
-    displayText(p.lineName),
-    displayText(p.name),
-    displayText(p.categoryName),
+    facts.description,
+    facts.lineName,
+    facts.name,
+    facts.categoryName,
   )
   const autoTitle = brand ? `${effective}${TITLE_SEP}${brand}` : effective
-  const images = Array.isArray(p.images) ? p.images.map((u) => displayText(u)).filter(Boolean) : []
-  const errors = []
+  const images = facts.images
+  const blockingErrors = [...facts.blockingErrors]
+  const qualityWarnings = [...facts.qualityWarnings]
+  const overrideErrors = []
   const visible = p.visible !== false
   const catalogEnabled = p.catalogEnabled !== false
   const tenantActive = p.tenantActive !== false
 
-  if (!visible || !catalogEnabled || !tenantActive) errors.push("not_public")
-  if (!effective) errors.push("empty_effective_name")
-  if (!autoDesc) errors.push("empty_effective_description")
-  if (!validImage(images[0])) errors.push("missing_valid_image")
-  if (!displayText(p.slug)) errors.push("missing_slug")
-  if (!displayText(p.canonicalUrl)) errors.push("missing_canonical")
-  if (ctx.slugDup) errors.push("duplicate_slug")
-  if (ctx.canonDup) errors.push("duplicate_canonical")
-  if (ctx.colliding) errors.push("duplicate_effective_name")
-  if (ctx.identityLabelReject) errors.push(ctx.identityLabelReject)
+  if (!visible || !catalogEnabled || !tenantActive) blockingErrors.push("not_public")
+  if (facts.identityRequiredInvalid) blockingErrors.push("identity_invalid")
+  if (!effective) blockingErrors.push("empty_effective_name")
+  if (!displayText(p.slug)) blockingErrors.push("missing_slug")
+  if (!facts.canonicalUrl) blockingErrors.push("missing_canonical")
+  if (ctx.slugDup) blockingErrors.push("duplicate_slug")
+  if (ctx.canonDup) blockingErrors.push("duplicate_canonical")
+  if (ctx.colliding) blockingErrors.push("duplicate_effective_name")
+  if (ctx.identityLabelReject) overrideErrors.push(ctx.identityLabelReject)
+  if (facts.missingValidImage) qualityWarnings.push("missing_valid_image")
+  if (!autoDesc && effective) qualityWarnings.push("empty_effective_description")
 
   let state = "auto_ready"
-  if (errors.includes("not_public")) state = "suspended"
+  if (blockingErrors.includes("not_public")) state = "suspended"
+  else if (facts.identityRequiredInvalid || blockingErrors.includes("identity_invalid")) state = "needs_input"
   else if (ctx.identityLabelAccepted && !ctx.colliding) state = "override_ready"
-  else if (ctx.colliding || errors.includes("duplicate_effective_name")) state = "needs_input"
+  else if (ctx.colliding || blockingErrors.includes("duplicate_effective_name")) state = "needs_input"
   else if (
-    errors.includes("empty_effective_name") ||
-    errors.includes("empty_effective_description") ||
-    errors.includes("missing_valid_image") ||
-    errors.includes("missing_slug") ||
-    errors.includes("missing_canonical") ||
-    errors.includes("duplicate_slug") ||
-    errors.includes("duplicate_canonical")
+    blockingErrors.includes("empty_effective_name") ||
+    blockingErrors.includes("missing_slug") ||
+    blockingErrors.includes("missing_canonical") ||
+    blockingErrors.includes("duplicate_slug") ||
+    blockingErrors.includes("duplicate_canonical")
   ) {
     state = "needs_input"
   }
 
-  const indexingEnabled = state === "auto_ready" || state === "override_ready"
-  const jsonLd = indexingEnabled
+  const indexingProposed = state === "auto_ready" || state === "override_ready"
+  const jsonLd = indexingProposed
     ? buildJsonLd({
         name: effective,
         description: autoDesc,
-        canonicalUrl: displayText(p.canonicalUrl),
+        canonicalUrl: facts.canonicalUrl,
         productId: displayText(p.productId),
         images,
         price: p.price,
@@ -588,6 +775,10 @@ function finalizeRow(row, ctx) {
         availability: p.availability,
       })
     : null
+  const complete = isStructuredDataComplete(jsonLd)
+
+  const structuredResolutionCandidate =
+    state === "needs_input" && ctx.colliding && ctx.structuredResolutionCandidate
 
   return {
     productId: displayText(p.productId),
@@ -601,7 +792,10 @@ function finalizeRow(row, ctx) {
     imageAlt: effective,
     jsonLd,
     state,
-    errors,
+    blockingErrors,
+    qualityWarnings,
+    overrideErrors,
+    errors: blockingErrors,
     identityLabelAccepted: Boolean(ctx.identityLabelAccepted),
     identityLabelRejected: Boolean(ctx.identityLabelReject),
     seoTitleOverrideAccepted: false,
@@ -610,9 +804,14 @@ function finalizeRow(row, ctx) {
     seoDescriptionOverrideRejected: false,
     overrideRejected: Boolean(ctx.identityLabelReject),
     needsInputPrompt: state === "needs_input" ? NEEDS_INPUT_PROMPT : null,
-    indexingEnabled,
-    inSitemapProposed: indexingEnabled,
-    robotsProposed: indexingEnabled ? "index,follow" : "noindex,follow",
+    indexingProposed,
+    indexingEnabled: indexingProposed,
+    jsonLdProposed: Boolean(jsonLd),
+    structuredDataComplete: complete,
+    richResultEligible: indexingProposed && complete,
+    inSitemapProposed: indexingProposed,
+    robotsProposed: indexingProposed ? "index,follow" : "noindex,follow",
+    structuredResolutionCandidate,
   }
 }
 
@@ -636,7 +835,7 @@ function applySeoFieldOverrides(automatic, rows) {
     const input = rows[i].input
     const titleCheck = validateSeoOverride(input.seoTitleOverride, SEO_TITLE_MAX, "seo_title", true)
     const descCheck = validateSeoOverride(input.seoDescriptionOverride, SEO_DESC_MAX, "seo_description", false)
-    const errors = [...auto.errors]
+    const overrideErrors = [...auto.overrideErrors]
     let seoTitle = auto.seoTitle
     let metaDescription = auto.metaDescription
     let ogDescription = auto.ogDescription
@@ -651,7 +850,7 @@ function applySeoFieldOverrides(automatic, rows) {
       seoTitleOverrideAccepted = true
     } else if (titleCheck.present) {
       seoTitleOverrideRejected = true
-      errors.push("seo_title_rejected", titleCheck.reason)
+      overrideErrors.push("seo_title_rejected", titleCheck.reason)
     }
 
     if (descCheck.present && descCheck.ok) {
@@ -663,7 +862,7 @@ function applySeoFieldOverrides(automatic, rows) {
       }
     } else if (descCheck.present) {
       seoDescriptionOverrideRejected = true
-      errors.push("seo_description_rejected", descCheck.reason)
+      overrideErrors.push("seo_description_rejected", descCheck.reason)
     }
 
     return {
@@ -672,7 +871,10 @@ function applySeoFieldOverrides(automatic, rows) {
       metaDescription,
       ogDescription,
       jsonLd,
-      errors,
+      blockingErrors: auto.blockingErrors,
+      qualityWarnings: auto.qualityWarnings,
+      overrideErrors,
+      errors: auto.blockingErrors,
       seoTitleOverrideAccepted,
       seoTitleOverrideRejected,
       seoDescriptionOverrideAccepted,
@@ -684,6 +886,12 @@ function applySeoFieldOverrides(automatic, rows) {
         .digest("hex"),
     }
   })
+}
+
+function isStructuredDataComplete(jsonLd) {
+  if (!jsonLd) return false
+  const hasImage = Array.isArray(jsonLd.image) ? jsonLd.image.length > 0 : Boolean(jsonLd.image)
+  return Boolean(jsonLd.name && jsonLd.url && jsonLd.description && hasImage && jsonLd.offers)
 }
 
 /**
@@ -737,7 +945,7 @@ export function previewCatalogSeoReportOnly(inputs) {
   /** @type {Record<string, { identityKey: string, representativeDisplay: string, displays: string[], productIds: string[] }>} */
   const collisions = {}
   for (const row of products) {
-    if (!row.errors.includes("duplicate_effective_name")) continue
+    if (!row.blockingErrors.includes("duplicate_effective_name")) continue
     const identity = identityKey(row.effectiveProductName) || "__empty__"
     const group = collisions[identity] || {
       identityKey: identity,
@@ -749,6 +957,17 @@ export function previewCatalogSeoReportOnly(inputs) {
     group.productIds.push(row.productId)
     collisions[identity] = group
   }
+  const needs = products.filter((row) => row.state === "needs_input")
+  const needsInputCount = needs.length
+  const hasStructuredResolutionCandidate = needs.filter((row) => row.structuredResolutionCandidate).length
+  const requiresIdentityLabelOrNewAttribute = needs.filter(
+    (row) => row.blockingErrors.includes("duplicate_effective_name") && !row.structuredResolutionCandidate,
+  ).length
+  const indexingProposedCount = products.filter((row) => row.indexingProposed).length
+  const jsonLdProposedCount = products.filter((row) => row.jsonLdProposed).length
+  const structuredDataCompleteCount = products.filter((row) => row.structuredDataComplete).length
+  const richResultEligibleCount = products.filter((row) => row.richResultEligible).length
+  const qualityWarningProductCount = products.filter((row) => row.qualityWarnings.length > 0).length
   return {
     mode: "report-only",
     publishesHtml: false,
@@ -760,8 +979,15 @@ export function previewCatalogSeoReportOnly(inputs) {
     byState,
     collisionMatrix: collisions,
     needsInputPrompt: NEEDS_INPUT_PROMPT,
-    couldResolveWithStructuredAttributeOrIdentityLabel: products.filter((row) => row.state === "needs_input")
-      .length,
+    needsInputCount,
+    hasStructuredResolutionCandidate,
+    requiresIdentityLabelOrNewAttribute,
+    indexingProposedCount,
+    inSitemapProposedCount: indexingProposedCount,
+    jsonLdProposedCount,
+    structuredDataCompleteCount,
+    richResultEligibleCount,
+    qualityWarningProductCount,
     products,
   }
 }
