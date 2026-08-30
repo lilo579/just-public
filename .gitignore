@@ -27,5 +27,9 @@ pnpm-debug.log*
 .tmp-*.jpeg
 .tmp-*.webp
 
+# live shadow evidence (never commit payloads)
+ops/seo001/.live-evidence/
+.tmp-seo-shadow-live/
+
 # jetbrains setting folder
 .idea/
