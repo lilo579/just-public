@@ -15,6 +15,7 @@ import { identityKey, displayText } from "../src/lib/productSeoCompilerV1.js"
 import {
   createHostBoundCatalogLoader,
   loadProductSeoCanonicalContextV1,
+  liveCatalogLoaderGate,
   runProductSeoShadowV1,
   wrapReadOnlySupabase,
   READ_ONLY_CATALOG_RPC,
@@ -129,6 +130,8 @@ const loader = createHostBoundCatalogLoader({
   supabase,
   writeAttempts,
 })
+const gate = liveCatalogLoaderGate(loader)
+if (!gate.ok) abort(gate.reason)
 const livePage = await loader({ page: 1, pageSize: 500, signal: AbortSignal.timeout(4000) })
 if (writeAttempts.length) abort("write_attempted")
 const liveRows = Array.isArray(livePage.rows) ? livePage.rows : []
@@ -142,9 +145,10 @@ const report = await runProductSeoShadowV1({
     tenantActive: true,
     canonicalContext: apexAuthority,
   },
-  loadCatalog: async () => ({ rows: liveRows, nextPage: null, countKind: "none" }),
-  writeAttempts,
+  loadCatalog: loader,
 })
+if (report.readOnlyExecution !== "verified") abort("unverified_loader")
+if (report.writesObserved == null) abort("unverified_loader")
 
 mkdirSync(EVIDENCE_DIR, { recursive: true })
 writeFileSync(join(EVIDENCE_DIR, "live-catalog.json"), `${JSON.stringify(liveRows, null, 2)}\n`)
@@ -156,7 +160,10 @@ const liveIds = new Set(liveRows.map(rowId))
 const summary = {
   ok: true,
   mode: "shadow-report-only",
+  readOnlyExecution: report.readOnlyExecution,
+  loaderKind: report.loaderKind,
   writes: report.writes,
+  writesObserved: report.writesObserved,
   writeAttempts,
   allowlist: READ_ONLY_RPC_ALLOWLIST,
   rpc: [READ_ONLY_CANONICAL_RPC, READ_ONLY_CATALOG_RPC],

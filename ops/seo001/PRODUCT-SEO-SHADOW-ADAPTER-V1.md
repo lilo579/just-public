@@ -71,7 +71,11 @@ The adapter **does not** set `visible: true` when the source omits `visible`.
 
 ## Canonical context contract
 
-`resolveProductSeoCanonicalContextV1({ requestHost, expectedTenantId, authority })` is the only producer of a trusted context (`brand: just-product-seo-canonical-context/v1`). Live uses `loadProductSeoCanonicalContextV1` → RPC `public_host_canonical_authority`.
+`resolveProductSeoCanonicalContextV1({ requestHost, expectedTenantId, authority })` and `loadProductSeoCanonicalContextV1` are the only producers of a trusted context. After validating authority they create the object, deep-freeze the graph, and register it in a **module-private WeakSet**. `isTrustedCanonicalContext` requires **membership** plus structural invariants. The brand string `just-product-seo-canonical-context/v1` is diagnostic metadata only.
+
+A hand-built object, `{...spread}` clone, `JSON.parse(JSON.stringify(...))`, or property/symbol copy is not trusted. Mutating `tenantId`, `primaryHost`, `canonical`, `publication`, or `relation` after resolve throws (frozen). Live uses `loadProductSeoCanonicalContextV1` → RPC `public_host_canonical_authority`.
+
+RPC rows must include the requested host explicitly (`request_host` / `requestHost`). There is **no** fallback to the caller host. Absent, empty, non-string, or divergent values fail closed (`malformed_canonical_authority` or `host_mismatch`); the context is untrusted and shadow does not compile.
 
 Agreement required:
 
@@ -102,10 +106,13 @@ Mismatch cases (`total_changed`, `total_greater_than_received`, `total_less_than
 
 ## Read-only guarantee (honest)
 
-- `wrapReadOnlySupabase` blocks `from` / `insert` / `update` / `delete` / `upsert` / `storage` / `schema`.
+- `createHostBoundCatalogLoader` wraps the client, closes over the RPC allowlist, and registers the function in a **module-private WeakSet**. Only that factory produces a `verified` loader.
+- `runProductSeoShadowV1`: official registered loader → `readOnlyExecution: "verified"`, `loaderKind: "official"`, `writesObserved: []` when the wrapper saw no blocked access. Injected/synthetic loader → `readOnlyExecution: "unverified"`, `loaderKind: "synthetic"`, `writesObserved: null`. The runner **never** emits `writes: []` for an injected loader (`writes` is `null`).
+- Live CLI (`liveCatalogLoaderGate`) refuses an unverified loader before running.
+- `wrapReadOnlySupabase` blocks `from` / `insert` / `update` / `delete` / `upsert` / `storage` / `schema`. A blocked access on the official wrapper aborts the shadow and records the method in `writesObserved`.
 - RPC allowlist: `public_get_products_by_host`, `public_host_canonical_authority` (both POST-of-read SECURITY DEFINER).
 - Static scan: adapter, canonical context, and runner contain no `fetch(` / `createClient(`.
-- `writes: []` is the **observed** attempt log after a run. It is not a cryptographic proof that no other process wrote.
+- `writesObserved` is the **observed/blocked** attempt log of the official wrapper. It is not a cryptographic proof that no other process wrote. Defense in depth, not a formal guarantee.
 
 ## Alias policy
 
@@ -115,9 +122,9 @@ Each group is collected in full. Normalized comparison uses compiler `identityKe
 
 `runProductSeoShadowV1({ loadCatalog, context, pageSize, limit, timeoutMs, signal, writeAttempts })`
 
-- Injected loader (fixture or `createHostBoundCatalogLoader` → **allowlisted** `public_get_products_by_host`)
+- Injected loader (fixture tests: `synthetic` / `unverified`) or `createHostBoundCatalogLoader` (WeakSet-verified official path)
 - Canonical via `loadProductSeoCanonicalContextV1` → `public_host_canonical_authority`
-- `wrapReadOnlySupabase` blocks write surfaces; `writes` is the observed attempt log
+- Official wrapper blocks write surfaces; `writesObserved` is the observed/blocked log on the verified path only
 - Completeness is proven only with exact total; otherwise unknown/incomplete
 - Timeout + AbortSignal cancel the run
 - Shadow is **never** usable for enforcement
@@ -125,9 +132,9 @@ Each group is collected in full. Normalized comparison uses compiler `identityKe
 - Compare current PDP paint vs compiled proposal
 - Does not persist overrides or `product_publication_state`
 
-CLI (fixture): `scripts/preview-product-seo-shadow-v1.mjs <fixture.json>` stdout only.
+CLI (fixture): `scripts/preview-product-seo-shadow-v1.mjs <fixture.json>` stdout only. Fixture path is synthetic/unverified by design.
 
-Live read-only (anon, no Git payload): `scripts/preview-product-seo-shadow-live-readonly.mjs` writes evidence under `/tmp/just-seo-shadow-live` (or `SHADOW_LIVE_EVIDENCE_DIR`). Aborts on `service_role` / missing anon / any write method.
+Live read-only (anon, no Git payload): `scripts/preview-product-seo-shadow-live-readonly.mjs` writes evidence under `/tmp/just-seo-shadow-live` (or `SHADOW_LIVE_EVIDENCE_DIR`). Aborts on `service_role` / missing anon / unverified loader / any write method.
 
 ## Future data strategy (decision)
 
@@ -162,7 +169,7 @@ Surfaces: catalog product list badge, PDP editor hint, tenant SEO digest. Out of
 
 | Gate | Veredito |
 |---|---|
-| Commit local futuro | **GO** when asked (new shadow files + fixture `canonicalRpc` header + `.gitignore`; no pages). Canonical context and unproven completeness are closed. |
+| Commit corretivo sobre `02f6a2a` | **GO** when asked (WeakSet capability + explicit `request_host` + verified loader). Uncommitted until then. |
 | PR | **NO-GO** until commit GO and review |
 | Migration | **NO-GO** |
 | Hub UI | **NO-GO** |

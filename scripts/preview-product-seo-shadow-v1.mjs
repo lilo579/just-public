@@ -55,7 +55,10 @@ const report = await runProductSeoShadowV1({
 
 const slim = {
   mode: report.mode,
+  readOnlyExecution: report.readOnlyExecution,
+  loaderKind: report.loaderKind,
   writes: report.writes,
+  writesObserved: report.writesObserved,
   publishesHtml: report.publishesHtml,
   publishesSitemap: report.publishesSitemap,
   publishesRobots: report.publishesRobots,

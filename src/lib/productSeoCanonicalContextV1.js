@@ -1,12 +1,16 @@
 /**
  * Validated canonical context for Product SEO shadow.
- * Callers cannot stamp isPrimaryRequest. Authority is RPC row or Edge payload.
+ * Brand string is diagnostic metadata only. Trust is WeakSet membership
+ * after resolve/load validates authority. Callers cannot stamp isPrimaryRequest.
  */
 
 import { asPublicCanonicalContract, buildCanonicalUrl } from "./canonicalAuthority.js"
 import { parsePublicationContract, publicationFromPayload } from "./publicationContract.js"
 
 export const CANONICAL_CONTEXT_BRAND = "just-product-seo-canonical-context/v1"
+
+/** @type {WeakSet<object>} */
+const trustedCanonicalContexts = new WeakSet()
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -49,14 +53,32 @@ function fail(reason, extra = {}) {
   }
 }
 
-function ok(fields) {
-  return {
+function deepFreeze(value, seen = new WeakSet()) {
+  if (value == null || typeof value !== "object") return value
+  if (seen.has(value)) return value
+  seen.add(value)
+  if (Array.isArray(value)) {
+    for (const item of value) deepFreeze(item, seen)
+  } else {
+    for (const key of Object.getOwnPropertyNames(value)) {
+      deepFreeze(value[key], seen)
+    }
+  }
+  return Object.freeze(value)
+}
+
+function sealTrusted(fields) {
+  const ctx = {
     brand: CANONICAL_CONTEXT_BRAND,
     ok: true,
     trustedForShadow: true,
     reason: null,
     ...fields,
   }
+  const sealed = typeof structuredClone === "function" ? structuredClone(ctx) : ctx
+  deepFreeze(sealed)
+  trustedCanonicalContexts.add(sealed)
+  return sealed
 }
 
 function payloadTenantId(payload) {
@@ -95,14 +117,28 @@ function trustedRelation(requestHost, primaryHost, isPrimaryRequest) {
   return { ok: false, reason: "host_not_primary" }
 }
 
+function rpcRequestHostField(rec) {
+  const hasSnake = Object.prototype.hasOwnProperty.call(rec, "request_host")
+  const hasCamel = Object.prototype.hasOwnProperty.call(rec, "requestHost")
+  if (!hasSnake && !hasCamel) return { ok: false }
+  const raw = hasSnake ? rec.request_host : rec.requestHost
+  if (typeof raw !== "string") return { ok: false }
+  const normalized = hostKey(raw)
+  if (!normalized) return { ok: false }
+  return { ok: true, host: normalized }
+}
+
 function fromRpcRow(row, requestHost, expectedTenantId, publication) {
   if (row == null) return fail("canonical_host_unresolved", { requestHost })
   const rec = asRecord(row)
   if (!rec) return fail("malformed_canonical_authority", { requestHost })
 
-  const rpcRequestHost = hostKey(rec.request_host || rec.requestHost) || requestHost
-  if (rpcRequestHost !== requestHost) {
-    return fail("host_mismatch", { requestHost, rpcRequestHost })
+  const rpcHost = rpcRequestHostField(rec)
+  if (!rpcHost.ok) {
+    return fail("malformed_canonical_authority", { requestHost })
+  }
+  if (rpcHost.host !== requestHost) {
+    return fail("host_mismatch", { requestHost, rpcRequestHost: rpcHost.host })
   }
 
   const tenantId = tenantKey(rec.tenant_id || rec.tenantId)
@@ -135,7 +171,7 @@ function fromRpcRow(row, requestHost, expectedTenantId, publication) {
   const pub = agreePublication(publication, primaryHost)
   if (!pub.ok) return fail(pub.reason, { requestHost, tenantId, primaryHost })
 
-  return ok({
+  return sealTrusted({
     source: "rpc",
     requestHost,
     tenantId,
@@ -177,7 +213,7 @@ function fromPayload(payload, requestHost, expectedTenantId) {
   const pub = agreePublication(publicationFromPayload(rec), primaryHost)
   if (!pub.ok) return fail(pub.reason, { requestHost, tenantId, primaryHost })
 
-  return ok({
+  return sealTrusted({
     source: "payload",
     requestHost,
     tenantId,
@@ -221,15 +257,18 @@ export function resolveProductSeoCanonicalContextV1(input) {
   return fail("malformed_canonical_authority", { requestHost })
 }
 
-export function isTrustedCanonicalContext(value) {
-  const rec = asRecord(value)
+function hasTrustedShape(rec) {
   return Boolean(
-    rec &&
-      rec.brand === CANONICAL_CONTEXT_BRAND &&
+    rec.brand === CANONICAL_CONTEXT_BRAND &&
       rec.ok === true &&
       rec.trustedForShadow === true &&
       rec.canonical &&
       rec.tenantId &&
       rec.primaryHost,
   )
+}
+
+export function isTrustedCanonicalContext(value) {
+  const rec = asRecord(value)
+  return Boolean(rec && trustedCanonicalContexts.has(value) && hasTrustedShape(rec))
 }

@@ -1,6 +1,7 @@
 /**
  * Shadow / report-only runner for Product SEO Compiler v1.
- * Compiles in memory. Zero writes. Caller injects catalog loading.
+ * Compiles in memory. Official loaders are WeakSet-verified; injected loaders
+ * are synthetic/unverified. writesObserved is the wrapper log, not a cryptographic proof.
  */
 
 import { compileCatalogSeoV1, previewCatalogSeoReportOnly, identityKey, displayText, stableStringify } from "./productSeoCompilerV1.js"
@@ -33,6 +34,11 @@ export const BLOCKED_CLIENT_METHODS = Object.freeze([
   "storage",
   "schema",
 ])
+
+/** @type {WeakSet<object>} */
+const verifiedCatalogLoaders = new WeakSet()
+/** @type {WeakMap<object, string[]>} */
+const officialLoaderWriteLogs = new WeakMap()
 
 function asTrimmed(value) {
   return typeof value === "string" ? value.trim() : ""
@@ -135,14 +141,15 @@ function productContentFingerprint(input) {
   })
 }
 
-function emptyWriteLog() {
-  return []
-}
-
-function shadowFlags(writes, extra = {}) {
+function shadowFlags(writeState, extra = {}) {
+  const verified = writeState && writeState.verified === true
+  const writesObserved = verified
+    ? Object.freeze([...(Array.isArray(writeState.writesObserved) ? writeState.writesObserved : [])])
+    : null
+  const readOnlyExecution = verified ? "verified" : "unverified"
+  const loaderKind = verified ? "official" : "synthetic"
   return {
     mode: "shadow-report-only",
-    writes: Object.freeze(writes.slice()),
     publishesHtml: false,
     publishesSitemap: false,
     publishesRobots: false,
@@ -153,8 +160,27 @@ function shadowFlags(writes, extra = {}) {
     catalogComplete: false,
     completeness: "unknown",
     ...extra,
+    readOnlyExecution,
+    loaderKind,
+    writesObserved,
+    writes: writesObserved,
     usableForEnforcement: false,
   }
+}
+
+export function isVerifiedCatalogLoader(value) {
+  return typeof value === "function" && verifiedCatalogLoaders.has(value)
+}
+
+/**
+ * Live CLI gate. Membership check only; cannot register a loader.
+ * `writesObserved` is the wrapper's observed/blocked log, not a cryptographic proof.
+ */
+export function liveCatalogLoaderGate(loadCatalog) {
+  if (!isVerifiedCatalogLoader(loadCatalog)) {
+    return { ok: false, reason: "unverified_loader" }
+  }
+  return { ok: true }
 }
 
 function pageCountMeta(chunk) {
@@ -254,11 +280,15 @@ function evaluateCompleteness(state) {
  *   limit?: number
  *   timeoutMs?: number
  *   signal?: AbortSignal
- *   writeAttempts?: string[]
  * }} args
  */
 export async function runProductSeoShadowV1(args) {
-  const writeAttempts = Array.isArray(args.writeAttempts) ? args.writeAttempts : emptyWriteLog()
+  const loaderVerified = isVerifiedCatalogLoader(args.loadCatalog)
+  const writeLog = loaderVerified ? officialLoaderWriteLogs.get(args.loadCatalog) || [] : null
+  const writeState = () => ({
+    verified: loaderVerified,
+    writesObserved: writeLog,
+  })
   const pageSize =
     typeof args.pageSize === "number" && args.pageSize > 0 ? args.pageSize : SHADOW_DEFAULT_PAGE_SIZE
   const limit = typeof args.limit === "number" && args.limit > 0 ? args.limit : SHADOW_DEFAULT_LIMIT
@@ -296,16 +326,16 @@ export async function runProductSeoShadowV1(args) {
 
   try {
     if (typeof args.loadCatalog !== "function") {
-      return failClosed("missing_loader", writeAttempts, timedOut)
+      return failClosed("missing_loader", { verified: false, writesObserved: null }, timedOut)
     }
     if (!isTrustedCanonicalContext(args.context?.canonicalContext)) {
       const reason = args.context?.canonicalContext?.reason || "missing_canonical_context"
-      return failClosed(reason, writeAttempts, timedOut)
+      return failClosed(reason, writeState(), timedOut)
     }
     let page = 1
     while (rawRows.length < limit) {
       if (controller.signal.aborted) {
-        return failClosed(timedOut ? "timeout" : "aborted", writeAttempts, timedOut)
+        return failClosed(timedOut ? "timeout" : "aborted", writeState(), timedOut)
       }
       const remaining = limit - rawRows.length
       const size = Math.min(pageSize, remaining)
@@ -315,11 +345,11 @@ export async function runProductSeoShadowV1(args) {
         signal: controller.signal,
       })
       if (controller.signal.aborted) {
-        return failClosed(timedOut ? "timeout" : "aborted", writeAttempts, timedOut)
+        return failClosed(timedOut ? "timeout" : "aborted", writeState(), timedOut)
       }
       pagesRead += 1
       const rows = Array.isArray(chunk) ? chunk : Array.isArray(chunk?.rows) ? chunk.rows : null
-      if (!rows) return failClosed("malformed_page", writeAttempts, timedOut)
+      if (!rows) return failClosed("malformed_page", writeState(), timedOut)
       const meta = pageCountMeta(Array.isArray(chunk) ? {} : chunk)
       if (meta.kind === "exact") exactTotals.push(meta.total)
       if (meta.version) snapshotVersions.push(meta.version)
@@ -342,30 +372,30 @@ export async function runProductSeoShadowV1(args) {
     }
   } catch (err) {
     if (timedOut || controller.signal.aborted || isAbortLike(err)) {
-      return failClosed(timedOut ? "timeout" : "aborted", writeAttempts, timedOut)
+      return failClosed(timedOut ? "timeout" : "aborted", writeState(), timedOut)
     }
     if (err && typeof err === "object" && "code" in err && err.code === "write_method_blocked") {
       const method = "method" in err && err.method ? String(err.method) : "unknown"
-      if (!writeAttempts.includes(method)) writeAttempts.push(method)
-      return failClosed("write_attempted", writeAttempts, timedOut)
+      if (writeLog && !writeLog.includes(method)) writeLog.push(method)
+      return failClosed("write_attempted", writeState(), timedOut)
     }
     if (err && typeof err === "object" && "code" in err && err.code === "rpc_error") {
-      return failClosed("rpc_error", writeAttempts, timedOut)
+      return failClosed("rpc_error", writeState(), timedOut)
     }
     if (err && typeof err === "object" && "code" in err && err.code === "missing_rpc") {
-      return failClosed("missing_rpc", writeAttempts, timedOut)
+      return failClosed("missing_rpc", writeState(), timedOut)
     }
     if (err && typeof err === "object" && "code" in err && err.code === "malformed_page") {
-      return failClosed("malformed_page", writeAttempts, timedOut)
+      return failClosed("malformed_page", writeState(), timedOut)
     }
-    return failClosed("load_failed", writeAttempts, timedOut)
+    return failClosed("load_failed", writeState(), timedOut)
   } finally {
     clearTimeout(timer)
     if (args.signal) args.signal.removeEventListener("abort", onAbort)
   }
 
-  if (writeAttempts.length) {
-    return failClosed("write_attempted", writeAttempts, timedOut)
+  if (writeLog && writeLog.length) {
+    return failClosed("write_attempted", writeState(), timedOut)
   }
 
   const completenessState = evaluateCompleteness({
@@ -408,7 +438,7 @@ export async function runProductSeoShadowV1(args) {
       continue
     }
     if (seen.get(id) !== fingerprint) {
-      return failClosed("duplicate_product_id_conflict", writeAttempts, timedOut)
+      return failClosed("duplicate_product_id_conflict", writeState(), timedOut)
     }
   }
 
@@ -449,7 +479,7 @@ export async function runProductSeoShadowV1(args) {
   })
 
   const report = {
-    ...shadowFlags(writeAttempts, {
+    ...shadowFlags(writeState(), {
       catalogComplete,
       incomplete,
       incompleteReason,
@@ -506,9 +536,9 @@ export async function runProductSeoShadowV1(args) {
   return redactShadowValue(report)
 }
 
-function failClosed(reason, writeAttempts, timedOut) {
+function failClosed(reason, writeState, timedOut) {
   return redactShadowValue({
-    ...shadowFlags(writeAttempts, {
+    ...shadowFlags(writeState, {
       ok: false,
       reason,
       timedOut,
@@ -591,25 +621,33 @@ function readCatalogRpcResult(result) {
  */
 export function createHostBoundCatalogLoader(args) {
   const writeAttempts = Array.isArray(args.writeAttempts) ? args.writeAttempts : []
-  return async function loadCatalog({ signal }) {
-    const host = asTrimmed(args.host).toLowerCase()
+  const host = asTrimmed(args.host).toLowerCase()
+  const guarded =
+    args.supabase && typeof args.supabase.rpc === "function"
+      ? wrapReadOnlySupabase(args.supabase, writeAttempts)
+      : null
+
+  async function loadCatalog({ signal }) {
     if (!host) {
       const err = new Error("unknown_host")
       err.code = "unknown_host"
       throw err
     }
-    if (!args.supabase || typeof args.supabase.rpc !== "function") {
+    if (!guarded) {
       const err = new Error("missing_rpc")
       err.code = "missing_rpc"
       throw err
     }
-    const guarded = wrapReadOnlySupabase(args.supabase, writeAttempts)
     const builder = guarded.rpc(READ_ONLY_CATALOG_RPC, { p_host: host })
     if (builder && typeof builder.abortSignal === "function") {
       return readCatalogRpcResult(await builder.abortSignal(signal))
     }
     return readCatalogRpcResult(await builder)
   }
+
+  verifiedCatalogLoaders.add(loadCatalog)
+  officialLoaderWriteLogs.set(loadCatalog, writeAttempts)
+  return loadCatalog
 }
 
 /**

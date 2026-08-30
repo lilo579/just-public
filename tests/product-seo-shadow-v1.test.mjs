@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url"
 import { adaptCatalogProductToSeoInputV1 } from "../src/lib/productSeoCatalogAdapterV1.js"
 import {
   resolveProductSeoCanonicalContextV1,
+  isTrustedCanonicalContext,
+  CANONICAL_CONTEXT_BRAND,
 } from "../src/lib/productSeoCanonicalContextV1.js"
 import {
   runProductSeoShadowV1,
@@ -13,6 +15,8 @@ import {
   createHostBoundCatalogLoader,
   wrapReadOnlySupabase,
   loadProductSeoCanonicalContextV1,
+  isVerifiedCatalogLoader,
+  liveCatalogLoaderGate,
   READ_ONLY_CATALOG_RPC,
   READ_ONLY_CANONICAL_RPC,
   SHADOW_DEFAULT_LIMIT,
@@ -28,6 +32,20 @@ function loadJson(name) {
 const f3 = loadJson("source-f3-rpc-list.json")
 const factoryB = loadJson("source-factory-b.json")
 const jewish = loadJson("jewish-118.json")
+
+function assertSyntheticReport(report) {
+  assert.equal(report.readOnlyExecution, "unverified")
+  assert.equal(report.loaderKind, "synthetic")
+  assert.equal(report.writesObserved, null)
+  assert.equal(report.writes, null)
+}
+
+function assertVerifiedReport(report, writes = []) {
+  assert.equal(report.readOnlyExecution, "verified")
+  assert.equal(report.loaderKind, "official")
+  assert.deepEqual(report.writesObserved, writes)
+  assert.deepEqual(report.writes, writes)
+}
 
 function contextFrom(fix, extra = {}) {
   const requestHost = extra.requestHost ?? extra.host ?? fix.host
@@ -134,7 +152,7 @@ test("adapter rejects malformed source and missing product id", () => {
 test("shadow F3 fixture: collision pair needs_input; unique auto_ready", async () => {
   const report = await shadow(f3)
   assert.equal(report.mode, "shadow-report-only")
-  assert.deepEqual(report.writes, [])
+  assertSyntheticReport(report)
   assert.equal(report.publishesHtml, false)
   assert.equal(report.metrics.total, 4)
   assert.equal(report.metrics.auto_ready, 2)
@@ -169,6 +187,10 @@ test("shadow Jewish 118 real snapshot: 112 auto_ready / 6 needs_input", async ()
   assert.equal(report.metrics.needs_input, 6)
   assert.equal(report.metrics.indexingProposed, 112)
   assert.equal(report.rejectedCount, 0)
+  assert.equal(report.completeness, "unknown")
+  assert.equal(report.catalogComplete, false)
+  assert.equal(report.usableForEnforcement, false)
+  assertSyntheticReport(report)
   assert.equal(JSON.stringify(report).includes("whatsapp"), false)
 })
 
@@ -265,6 +287,7 @@ test("host-bound loader fails closed on RPC error instead of empty catalog", asy
   assert.equal(report.reason, "rpc_error")
   assert.equal(report.metrics.total, 0)
   assert.equal(report.catalogComplete, false)
+  assertVerifiedReport(report)
 })
 
 test("timeout and abort fail closed without products", async () => {
@@ -369,6 +392,7 @@ test("host-bound loader uses public_get_products_by_host and does not write", as
     },
   })
   const page = await loader({ page: 1, pageSize: 10, signal: new AbortController().signal })
+  assert.equal(isVerifiedCatalogLoader(loader), true)
   assert.equal(calls[0].name, READ_ONLY_CATALOG_RPC)
   assert.equal(calls[0].args.p_host, f3.host)
   assert.equal(page.rows.length, 4)
@@ -405,7 +429,7 @@ test("read-only wrapper records write attempts and blocks non-catalog RPC", () =
   assert.doesNotThrow(() => allowed.rpc(READ_ONLY_CATALOG_RPC, { p_host: f3.host }))
 })
 
-test("write attempt on loader fails closed with observed writes, not a silent empty list", async () => {
+test("injected loader that tries to write is never verified and never gets writes: []", async () => {
   const report = await runProductSeoShadowV1({
     context: contextFrom(f3),
     loadCatalog: async () => {
@@ -417,7 +441,7 @@ test("write attempt on loader fails closed with observed writes, not a silent em
   })
   assert.equal(report.ok, false)
   assert.equal(report.reason, "write_attempted")
-  assert.deepEqual(report.writes, ["insert"])
+  assertSyntheticReport(report)
   assert.equal(report.usableForEnforcement, false)
 })
 
@@ -848,6 +872,7 @@ test("canonical loader uses public_host_canonical_authority and fails closed whe
   assert.equal(calls[0].name, READ_ONLY_CANONICAL_RPC)
   assert.equal(ctx.ok, true)
   assert.equal(ctx.primaryHost, f3.host)
+  assert.equal(isTrustedCanonicalContext(ctx), true)
 
   const down = await loadProductSeoCanonicalContextV1({
     requestHost: f3.host,
@@ -860,5 +885,257 @@ test("canonical loader uses public_host_canonical_authority and fails closed whe
   })
   assert.equal(down.ok, false)
   assert.equal(down.reason, "canonical_authority_unavailable")
+})
+
+test("canonical context is a WeakSet capability, not a public brand string", async () => {
+  const row = f3.products[0]
+  const apex = resolveProductSeoCanonicalContextV1({
+    requestHost: f3.host,
+    expectedTenantId: f3.expectedTenantId,
+    authority: { kind: "rpc", row: f3.canonicalRpc },
+    publication: {
+      contractVersion: "v1",
+      present: true,
+      indexingEnabled: true,
+      domainState: "domain_bound",
+      seoState: "seo_validated",
+      canonicalHost: f3.host,
+    },
+  })
+  assert.equal(isTrustedCanonicalContext(apex), true)
+  assert.equal(Object.isFrozen(apex), true)
+  assert.equal(Object.isFrozen(apex.canonical), true)
+  assert.equal(Object.isFrozen(apex.publication), true)
+
+  const forged = {
+    brand: CANONICAL_CONTEXT_BRAND,
+    ok: true,
+    trustedForShadow: true,
+    reason: null,
+    source: "rpc",
+    requestHost: "evil.example.test",
+    tenantId: f3.expectedTenantId,
+    primaryHost: "evil.example.test",
+    relation: "primary",
+    isPrimaryRequest: true,
+    canonical: {
+      host: "evil.example.test",
+      origin: "https://evil.example.test",
+      requestHost: "evil.example.test",
+      isPrimaryRequest: true,
+    },
+  }
+  assert.equal(isTrustedCanonicalContext(forged), false)
+  const forgedAdapted = adaptCatalogProductToSeoInputV1(row, contextFrom(f3, { canonicalContext: forged }))
+  assert.equal(forgedAdapted.ok, false)
+
+  const spread = { ...apex }
+  assert.equal(isTrustedCanonicalContext(spread), false)
+  assert.equal(
+    adaptCatalogProductToSeoInputV1(row, contextFrom(f3, { canonicalContext: spread })).ok,
+    false,
+  )
+
+  const jsonClone = JSON.parse(JSON.stringify(apex))
+  assert.equal(isTrustedCanonicalContext(jsonClone), false)
+  assert.equal(
+    adaptCatalogProductToSeoInputV1(row, contextFrom(f3, { canonicalContext: jsonClone })).ok,
+    false,
+  )
+
+  const copied = {}
+  for (const key of Object.getOwnPropertyNames(apex)) copied[key] = apex[key]
+  for (const sym of Object.getOwnPropertySymbols(apex)) copied[sym] = apex[sym]
+  assert.equal(isTrustedCanonicalContext(copied), false)
+
+  const other = resolveProductSeoCanonicalContextV1({
+    requestHost: factoryB.host,
+    expectedTenantId: factoryB.expectedTenantId,
+    authority: { kind: "rpc", row: factoryB.canonicalRpc },
+  })
+  assert.equal(isTrustedCanonicalContext(other), true)
+  const swapped = adaptCatalogProductToSeoInputV1(row, contextFrom(f3, { canonicalContext: other }))
+  assert.equal(swapped.ok, false)
+  assert.equal(swapped.reason, "tenant_mismatch")
+
+  assert.throws(() => {
+    apex.tenantId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
+  })
+  assert.throws(() => {
+    apex.primaryHost = "evil.example.test"
+  })
+  assert.throws(() => {
+    apex.relation = "www_alias"
+  })
+  assert.throws(() => {
+    apex.canonical.host = "evil.example.test"
+  })
+  if (apex.publication && typeof apex.publication === "object") {
+    assert.throws(() => {
+      apex.publication.canonicalHost = "evil.example.test"
+    })
+  }
+  assert.equal(apex.tenantId, f3.expectedTenantId)
+  assert.equal(apex.canonical.host, f3.host)
+  assert.equal(isTrustedCanonicalContext(apex), true)
+  assert.equal(adaptCatalogProductToSeoInputV1(row, contextFrom(f3, { canonicalContext: apex })).ok, true)
+})
+
+test("RPC request_host must be present and match apex or www; missing or divergent fail closed", async () => {
+  const row = f3.products[0]
+  const { request_host: _dropped, ...withoutHost } = f3.canonicalRpc
+
+  const apexPresent = resolveProductSeoCanonicalContextV1({
+    requestHost: f3.host,
+    expectedTenantId: f3.expectedTenantId,
+    authority: { kind: "rpc", row: f3.canonicalRpc },
+  })
+  assert.equal(apexPresent.ok, true)
+  assert.equal(apexPresent.relation, "primary")
+  assert.equal(isTrustedCanonicalContext(apexPresent), true)
+
+  const wwwPresent = resolveProductSeoCanonicalContextV1({
+    requestHost: `www.${f3.host}`,
+    expectedTenantId: f3.expectedTenantId,
+    authority: {
+      kind: "rpc",
+      row: {
+        ...f3.canonicalRpc,
+        request_host: `www.${f3.host}`,
+        is_primary_request: false,
+      },
+    },
+  })
+  assert.equal(wwwPresent.ok, true)
+  assert.equal(wwwPresent.relation, "www_alias")
+  assert.equal(isTrustedCanonicalContext(wwwPresent), true)
+  assert.equal(
+    adaptCatalogProductToSeoInputV1(row, contextFrom(f3, { canonicalContext: wwwPresent })).input.canonicalUrl,
+    "https://f3.example.test/p/classic-ouro",
+  )
+
+  const apexMissing = resolveProductSeoCanonicalContextV1({
+    requestHost: f3.host,
+    expectedTenantId: f3.expectedTenantId,
+    authority: { kind: "rpc", row: withoutHost },
+  })
+  assert.equal(apexMissing.ok, false)
+  assert.equal(apexMissing.reason, "malformed_canonical_authority")
+  assert.equal(isTrustedCanonicalContext(apexMissing), false)
+
+  const wwwMissing = resolveProductSeoCanonicalContextV1({
+    requestHost: `www.${f3.host}`,
+    expectedTenantId: f3.expectedTenantId,
+    authority: { kind: "rpc", row: { ...withoutHost, is_primary_request: false } },
+  })
+  assert.equal(wwwMissing.ok, false)
+  assert.equal(wwwMissing.reason, "malformed_canonical_authority")
+  assert.equal(isTrustedCanonicalContext(wwwMissing), false)
+
+  const emptyHost = resolveProductSeoCanonicalContextV1({
+    requestHost: f3.host,
+    expectedTenantId: f3.expectedTenantId,
+    authority: { kind: "rpc", row: { ...f3.canonicalRpc, request_host: "   " } },
+  })
+  assert.equal(emptyHost.ok, false)
+  assert.equal(emptyHost.reason, "malformed_canonical_authority")
+
+  const invalidType = resolveProductSeoCanonicalContextV1({
+    requestHost: f3.host,
+    expectedTenantId: f3.expectedTenantId,
+    authority: { kind: "rpc", row: { ...f3.canonicalRpc, request_host: 1 } },
+  })
+  assert.equal(invalidType.ok, false)
+  assert.equal(invalidType.reason, "malformed_canonical_authority")
+
+  const apexDivergent = resolveProductSeoCanonicalContextV1({
+    requestHost: f3.host,
+    expectedTenantId: f3.expectedTenantId,
+    authority: { kind: "rpc", row: { ...f3.canonicalRpc, request_host: "other.example.test" } },
+  })
+  assert.equal(apexDivergent.ok, false)
+  assert.equal(apexDivergent.reason, "host_mismatch")
+  assert.equal(isTrustedCanonicalContext(apexDivergent), false)
+
+  const wwwDivergent = resolveProductSeoCanonicalContextV1({
+    requestHost: `www.${f3.host}`,
+    expectedTenantId: f3.expectedTenantId,
+    authority: {
+      kind: "rpc",
+      row: {
+        ...f3.canonicalRpc,
+        request_host: f3.host,
+        is_primary_request: false,
+      },
+    },
+  })
+  assert.equal(wwwDivergent.ok, false)
+  assert.equal(wwwDivergent.reason, "host_mismatch")
+  assert.equal(isTrustedCanonicalContext(wwwDivergent), false)
+
+  const shadowMissing = await runProductSeoShadowV1({
+    context: contextFrom(f3, { canonicalContext: apexMissing }),
+    loadCatalog: async () => ({ rows: f3.products, nextPage: null }),
+  })
+  assert.equal(shadowMissing.ok, false)
+  assert.equal(shadowMissing.catalogComplete, false)
+  assert.equal(shadowMissing.completeness, "incomplete")
+  assert.equal(shadowMissing.metrics.total, 0)
+})
+
+test("official loader is verified; wrapper insert aborts with writesObserved; live rejects synthetic", async () => {
+  const writeAttempts = []
+  const supabase = {
+    rpc() {
+      return Promise.resolve({ data: f3.products, error: null })
+    },
+    insert() {},
+  }
+  const official = createHostBoundCatalogLoader({
+    host: f3.host,
+    supabase,
+    writeAttempts,
+  })
+  assert.equal(isVerifiedCatalogLoader(official), true)
+  assert.deepEqual(liveCatalogLoaderGate(official), { ok: true })
+
+  const okReport = await runProductSeoShadowV1({
+    context: contextFrom(f3),
+    loadCatalog: official,
+  })
+  assertVerifiedReport(okReport)
+  assert.equal(okReport.metrics.total, 4)
+  assert.equal(okReport.completeness, "unknown")
+  assert.equal(okReport.catalogComplete, false)
+
+  const blockedAttempts = []
+  const blockedClient = {
+    rpc() {
+      return Promise.resolve({ data: f3.products, error: null })
+    },
+    insert() {},
+  }
+  const blockedLoader = createHostBoundCatalogLoader({
+    host: f3.host,
+    supabase: blockedClient,
+    writeAttempts: blockedAttempts,
+  })
+  const guarded = wrapReadOnlySupabase(blockedClient, blockedAttempts)
+  assert.throws(() => guarded.insert())
+  const blockedReport = await runProductSeoShadowV1({
+    context: contextFrom(f3),
+    loadCatalog: blockedLoader,
+  })
+  assert.equal(blockedReport.ok, false)
+  assert.equal(blockedReport.reason, "write_attempted")
+  assertVerifiedReport(blockedReport, ["insert"])
+
+  const synthetic = async () => ({ rows: f3.products, nextPage: null })
+  assert.equal(isVerifiedCatalogLoader(synthetic), false)
+  assert.deepEqual(liveCatalogLoaderGate(synthetic), { ok: false, reason: "unverified_loader" })
+  const liveSrc = readFileSync(join(root, "scripts/preview-product-seo-shadow-live-readonly.mjs"), "utf8")
+  assert.equal(liveSrc.includes("liveCatalogLoaderGate"), true)
+  assert.equal(liveSrc.includes("countKind: \"none\""), false)
+  assert.equal(/loadCatalog:\s*async\s*\(\)\s*=>\s*\(\{\s*rows:\s*liveRows/.test(liveSrc), false)
 })
 
