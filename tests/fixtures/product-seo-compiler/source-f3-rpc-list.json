@@ -1,0 +1,90 @@
+{
+  "factory": "f3-rpc-list",
+  "note": "Synthetic public_get_products_by_host shape. No description, currency, availability, or SKU.",
+  "host": "f3.example.test",
+  "expectedTenantId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "brand": "Ateliê F3",
+  "canonical": {
+    "host": "f3.example.test",
+    "origin": "https://f3.example.test",
+    "requestHost": "f3.example.test",
+    "isPrimaryRequest": true
+  },
+  "canonicalRpc": {
+    "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "primary_host": "f3.example.test",
+    "request_host": "f3.example.test",
+    "has_primary": true,
+    "is_primary_request": true
+  },
+  "products": [
+    {
+      "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "product_id": "aaaaaaaa-aaaa-4aaa-8aaa-000000000001",
+      "name": "Ouro",
+      "slug": "classic-ouro",
+      "price": 90,
+      "image_url": "https://cdn.example.test/f3/classic-ouro.webp",
+      "featured": true,
+      "sort_order": 1,
+      "company_name": "Ateliê F3",
+      "whatsapp_number": "5511999990000",
+      "category_slug": "aneis",
+      "category_name": "Anéis",
+      "line_slug": "classic",
+      "line_name": "Classic",
+      "collection_slugs": []
+    },
+    {
+      "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "product_id": "aaaaaaaa-aaaa-4aaa-8aaa-000000000002",
+      "name": "Prata",
+      "slug": "classic-prata",
+      "price": 80,
+      "image_url": "https://cdn.example.test/f3/classic-prata.webp",
+      "featured": false,
+      "sort_order": 2,
+      "company_name": "Ateliê F3",
+      "whatsapp_number": "5511999990000",
+      "category_slug": "aneis",
+      "category_name": "Anéis",
+      "line_slug": "classic",
+      "line_name": "Classic",
+      "collection_slugs": []
+    },
+    {
+      "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "product_id": "aaaaaaaa-aaaa-4aaa-8aaa-000000000003",
+      "name": "Azul",
+      "slug": "twin-azul-a",
+      "price": 50,
+      "image_url": "https://cdn.example.test/f3/twin-a.webp",
+      "featured": false,
+      "sort_order": 3,
+      "company_name": "Ateliê F3",
+      "whatsapp_number": "5511999990000",
+      "category_slug": "pares",
+      "category_name": "Pares",
+      "line_slug": "twin",
+      "line_name": "Twin",
+      "collection_slugs": []
+    },
+    {
+      "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "product_id": "aaaaaaaa-aaaa-4aaa-8aaa-000000000004",
+      "name": "Azul",
+      "slug": "twin-azul-b",
+      "price": 50,
+      "image_url": "https://cdn.example.test/f3/twin-b.webp",
+      "featured": false,
+      "sort_order": 4,
+      "company_name": "Ateliê F3",
+      "whatsapp_number": "5511999990000",
+      "category_slug": "pares",
+      "category_name": "Pares",
+      "line_slug": "twin",
+      "line_name": "Twin",
+      "collection_slugs": []
+    }
+  ]
+}

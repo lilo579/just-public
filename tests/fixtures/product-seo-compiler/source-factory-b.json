@@ -1,0 +1,50 @@
+{
+  "factory": "future-factory-b",
+  "note": "Synthetic future catalog factory: title/media/sku keys. Not a tenant branch.",
+  "host": "factory-b.example.test",
+  "expectedTenantId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "brand": "Studio B",
+  "canonical": {
+    "host": "factory-b.example.test",
+    "origin": "https://factory-b.example.test",
+    "requestHost": "factory-b.example.test",
+    "isPrimaryRequest": true
+  },
+  "canonicalRpc": {
+    "tenant_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "primary_host": "factory-b.example.test",
+    "request_host": "factory-b.example.test",
+    "has_primary": true,
+    "is_primary_request": true
+  },
+  "products": [
+    {
+      "tenantId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "productId": "bbbbbbbb-bbbb-4bbb-8bbb-000000000001",
+      "title": "Terracota",
+      "slug": "mesa-terracota",
+      "lineName": "Mesa",
+      "category_name": "Louça",
+      "sku": "B-MESA-A",
+      "price": 75,
+      "currency": "BRL",
+      "availability": "https://schema.org/InStock",
+      "media": [{ "url": "https://cdn.example.test/b/mesa.webp" }],
+      "description": "Peça de mesa em terracota."
+    },
+    {
+      "tenantId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "productId": "bbbbbbbb-bbbb-4bbb-8bbb-000000000002",
+      "title": "Areia",
+      "slug": "mesa-areia",
+      "lineName": "Mesa",
+      "category_name": "Louça",
+      "sku": "B-MESA-B",
+      "price": 70,
+      "currency": "BRL",
+      "availability": "https://schema.org/InStock",
+      "media": [{ "href": "https://cdn.example.test/b/areia.webp" }],
+      "description": "Peça de mesa em areia."
+    }
+  ]
+}

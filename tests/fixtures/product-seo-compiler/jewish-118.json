@@ -2,6 +2,13 @@
   "tenantBrand": "3D Jewish",
   "host": "3djewish.com.br",
   "capturedAt": "2026-08-27T00:56:48+00:00",
+  "canonicalRpc": {
+    "tenant_id": "76a96afa-80f9-4782-a08d-e869e79d7d84",
+    "primary_host": "3djewish.com.br",
+    "request_host": "3djewish.com.br",
+    "has_primary": true,
+    "is_primary_request": true
+  },
   "products": [
     {
       "productId": "07443d1b-8b88-41d5-96e2-ee68efb7f528",
