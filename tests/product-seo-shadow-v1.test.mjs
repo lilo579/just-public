@@ -19,6 +19,7 @@ import {
   liveCatalogLoaderGate,
   READ_ONLY_CATALOG_RPC,
   READ_ONLY_CANONICAL_RPC,
+  READ_ONLY_SEO_CATALOG_RPC,
   SHADOW_DEFAULT_LIMIT,
 } from "../src/lib/productSeoShadowRunnerV1.js"
 
@@ -353,6 +354,8 @@ test("zero writes and no runtime import of adapter/runner", () => {
     assert.equal(body.includes("productSeoCompilerV1"), false)
     assert.equal(body.includes("productSeoCatalogAdapterV1"), false)
     assert.equal(body.includes("productSeoCanonicalContextV1"), false)
+    assert.equal(body.includes("productSeoBatchCatalogV1"), false)
+    assert.equal(body.includes("productSeoShadowRunnerV1"), false)
   }
   const runner = readFileSync(join(root, "src/lib/productSeoShadowRunnerV1.js"), "utf8")
   const adapter = readFileSync(join(root, "src/lib/productSeoCatalogAdapterV1.js"), "utf8")
@@ -427,6 +430,7 @@ test("read-only wrapper records write attempts and blocks non-catalog RPC", () =
   assert.equal(typeof guarded.rpc, "function")
   assert.doesNotThrow(() => allowed.rpc(READ_ONLY_CANONICAL_RPC, { p_host: f3.host }))
   assert.doesNotThrow(() => allowed.rpc(READ_ONLY_CATALOG_RPC, { p_host: f3.host }))
+  assert.doesNotThrow(() => allowed.rpc(READ_ONLY_SEO_CATALOG_RPC, { p_host: f3.host, p_limit: 500 }))
 })
 
 test("injected loader that tries to write is never verified and never gets writes: []", async () => {
