@@ -1,6 +1,6 @@
 # Product SEO catalog consumer — `product-seo-catalog/v1`
 
-**Status:** Local / not committed
+**Status:** Committed on branch / shadow-only / not applied
 **Contract name:** `product-seo-catalog/v1`
 **Owner of SQL/authority:** just-auth-nexus
 **This repo:** parser, shadow adapter, consumer tests
@@ -48,4 +48,4 @@ A truncated envelope (`truncated: true`, fingerprint `null`) is incomplete. Shad
 
 ## Apply / runtime gate
 
-NO-GO until separately authorized: commit, PR, linked migration, Hub, HTML, sitemap, deploy, Cloudflare, GSC.
+Git commit/PR does not authorize runtime. NO-GO until separately authorized: linked migration, Hub, HTML, sitemap, deploy, Cloudflare, GSC.
