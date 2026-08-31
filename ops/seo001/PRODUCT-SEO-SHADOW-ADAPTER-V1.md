@@ -1,6 +1,6 @@
 # ADR: Product SEO Compiler v1 — adapter and shadow mode
 
-Status: **local / not committed**. Report-only. Does not publish HTML, sitemap, robots, JSON-LD, Hub, banco, Edge, Cloudflare, or GSC.
+Status: **committed / report-only**. Does not publish HTML, sitemap, robots, JSON-LD, Hub, banco, Edge, Cloudflare, or GSC.
 
 ## Decision
 
@@ -206,3 +206,8 @@ Captured **2026-08-30T09:09:53Z**. Anon JWT. RPCs: `public_host_canonical_author
 | Redaction | no WhatsApp, storage URLs, JWTs, or service_role in the report |
 
 Tests: compiler **43/43** + shadow **26/26**.
+
+## Batch catalog contract
+
+The list RPC remains `public_get_products_by_host` until the authority envelope `product-seo-catalog/v1` is applied. Public consumes that contract by name only (parser + `createProductSeoBatchCatalogLoader`). `p_limit` is sent as a JSON number. Fingerprint is `sha256:` + 64 lowercase hex, and is JSON `null` when truncated. See `ops/seo001/PRODUCT-SEO-CATALOG-V1-CONSUMER.md` and `docs/contracts/product-seo-catalog-v1.json`. Authority SQL lives in Nexus. Not applied, not imported by pages.
+

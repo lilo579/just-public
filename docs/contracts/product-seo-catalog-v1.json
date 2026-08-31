@@ -1,0 +1,248 @@
+{
+  "contractVersion": "product-seo-catalog/v1",
+  "rpcName": "public_get_product_seo_catalog_by_host_v1",
+  "owner": "just-auth-nexus",
+  "consumer": "just-public",
+  "mode": "shadow-report-only",
+  "usableForEnforcement": false,
+  "crossReference": "Documents and parsers must name this contract as product-seo-catalog/v1. Do not couple repos by temporary worktree or file paths.",
+  "arguments": {
+    "p_host": {
+      "type": "text",
+      "required": true,
+      "notes": "Request host only. Client never supplies tenantId."
+    },
+    "p_limit": {
+      "type": "jsonb",
+      "sqlDefault": "500::jsonb",
+      "required": false,
+      "omitMeans": 500,
+      "acceptedJsonTypes": ["number"],
+      "integerOnly": true,
+      "minimum": 1,
+      "absoluteMaximum": 500,
+      "aboveMaximum": "clamp to 500 on the server",
+      "rejectToLimitInvalid": [
+        "JSON null",
+        "JSON string (including numeric text such as \"500\")",
+        "JSON boolean",
+        "JSON object",
+        "JSON array",
+        "JSON number with a decimal/exponent that is not a digit-only integer",
+        "zero",
+        "negative"
+      ],
+      "postgrest": "Single (text, jsonb) signature. Invalid JSON types must return the versioned envelope, never SQLSTATE 22P02.",
+      "noOverload": true
+    }
+  },
+  "envelope": {
+    "contractVersion": "product-seo-catalog/v1",
+    "rpcName": "public_get_product_seo_catalog_by_host_v1",
+    "status": "ok | catalog_empty | catalog_unavailable | tenant_suspended | host_not_resolved | invalid_host | host_not_primary | primary_missing | multiple_primaries | limit_invalid | internal_error",
+    "ok": "true only for status ok or catalog_empty",
+    "catalogComplete": "true only for status ok or catalog_empty with proven total (returnedCount === totalCount && truncated === false)",
+    "usableForEnforcement": false,
+    "tenantId": "uuid or null",
+    "canonicalHost": "active primary host when exactly one active primary exists; never inferred by stripping www; never chosen by LIMIT 1; null on unresolved/invalid/limit/internal/primary_missing/multiple_primaries",
+    "requestHost": "normalized request host or null",
+    "storageOrigin": "canonical https origin from server GUC app.settings.api_external_url (fallback product_seo.storage_origin); never from the client; JSON null when missing/invalid",
+    "effectiveLimit": "integer 1..500 applied by the server",
+    "returnedCount": "products.length; never greater than effectiveLimit",
+    "totalCount": "exact matching catalog size for ok/catalog_empty; null on fail-closed statuses",
+    "truncated": "true iff status is ok and totalCount > effectiveLimit",
+    "catalogFingerprint": "sha256: + 64 lowercase hex of canonical jsonb; JSON null when truncated, incomplete, or fail-closed; identical for apex and www; independent of physical row order, jsonb key order, and call timestamp",
+    "imageDiagnostics": {
+      "acceptedCount": "integer",
+      "rejectedCount": "integer",
+      "rejectedByReason": {
+        "not_https": "integer",
+        "userinfo": "integer",
+        "has_query": "integer",
+        "fragment": "integer",
+        "untrusted_host": "integer",
+        "invalid_path": "integer",
+        "origin_unconfigured": "integer"
+      }
+    },
+    "products": "array of product objects, ordered by productId, length === returnedCount"
+  },
+  "statuses": {
+    "ok": "Exactly one active primary, gates passed, totalCount > 0. May be truncated.",
+    "catalog_empty": "Exactly one active primary, gates passed, totalCount === 0. Not a failure. May be catalogComplete true.",
+    "catalog_unavailable": "Tenant resolved and unique primary known, but site module or catalog_enabled is false. No products. catalogComplete false. Not empty catalog.",
+    "tenant_suspended": "tenants.status = suspended. No products. catalogComplete false. Not empty catalog.",
+    "host_not_resolved": "Normalized host is non-empty but tenant_id_from_host returns null.",
+    "invalid_host": "Host empty or empty after _normalize_host.",
+    "host_not_primary": "Exactly one active primary exists, tenant resolved, request host is neither that primary nor its official www alias. Fail-closed. Not empty catalog.",
+    "primary_missing": "Tenant resolved and count of active primaries is 0. Fail-closed. No LIMIT 1 fallback.",
+    "multiple_primaries": "Tenant resolved and count of active primaries is > 1. Fail-closed. No LIMIT 1 pick.",
+    "limit_invalid": "p_limit is explicit JSON null, non-integer, < 1, or not a JSON number. No products.",
+    "internal_error": "Unexpected exception. Fail-closed. Does not leak SQLERRM or URLs."
+  },
+  "canonicalAuthority": {
+    "countActivePrimaries": "count(*) from tenant_domains where tenant_id = resolved and is_active and is_primary",
+    "exactlyOne": "continue; resolve the unique primary host without LIMIT 1 as a chooser",
+    "zero": "status primary_missing",
+    "moreThanOne": "status multiple_primaries",
+    "extraActiveNonPrimary": "status host_not_primary",
+    "wwwAlias": "www.{primary} (or primary that is www of the request) remains accepted"
+  },
+  "images": {
+    "originSource": "Server GUC only: current_setting('app.settings.api_external_url', true), else current_setting('product_seo.storage_origin', true). Never from the client.",
+    "originMissing": "Fail-closed: omit all images, catalogFingerprint still follows completeness rules, diagnostics origin_unconfigured incremented. Do not invent an origin.",
+    "acceptOnlyWhenAll": [
+      "scheme prefix exactly the four characters h-t-t-p-s-:-/-/ in lowercase (https://); mixed-case such as HTTPS:// is not_https",
+      "hostname exactly equal to the configured origin host (case-insensitive)",
+      "port absent or 443",
+      "no userinfo",
+      "no query string",
+      "no fragment",
+      "no percent-encoding (no decoder is used)",
+      "no backslash",
+      "no ASCII controls",
+      "no duplicate slashes",
+      "path segments exactly /storage/v1/object/public/product-images/{tenant_uuid}/{object_path}",
+      "tenant UUID is a complete path segment equal to tenant_id::text",
+      "object_path non-empty with no . or .. segments"
+    ],
+    "reject": [
+      "signed or tokenized URLs",
+      "any query, including cache-busters such as ?v=1",
+      "fragments",
+      "userinfo",
+      "other project refs, punycode lookalikes, suffix hosts",
+      "UUID merely contained in the path",
+      "other buckets (including site-media)",
+      "http",
+      "HTTPS:// and any non-canonical scheme spelling",
+      "non-default ports",
+      "percent-encoded segments",
+      ". and ..",
+      "backslash"
+    ],
+    "never": [
+      "strip query to convert a signed URL into a public URL",
+      "return the query-stripped variant",
+      "lowercase or otherwise rewrite a mixed-case scheme into https://",
+      "include rejected URLs in the envelope or diagnostics",
+      "accept another project-ref because the path contains the tenant UUID"
+    ],
+    "diagnostics": "Aggregated counts and reasons only. Never the URL.",
+    "arrayOrder": "First-seen among images[], then image_main_url, image_thumb_url, image_original_url, after filtering. Duplicate URLs kept once."
+  },
+  "fingerprint": {
+    "algorithm": "sha256: || encode(extensions.digest(canonical_jsonb::text, 'sha256'), 'hex')",
+    "pattern": "^sha256:[0-9a-f]{64}$",
+    "whenNull": "truncated = true, catalogComplete false, or any fail-closed status. Do not hash the full catalog when truncated.",
+    "canonicalJsonbKeys": ["canonicalHost", "contractVersion", "products", "tenantId"],
+    "productOrder": "productId ascending (uuid text)",
+    "productFields": [
+      "availability",
+      "brand",
+      "categoryName",
+      "currency",
+      "description",
+      "images",
+      "lineName",
+      "name",
+      "price",
+      "productId",
+      "publicProductCode",
+      "slug",
+      "variantAttributes",
+      "visible"
+    ],
+    "nullVsAbsent": "currency, availability, publicProductCode, visible, and null price are always present as JSON null. description is always a string (possibly empty). variantAttributes and images are always arrays.",
+    "numbers": "price is to_jsonb(round(price, 2)) (PostgreSQL numeric JSON number) or JSON null. No other numeric fields in the canonical object.",
+    "variantAttributesOrder": "material then dimensions, each included only when non-empty after trim. Not sorted alphabetically. Empty values omitted (array may be shorter than 2).",
+    "imagesArrayOrder": "accepted URLs in first-seen order after structural filter; duplicates dropped.",
+    "excluded": [
+      "updated_at",
+      "created_at",
+      "requestHost",
+      "call timestamp",
+      "featured",
+      "order",
+      "whatsapp",
+      "customization_notes",
+      "customization_available",
+      "production_time",
+      "rejected image URLs",
+      "storageOrigin"
+    ],
+    "changesWhen": "Any included SEO field of any matching product in the hashed page changes, or tenantId/canonicalHost identity changes. Truncated catalogs do not hash.",
+    "doesNotChangeWhen": [
+      "physical heap/index order of product rows",
+      "JSON object key order",
+      "apex vs www request host",
+      "wall-clock of the call"
+    ]
+  },
+  "cost": {
+    "limitValidatesFirst": true,
+    "totalCount": "SELECT count(*) FROM products WHERE tenant_id = :tenant. Indexable (tenant_id, id). May still walk the tenant index.",
+    "heavyWork": "SELECT/JOIN/image classify/jsonb_agg only for ORDER BY id LIMIT effectiveLimit rows.",
+    "truncatedFingerprint": "null; the truncated page is not hashed as if it were the full catalog.",
+    "documentation": "Count still traverses the tenant index. Payload, image classification, and fingerprint stay bounded by effectiveLimit."
+  },
+  "security": {
+    "securityDefiner": true,
+    "owner": "postgres",
+    "search_path": "public, pg_temp",
+    "schemaQualifiedNames": true,
+    "revokeAllFromPublic": true,
+    "revokeHelpersFrom": ["PUBLIC", "anon", "authenticated", "service_role"],
+    "grantExecute": ["anon", "authenticated", "service_role"],
+    "grantExecuteAppliesTo": "only public_get_product_seo_catalog_by_host_v1(text, jsonb)",
+    "clientNeverSuppliesTenantId": true,
+    "rlsBypass": "SECURITY DEFINER owned by postgres bypasses RLS on products and related tables. L1A remains: anon cannot SELECT catalog tables via PostgREST. This RPC is the public read path.",
+    "limitBeforeHeavyAggregation": "p_limit is validated and clamped before product aggregation. jsonb_agg of the payload is LIMIT effectiveLimit. totalCount is a separate count(*). Fingerprint runs only when complete.",
+    "privateFieldsAbsent": [
+      "whatsapp_number",
+      "customization_notes",
+      "customization_available",
+      "production_time",
+      "email",
+      "address"
+    ],
+    "volatility": "STABLE",
+    "writes": "zero"
+  },
+  "consumerParser": {
+    "fingerprint": "^sha256:[0-9a-f]{64}$ required iff catalogComplete; must be JSON null when truncated or fail-closed",
+    "refuseDoNotRepair": [
+      "duplicate productId",
+      "product tenantId missing, null, not a UUID, or divergent from envelope tenantId",
+      "product host missing, null, not a host, www alias, or divergent from canonicalHost",
+      "required productObject fields missing or wrong type",
+      "image outside the structural policy",
+      "image with mixed-case scheme, query/fragment/userinfo/percent-encoding/path traversal",
+      "incoherent counts",
+      "fingerprint missing on complete catalog",
+      "fingerprint present when truncated/incomplete",
+      "canonical anomaly statuses marked catalogComplete",
+      "dangerous prototype keys (__proto__, constructor, prototype) on relevant objects"
+    ]
+  },
+  "productObject": {
+    "productId": "uuid",
+    "tenantId": "uuid",
+    "host": "canonicalHost (never requestHost)",
+    "slug": "text",
+    "name": "text",
+    "lineName": "text",
+    "categoryName": "text or empty string",
+    "description": "text, possibly empty",
+    "variantAttributes": "text[]",
+    "images": "accepted public HTTPS URLs only",
+    "price": "number or null",
+    "currency": null,
+    "availability": null,
+    "publicProductCode": null,
+    "brand": "site_contact.company_name or empty string",
+    "visible": null,
+    "catalogEnabled": true,
+    "tenantActive": true
+  }
+}

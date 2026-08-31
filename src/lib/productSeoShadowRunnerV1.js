@@ -14,6 +14,12 @@ import {
   isTrustedCanonicalContext,
   resolveProductSeoCanonicalContextV1,
 } from "./productSeoCanonicalContextV1.js"
+import {
+  parseProductSeoCatalogV1,
+  isProductSeoCatalogSuccess,
+  PRODUCT_SEO_CATALOG_RPC,
+  PRODUCT_SEO_CATALOG_ABSOLUTE_LIMIT,
+} from "./productSeoBatchCatalogV1.js"
 
 export const SHADOW_RUNNER_VERSION = "just-product-seo-shadow/v1"
 export const SHADOW_DEFAULT_LIMIT = 500
@@ -21,9 +27,11 @@ export const SHADOW_DEFAULT_PAGE_SIZE = 100
 export const SHADOW_DEFAULT_TIMEOUT_MS = 4000
 export const READ_ONLY_CATALOG_RPC = "public_get_products_by_host"
 export const READ_ONLY_CANONICAL_RPC = "public_host_canonical_authority"
+export const READ_ONLY_SEO_CATALOG_RPC = PRODUCT_SEO_CATALOG_RPC
 export const READ_ONLY_RPC_ALLOWLIST = Object.freeze([
   READ_ONLY_CATALOG_RPC,
   READ_ONLY_CANONICAL_RPC,
+  READ_ONLY_SEO_CATALOG_RPC,
 ])
 export const BLOCKED_CLIENT_METHODS = Object.freeze([
   "from",
@@ -388,6 +396,25 @@ export async function runProductSeoShadowV1(args) {
     if (err && typeof err === "object" && "code" in err && err.code === "malformed_page") {
       return failClosed("malformed_page", writeState(), timedOut)
     }
+    if (
+      err &&
+      typeof err === "object" &&
+      "code" in err &&
+      [
+        "catalog_unavailable",
+        "tenant_suspended",
+        "host_not_resolved",
+        "invalid_host",
+        "host_not_primary",
+        "primary_missing",
+        "multiple_primaries",
+        "limit_invalid",
+        "internal_error",
+        "unknown_contract_version",
+      ].includes(String(err.code))
+    ) {
+      return failClosed(String(err.code), writeState(), timedOut)
+    }
     return failClosed("load_failed", writeState(), timedOut)
   } finally {
     clearTimeout(timer)
@@ -643,6 +670,78 @@ export function createHostBoundCatalogLoader(args) {
       return readCatalogRpcResult(await builder.abortSignal(signal))
     }
     return readCatalogRpcResult(await builder)
+  }
+
+  verifiedCatalogLoaders.add(loadCatalog)
+  officialLoaderWriteLogs.set(loadCatalog, writeAttempts)
+  return loadCatalog
+}
+
+function readSeoCatalogRpcResult(result) {
+  if (result && result.error) {
+    const err = new Error("rpc_error")
+    err.code = "rpc_error"
+    throw err
+  }
+  const data = result && result.data
+  const envelope = Array.isArray(data) ? data[0] : data
+  const parsed = parseProductSeoCatalogV1(envelope)
+  if (!parsed.accepted) {
+    const err = new Error(parsed.reason || "malformed_page")
+    err.code = parsed.reason === "unknown_contract_version" ? "unknown_contract_version" : "malformed_page"
+    throw err
+  }
+  if (!isProductSeoCatalogSuccess(parsed)) {
+    const err = new Error(parsed.status)
+    err.code = parsed.status
+    throw err
+  }
+  return {
+    rows: parsed.products,
+    nextPage: null,
+    countKind: "exact",
+    totalCount: parsed.totalCount,
+    snapshotVersion: parsed.catalogFingerprint,
+  }
+}
+
+/**
+ * Official loader for contract product-seo-catalog/v1. Shadow runner only.
+ * @param {{
+ *   supabase: { rpc?: Function }
+ *   host: string
+ *   limit?: number
+ *   writeAttempts?: string[]
+ * }} args
+ */
+export function createProductSeoBatchCatalogLoader(args) {
+  const writeAttempts = Array.isArray(args.writeAttempts) ? args.writeAttempts : []
+  const host = asTrimmed(args.host).toLowerCase()
+  const limit =
+    typeof args.limit === "number" && args.limit > 0
+      ? Math.min(Math.trunc(args.limit), PRODUCT_SEO_CATALOG_ABSOLUTE_LIMIT)
+      : PRODUCT_SEO_CATALOG_ABSOLUTE_LIMIT
+  const guarded =
+    args.supabase && typeof args.supabase.rpc === "function"
+      ? wrapReadOnlySupabase(args.supabase, writeAttempts)
+      : null
+
+  async function loadCatalog({ signal }) {
+    if (!host) {
+      const err = new Error("invalid_host")
+      err.code = "invalid_host"
+      throw err
+    }
+    if (!guarded) {
+      const err = new Error("missing_rpc")
+      err.code = "missing_rpc"
+      throw err
+    }
+    const builder = guarded.rpc(READ_ONLY_SEO_CATALOG_RPC, { p_host: host, p_limit: limit })
+    if (builder && typeof builder.abortSignal === "function") {
+      return readSeoCatalogRpcResult(await builder.abortSignal(signal))
+    }
+    return readSeoCatalogRpcResult(await builder)
   }
 
   verifiedCatalogLoaders.add(loadCatalog)
