@@ -46,7 +46,7 @@
     "tenantId": "uuid or null",
     "canonicalHost": "active primary host when exactly one active primary exists; never inferred by stripping www; never chosen by LIMIT 1; null on unresolved/invalid/limit/internal/primary_missing/multiple_primaries",
     "requestHost": "normalized request host or null",
-    "storageOrigin": "canonical https origin from server GUC app.settings.api_external_url (fallback product_seo.storage_origin); never from the client; JSON null when missing/invalid",
+    "storageOrigin": "canonical https origin from server GUC product_seo.storage_origin; never from the client; never from app.settings.api_external_url; JSON null when missing/invalid; do not infer an origin",
     "effectiveLimit": "integer 1..500 applied by the server",
     "returnedCount": "products.length; never greater than effectiveLimit",
     "totalCount": "exact matching catalog size for ok/catalog_empty; null on fail-closed statuses",
@@ -89,7 +89,7 @@
     "wwwAlias": "www.{primary} (or primary that is www of the request) remains accepted"
   },
   "images": {
-    "originSource": "Server GUC only: current_setting('app.settings.api_external_url', true), else current_setting('product_seo.storage_origin', true). Never from the client.",
+    "originSource": "Server GUC only: current_setting('product_seo.storage_origin', true). Never app.settings.api_external_url. Never from the client. Missing/invalid GUC omits images (origin_unconfigured) and does not invent a URL.",
     "originMissing": "Fail-closed: omit all images, catalogFingerprint still follows completeness rules, diagnostics origin_unconfigured incremented. Do not invent an origin.",
     "acceptOnlyWhenAll": [
       "scheme prefix exactly the four characters h-t-t-p-s-:-/-/ in lowercase (https://); mixed-case such as HTTPS:// is not_https",
