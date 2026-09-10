@@ -64,6 +64,8 @@ export type HeroBlock = {
     }[]
   }
   primaryCTA?: HomepageCTA | null
+  /** Optional secondary CTA — F1 painters omit; F4 framing may set. */
+  secondaryCTA?: HomepageCTA | null
 }
 
 export type TrustBlock = {

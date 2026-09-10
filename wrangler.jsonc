@@ -3,6 +3,8 @@
 // env.production = just-public-production (internal staging hostname pilot).
 // NOTE: name set inside env.production is used as-is (Wrangler does not append -production).
 // Custom Domain is managed remotely (API/Dashboard); not declared in this file.
+// Optional secret (not vars): CLOUDFLARE_WEB_ANALYTICS_TOKEN — set via
+// `wrangler secret put CLOUDFLARE_WEB_ANALYTICS_TOKEN` per env; omitted when unset.
 {
   "name": "just-public-poc",
   "compatibility_date": "2026-01-14",
@@ -20,7 +22,7 @@
   "env": {
     "staging": {
       "name": "just-public-staging",
-      "workers_dev": false,
+      "workers_dev": true,
       "preview_urls": true,
       "vars": {
         "DEPLOY_ENV": "staging",

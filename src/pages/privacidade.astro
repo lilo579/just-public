@@ -1,33 +1,70 @@
 ---
+/**
+ * Mission allowlisted content page — `/privacidade`.
+ * Prefer declared mission route; otherwise JUST institutional legal pack.
+ */
 export const prerender = false
 
+import MissionContentPage from "../components/mission/MissionContentPage.astro"
 import JustLegalLayout from "../components/just-institutional/JustLegalLayout.astro"
+import { loadAllowlistedMissionPage } from "../lib/loadAllowlistedMissionPage.js"
 import { loadJustInstitutionalChrome } from "../lib/loadJustInstitutionalChrome.js"
 import { resolveChromeCanonicalUrl } from "../lib/canonicalAuthority.js"
 
-const chrome = await loadJustInstitutionalChrome(Astro.request, Astro.locals)
-if (!chrome.ok) {
-  return new Response(`Page unavailable (${chrome.reason})`, {
-    status: chrome.status || 404,
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
-  })
+const mission = await loadAllowlistedMissionPage(
+  Astro.request,
+  Astro.locals,
+  "/privacidade",
+  "content_page",
+)
+
+if (mission.ok) {
+  Astro.locals.__missionPrivacy = mission
+} else {
+  const chrome = await loadJustInstitutionalChrome(Astro.request, Astro.locals)
+  if (!chrome.ok) {
+    return new Response(`Page unavailable (${chrome.reason || mission.reason})`, {
+      status: chrome.status || mission.status || 404,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    })
+  }
+  const canonicalResolved = resolveChromeCanonicalUrl(chrome, "/privacidade")
+  if (!canonicalResolved.ok) return canonicalResolved.response
+  Astro.locals.__justPrivacy = {
+    chrome,
+    page: chrome.packaged.legalPages.privacidade,
+    canonicalUrl: canonicalResolved.canonicalUrl || "",
+  }
 }
 
-const canonicalResolved = resolveChromeCanonicalUrl(chrome, "/privacidade")
-if (!canonicalResolved.ok) return canonicalResolved.response
-
-const page = chrome.packaged.legalPages.privacidade
+const missionPage = Astro.locals.__missionPrivacy
+const justPage = Astro.locals.__justPrivacy
 ---
 
-<JustLegalLayout
-  title={page.title}
-  body={page.body}
-  host={chrome.host}
-  branding={chrome.branding}
-  seoTitle={`${page.title} | JUST`}
-  seoDescription={chrome.seo.description}
-  canonicalUrl={canonicalResolved.canonicalUrl || ""}
-  faviconUrl={chrome.seo.faviconUrl}
-  ogImage={chrome.seo.ogImage}
-  robots={chrome.seo.robots}
-/>
+{
+  missionPage ? (
+    <MissionContentPage
+      title={missionPage.route.title || "Aviso de Privacidade"}
+      heading={missionPage.route.heading || missionPage.route.title || "Aviso de Privacidade"}
+      body={missionPage.route.body || ""}
+      host={missionPage.host}
+      path="/privacidade"
+      noindex={missionPage.noindex}
+      seo={missionPage.seo}
+      chrome={missionPage.chrome}
+    />
+  ) : (
+    <JustLegalLayout
+      title={justPage.page.title}
+      body={justPage.page.body}
+      host={justPage.chrome.host}
+      branding={justPage.chrome.branding}
+      seoTitle={`${justPage.page.title} | JUST`}
+      seoDescription={justPage.chrome.seo.description}
+      canonicalUrl={justPage.canonicalUrl}
+      faviconUrl={justPage.chrome.seo.faviconUrl}
+      ogImage={justPage.chrome.seo.ogImage}
+      robots={justPage.chrome.seo.robots}
+    />
+  )
+}

@@ -84,9 +84,9 @@ const show = milestones.length > 0 || hasQuantitative
             <div class="mission-progress__fill" style={`width: ${pct}%`} />
           </div>
           <p class="mission-progress__numbers">
-            <span>{quantitative.current}</span>
+            <span>{new Intl.NumberFormat("pt-BR").format(quantitative.current)}</span>
             <span aria-hidden="true"> / </span>
-            <span>{quantitative.goal}</span>
+            <span>{new Intl.NumberFormat("pt-BR").format(quantitative.goal)}</span>
             {quantitative.unitLabel ? <span> {quantitative.unitLabel}</span> : null}
           </p>
         </div>

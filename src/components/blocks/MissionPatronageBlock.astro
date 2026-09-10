@@ -31,7 +31,11 @@ const show = Boolean(headline || description || tiers.length > 0)
 ---
 
 {show && (
-  <section class="mission-patronage" aria-labelledby="mission-patronage-title">
+  <section
+    id="sponsorship"
+    class="mission-patronage"
+    aria-labelledby="mission-patronage-title"
+  >
     <div class="mission-patronage__container">
       {headline && (
         <h2 id="mission-patronage-title" class="mission-patronage__title">

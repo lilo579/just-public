@@ -1,0 +1,58 @@
+---
+/**
+ * Shared mission content_page shell — title/heading/body from allowlisted route.
+ * When chrome is present, wraps with MissionSiteChrome (Header/Footer/SiteTheme).
+ */
+import MissionSiteChrome from "./MissionSiteChrome.astro"
+
+const {
+  title,
+  heading,
+  body,
+  host,
+  path,
+  noindex = false,
+  seo = {},
+  chrome = null,
+} = Astro.props
+
+const pageTitle = seo.title ? `${title} | ${seo.title}` : title
+const description = seo.description || ""
+const robots = seo.robots || (noindex ? "noindex,nofollow" : "index,follow")
+const canonicalHref = seo.canonicalUrl || `https://${host}${path}`
+---
+
+<MissionSiteChrome
+  chrome={chrome}
+  title={pageTitle}
+  description={description}
+  robots={robots}
+  canonicalHref={canonicalHref}
+  routeKind="content_page"
+  host={host}
+>
+  <article class="mission-content-page">
+    <h1>{heading || title}</h1>
+    {body && (
+      <div class="mission-content-page__body" set:html={body.replace(/\n/g, "<br/>")} />
+    )}
+  </article>
+</MissionSiteChrome>
+
+<style>
+  .mission-content-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+    font-family: Georgia, "Times New Roman", serif;
+    color: hsl(220 15% 16%);
+    line-height: 1.6;
+  }
+  h1 {
+    font-size: 1.75rem;
+    margin: 0 0 1rem;
+  }
+  .mission-content-page__body {
+    margin: 0;
+  }
+</style>

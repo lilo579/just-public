@@ -31,7 +31,7 @@ const statIcons: StatIcon[] = ["heart", "users", "star", "circle"];
 {(title || paragraphs.length > 0 || photoUrl || (isCinematic && stats.length > 0)) && (
   <section
     class:list={["about", isCinematic && "about--cinematic"]}
-    id={isCinematic ? sectionId : undefined}
+    id={sectionId}
   >
     {!isCinematic && <div class="about__overlay" aria-hidden="true"></div>}
     {isCinematic && (

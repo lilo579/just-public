@@ -10,5 +10,6 @@ DEPLOY_ENV=staging
 PUBLIC_SITE_PAYLOAD_URL=http://127.0.0.1:9/mock-public-site-payload
 SUPABASE_ANON_KEY=poc-local-anon-placeholder-not-a-real-key
 #
-# Optional Node contingency alias (not the Worker canonical name):
-# PUBLIC_DEPLOY_ENV=staging
+# Optional Cloudflare Web Analytics token (Worker secret preferred):
+# wrangler secret put CLOUDFLARE_WEB_ANALYTICS_TOKEN
+# CLOUDFLARE_WEB_ANALYTICS_TOKEN=

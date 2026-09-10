@@ -12,6 +12,7 @@ const {
   navItems = [],
   whatsappHref = "",
   headerCtaLabel = "Fale comigo",
+  legalLinks = [],
 } = Astro.props as {
   footer: HomepageFooter
   /** engine_v1 shows JUST gold band; classic_v1 omits it. */
@@ -24,6 +25,7 @@ const {
   navItems?: Array<{ label: string; href: string }>
   whatsappHref?: string
   headerCtaLabel?: string
+  legalLinks?: Array<{ label: string; href: string }>
 }
 
 const isShopFooter = layout === "shop"
@@ -58,6 +60,16 @@ const resolvedWhatsappHref =
     ? `https://wa.me/${footer.whatsappNumber}`
     : "")
 const cinematicNavItems = Array.isArray(navItems) ? navItems : []
+const resolvedLegalLinks = Array.isArray(legalLinks)
+  ? legalLinks.filter(
+      (link) =>
+        link &&
+        typeof link.label === "string" &&
+        link.label.trim() &&
+        typeof link.href === "string" &&
+        link.href.trim(),
+    )
+  : []
 const ctaLabel =
   typeof headerCtaLabel === "string" && headerCtaLabel.trim()
     ? headerCtaLabel.trim()
@@ -470,6 +482,15 @@ function socialGlyph(type: string) {
           <p class="site-footer__copyright site-footer__copyright--card">
             {`© ${year} ${footer.companyName || "Empresa"}. Todos os direitos reservados.`}
           </p>
+          {resolvedLegalLinks.length > 0 && (
+            <ul class="site-footer__legal site-footer__legal--card" aria-label="Links legais">
+              {resolvedLegalLinks.map((link) => (
+                <li>
+                  <a href={link.href}>{link.label}</a>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </footer>
@@ -483,22 +504,18 @@ function socialGlyph(type: string) {
     >
       {justSignatureBand && (
         <div class="site-footer__signature" aria-label="Desenvolvido pela JUST">
-          {isShopFooter ? (
-            <p class="site-footer__signature-text">
-              Desenvolvido pela{" "}
-              <a
-                href="https://www.justwebsites.com.br"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="site-footer__signature-brand"
-              >
-                JUST
-              </a>{" "}
-              — a estrutura para seu negócio funcionar online
-            </p>
-          ) : (
-            <>Desenvolvido pela <strong>JUST</strong> — a estrutura para seu negócio funcionar online</>
-          )}
+          <p class="site-footer__signature-text">
+            Desenvolvido pela{" "}
+            <a
+              href="https://www.justwebsites.com.br"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="site-footer__signature-brand"
+            >
+              JUST
+            </a>{" "}
+            — a estrutura para seu negócio funcionar online
+          </p>
         </div>
       )}
 
@@ -729,9 +746,28 @@ function socialGlyph(type: string) {
         )}
 
         {!isShopFooter ? (
-          <p class="site-footer__copyright site-footer__copyright--global">
-            {`© ${year} ${footer.companyName || "Empresa"}. Todos os direitos reservados.`}
-          </p>
+          <div class="site-footer__copyright-block">
+            <p class="site-footer__copyright site-footer__copyright--global">
+              {`© ${year} ${footer.companyName || "Empresa"}. Todos os direitos reservados.`}
+            </p>
+            {resolvedLegalLinks.length > 0 && (
+              <ul class="site-footer__legal" aria-label="Links legais">
+                {resolvedLegalLinks.map((link) => (
+                  <li>
+                    <a href={link.href}>{link.label}</a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : resolvedLegalLinks.length > 0 ? (
+          <ul class="site-footer__legal site-footer__legal--shop" aria-label="Links legais">
+            {resolvedLegalLinks.map((link) => (
+              <li>
+                <a href={link.href}>{link.label}</a>
+              </li>
+            ))}
+          </ul>
         ) : null}
           </div>
         </div>
@@ -1032,6 +1068,63 @@ function socialGlyph(type: string) {
     color: #6b7280;
     font-size: 0.95rem;
     line-height: 1.55;
+  }
+
+  .site-footer__copyright-block {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .site-footer__legal {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+  }
+
+  .site-footer__legal a {
+    color: #6b7280;
+    text-decoration: none;
+    font-size: 0.88rem;
+  }
+
+  .site-footer__legal a:hover,
+  .site-footer__legal a:focus-visible {
+    text-decoration: underline;
+    outline: none;
+  }
+
+  .site-footer[data-footer-surface="dark"] .site-footer__legal a {
+    color: var(--site-color-inverse, #e5e7eb);
+  }
+
+  .site-footer__legal--card {
+    justify-content: center;
+    padding: 0 1.75rem 1.75rem;
+  }
+
+  .site-footer__legal--shop {
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+
+  .site-footer__signature-text {
+    margin: 0;
+    text-align: center;
+  }
+
+  .site-footer__signature-brand {
+    font-weight: 700;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .site-footer__signature-brand:hover,
+  .site-footer__signature-brand:focus-visible {
+    text-decoration: underline;
+    outline: none;
   }
 
   .site-footer__section h3 {
@@ -1491,7 +1584,7 @@ function socialGlyph(type: string) {
       max-width: 15rem;
     }
 
-    .site-footer:not([data-footer-chrome="shop"]) .site-footer__copyright--global {
+    .site-footer:not([data-footer-chrome="shop"]) .site-footer__copyright-block {
       grid-column: 1 / 2;
       justify-self: start;
       margin-top: -0.25rem;
@@ -1526,9 +1619,10 @@ function socialGlyph(type: string) {
       justify-content: center;
     }
 
-    .site-footer:not(.site-footer--cinematic):not([data-footer-chrome="shop"]) .site-footer__copyright--global {
+    .site-footer:not(.site-footer--cinematic):not([data-footer-chrome="shop"]) .site-footer__copyright-block {
       text-align: center;
-      max-width: 24ch;
+      max-width: 28ch;
+      justify-items: center;
     }
   }
 

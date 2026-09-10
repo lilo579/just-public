@@ -1,6 +1,6 @@
 ---
 /**
- * Allowlisted F4 content page — `/privacy` for synthetic mission tenant.
+ * Allowlisted F4 content_page — `/termos-do-clube`.
  */
 export const prerender = false
 
@@ -10,7 +10,7 @@ import { loadAllowlistedMissionPage } from "../lib/loadAllowlistedMissionPage.js
 const mission = await loadAllowlistedMissionPage(
   Astro.request,
   Astro.locals,
-  "/privacy",
+  "/termos-do-clube",
   "content_page",
 )
 
@@ -23,11 +23,11 @@ if (!mission.ok) {
 ---
 
 <MissionContentPage
-  title={mission.route.title || "Privacidade"}
-  heading={mission.route.heading || mission.route.title || "Privacidade"}
+  title={mission.route.title || "Informações do Clube"}
+  heading={mission.route.heading || mission.route.title || "Informações do Clube"}
   body={mission.route.body || ""}
   host={mission.host}
-  path="/privacy"
+  path="/termos-do-clube"
   noindex={mission.noindex}
   seo={mission.seo}
   chrome={mission.chrome}

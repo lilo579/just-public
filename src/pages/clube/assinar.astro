@@ -1,16 +1,16 @@
 ---
 /**
- * Allowlisted F4 form_signup_shell — `/participate` for synthetic mission tenant.
+ * Allowlisted F4 form_signup_shell — `/clube/assinar`.
  */
 export const prerender = false
 
-import MissionFormSignupShell from "../components/mission/MissionFormSignupShell.astro"
-import { loadAllowlistedMissionPage } from "../lib/loadAllowlistedMissionPage.js"
+import MissionFormSignupShell from "../../components/mission/MissionFormSignupShell.astro"
+import { loadAllowlistedMissionPage } from "../../lib/loadAllowlistedMissionPage.js"
 
 const mission = await loadAllowlistedMissionPage(
   Astro.request,
   Astro.locals,
-  "/participate",
+  "/clube/assinar",
   "form_signup_shell",
 )
 
@@ -23,11 +23,11 @@ if (!mission.ok) {
 ---
 
 <MissionFormSignupShell
-  title={mission.route.title || "Participar"}
-  heading={mission.route.heading || mission.route.title || "Participar"}
+  title={mission.route.title || "Assinar o Clube"}
+  heading={mission.route.heading || mission.route.title || "Assinar o Clube"}
   body={mission.route.body || ""}
   host={mission.host}
-  path="/participate"
+  path="/clube/assinar"
   noindex={true}
   seo={mission.seo}
   chrome={mission.chrome}
