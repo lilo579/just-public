@@ -8,6 +8,7 @@ import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
 import SiteTheme from "../components/SiteTheme.astro"
 import PublicSiteHead from "../components/PublicSiteHead.astro"
+import CloudflareWebAnalytics from "../components/CloudflareWebAnalytics.astro"
 import WhatsAppFloat from "../components/WhatsAppFloat.astro"
 import {
   chooseHomepageRenderer,
@@ -222,6 +223,7 @@ const presentationProfile = presentationBinding.profile
 const presentationFamily = presentationBinding.family || "f1"
 const isCinematicPresentation = presentationProfile === "f1.presentation.cinematic_v1"
 const isF3Presentation = presentationFamily === "f3"
+const isF4Presentation = presentationFamily === "f4"
 const presentationChrome = presentationBinding.chrome
 const cinematicAtmosphere =
   presentationChrome &&
@@ -329,28 +331,54 @@ if (isF3Presentation) {
   }
 }
 
+/** F4 (and non-F3 chrome nav) wins over cinematicEditorial / shop defaults. */
+const chromeNavItems =
+  !isF3Presentation &&
+  presentationChrome &&
+  "navItems" in presentationChrome &&
+  Array.isArray(presentationChrome.navItems)
+    ? presentationChrome.navItems
+    : null
+
 const headerNavItems = applyHostOverrideToNavItems(
-  Array.isArray(cinematicEditorial?.navItems)
-    ? cinematicEditorial.navItems
-    : shopNavItems,
+  chromeNavItems ??
+    (Array.isArray(cinematicEditorial?.navItems)
+      ? cinematicEditorial.navItems
+      : shopNavItems),
   hostOverride,
 )
 const headerCtaLabel =
   typeof cinematicEditorial?.headerCtaLabel === "string" &&
   cinematicEditorial.headerCtaLabel.trim()
     ? cinematicEditorial.headerCtaLabel
-    : isF3Presentation &&
-        typeof presentationChrome?.headerCtaLabel === "string" &&
+    : typeof presentationChrome?.headerCtaLabel === "string" &&
         presentationChrome.headerCtaLabel.trim()
       ? presentationChrome.headerCtaLabel
       : "WhatsApp"
+const headerCtaHref =
+  typeof presentationChrome?.headerCtaHref === "string" &&
+  presentationChrome.headerCtaHref.trim()
+    ? presentationChrome.headerCtaHref.trim()
+    : ""
+const chromeLegalLinks = Array.isArray(presentationChrome?.legalLinks)
+  ? presentationChrome.legalLinks.filter(
+      (link: { label?: unknown; href?: unknown }) =>
+        link &&
+        typeof link.label === "string" &&
+        link.label.trim() &&
+        typeof link.href === "string" &&
+        link.href.trim(),
+    )
+  : []
 const isPtDarkAtmosphere = cinematicAtmosphere === "pt_dark"
 const headerCtaVariant = isF3Presentation
   ? "outline-on-dark"
-  : isPtDarkAtmosphere
-    ? "solid"
-    : "outline-on-dark"
-const headerNavReveal = isF3Presentation
+  : isF4Presentation
+    ? "outline-on-dark"
+    : isPtDarkAtmosphere
+      ? "solid"
+      : "outline-on-dark"
+const headerNavReveal = isF3Presentation || isF4Presentation
   ? "always"
   : isPtDarkAtmosphere
     ? "always"
@@ -550,6 +578,7 @@ const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
       <link rel="preload" as="image" href={modeLogo} fetchpriority="high" />
     ) : null}
     {packagedInstitutional ? <meta name="theme-color" content="#121212" /> : null}
+    <CloudflareWebAnalytics />
   </head>
   <body>
     <SiteTheme tokens={tokens}>
@@ -606,6 +635,7 @@ const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
             logoOverHeroUrl={brandingLogoOverHero}
             logoAlt={brandingName}
             whatsappHref={whatsappHref}
+            ctaHref={headerCtaHref || undefined}
             pillChrome={presentationChrome.headerPillChrome !== false && !isF3Presentation}
             overHero={headerOverHero}
             ctaLabel={headerCtaLabel}
@@ -672,15 +702,18 @@ const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
             layout={
               isF3Presentation
                 ? "shop"
-                : isPtDarkAtmosphere
-                  ? "cinematic-pt"
-                  : isCinematicPresentation
-                    ? "cinematic-editorial"
-                    : "standard"
+                : isF4Presentation
+                  ? "standard"
+                  : isPtDarkAtmosphere
+                    ? "cinematic-pt"
+                    : isCinematicPresentation
+                      ? "cinematic-editorial"
+                      : "standard"
             }
             navItems={headerNavItems}
             whatsappHref={whatsappHref}
             headerCtaLabel={headerCtaLabel}
+            legalLinks={chromeLegalLinks}
           />
           {whatsappHref && <WhatsAppFloat href={whatsappHref} />}
         </div>

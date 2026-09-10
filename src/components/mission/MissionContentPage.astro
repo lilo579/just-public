@@ -1,32 +1,43 @@
 ---
 /**
  * Shared mission content_page shell — title/heading/body from allowlisted route.
+ * When chrome is present, wraps with MissionSiteChrome (Header/Footer/SiteTheme).
  */
-const { title, heading, body, host, path, noindex = false, seo = {} } = Astro.props
+import MissionSiteChrome from "./MissionSiteChrome.astro"
+
+const {
+  title,
+  heading,
+  body,
+  host,
+  path,
+  noindex = false,
+  seo = {},
+  chrome = null,
+} = Astro.props
+
 const pageTitle = seo.title ? `${title} | ${seo.title}` : title
 const description = seo.description || ""
 const robots = seo.robots || (noindex ? "noindex,nofollow" : "index,follow")
 const canonicalHref = seo.canonicalUrl || `https://${host}${path}`
 ---
 
-<html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{pageTitle}</title>
-    {description && <meta name="description" content={description} />}
-    <meta name="robots" content={robots} />
-    <link rel="canonical" href={canonicalHref} />
-  </head>
-  <body data-route-kind="content_page" data-mission-host={host}>
-    <main class="mission-content-page">
-      <article>
-        <h1>{heading || title}</h1>
-        {body && <div class="mission-content-page__body" set:html={body.replace(/\n/g, "<br/>")} />}
-      </article>
-    </main>
-  </body>
-</html>
+<MissionSiteChrome
+  chrome={chrome}
+  title={pageTitle}
+  description={description}
+  robots={robots}
+  canonicalHref={canonicalHref}
+  routeKind="content_page"
+  host={host}
+>
+  <article class="mission-content-page">
+    <h1>{heading || title}</h1>
+    {body && (
+      <div class="mission-content-page__body" set:html={body.replace(/\n/g, "<br/>")} />
+    )}
+  </article>
+</MissionSiteChrome>
 
 <style>
   .mission-content-page {

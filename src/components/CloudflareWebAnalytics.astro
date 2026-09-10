@@ -1,0 +1,42 @@
+---
+/**
+ * Cloudflare Web Analytics beacon (optional).
+ * Token comes from Worker secret / env: CLOUDFLARE_WEB_ANALYTICS_TOKEN
+ * (wrangler secret put CLOUDFLARE_WEB_ANALYTICS_TOKEN — not a committed var).
+ * Skipped in lead-intake safe mode (preview/staging) so staging does not pollute metrics.
+ */
+import { isLeadIntakeSafeMode, resolveDeployEnv } from "../lib/runtimeEnv.js"
+
+const deployEnv = resolveDeployEnv(Astro.locals)
+const runtimeEnv =
+  Astro.locals?.runtime &&
+  typeof Astro.locals.runtime === "object" &&
+  "env" in Astro.locals.runtime &&
+  Astro.locals.runtime.env &&
+  typeof Astro.locals.runtime.env === "object"
+    ? /** @type {Record<string, unknown>} */ (Astro.locals.runtime.env)
+    : null
+
+const fromRuntime =
+  runtimeEnv && typeof runtimeEnv.CLOUDFLARE_WEB_ANALYTICS_TOKEN === "string"
+    ? runtimeEnv.CLOUDFLARE_WEB_ANALYTICS_TOKEN.trim()
+    : ""
+const fromImportMeta =
+  typeof import.meta.env.CLOUDFLARE_WEB_ANALYTICS_TOKEN === "string"
+    ? import.meta.env.CLOUDFLARE_WEB_ANALYTICS_TOKEN.trim()
+    : typeof import.meta.env.PUBLIC_CLOUDFLARE_WEB_ANALYTICS_TOKEN === "string"
+      ? import.meta.env.PUBLIC_CLOUDFLARE_WEB_ANALYTICS_TOKEN.trim()
+      : ""
+
+const token = fromRuntime || fromImportMeta
+const enabled = Boolean(token) && !isLeadIntakeSafeMode(deployEnv)
+const beacon = enabled ? JSON.stringify({ token }) : ""
+---
+
+{enabled ? (
+  <script
+    defer
+    src="https://static.cloudflareinsights.com/beacon.min.js"
+    data-cf-beacon={beacon}
+  />
+) : null}

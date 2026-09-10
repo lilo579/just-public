@@ -187,6 +187,7 @@ test("non-F3 and packaged JUST sitemaps keep current path sets", () => {
 })
 
 test("F4 mission sitemap includes allowlisted declared routes", () => {
+  // Dorot standalone includes `/clube/assinar` when missionRoutes lists it.
   assert.deepEqual(
     collectPublicSitemapPaths({
       family: "f4",
@@ -198,6 +199,18 @@ test("F4 mission sitemap includes allowlisted declared routes", () => {
       ],
     }),
     ["/", "/privacy", "/participate"],
+  )
+  assert.deepEqual(
+    collectPublicSitemapPaths({
+      family: "f4",
+      tenantId: "f4-tenant",
+      missionRoutes: [
+        { kind: "content_page", path: "/privacidade" },
+        { kind: "content_page", path: "/termos-do-clube" },
+        { kind: "form_signup_shell", path: "/clube/assinar" },
+      ],
+    }),
+    ["/", "/privacidade", "/termos-do-clube", "/clube/assinar"],
   )
   assert.deepEqual(collectPublicSitemapPaths({ family: "f4", tenantId: "f4-tenant" }), ["/"])
 })

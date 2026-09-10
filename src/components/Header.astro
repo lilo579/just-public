@@ -9,6 +9,8 @@ const {
   logoOverHeroUrl = "",
   logoAlt = siteTitle,
   whatsappHref = "",
+  /** Non-WhatsApp header CTA href (F4 mission / custom chrome). */
+  ctaHref = "",
   pillChrome = true,
   overHero = false,
   ctaLabel = "WhatsApp",
@@ -32,6 +34,7 @@ const {
   logoOverHeroUrl?: string
   logoAlt?: string
   whatsappHref?: string
+  ctaHref?: string
   pillChrome?: boolean
   overHero?: boolean
   ctaLabel?: string
@@ -51,7 +54,17 @@ const overHeroCtaClass =
     ? "site-header__cta f1-cta f1-cta--solid"
     : "site-header__cta f1-cta f1-cta--outline-on-dark"
 const ctaClass = overHero ? overHeroCtaClass : "site-header__cta"
-const renderCta = showCta && !isShopChrome && Boolean(whatsappHref || !overHero)
+const resolvedCtaHref = typeof ctaHref === "string" ? ctaHref.trim() : ""
+const isCtaHrefWhatsapp = Boolean(resolvedCtaHref && resolvedCtaHref.includes("wa.me"))
+/** Prefer plain link when chrome sets a non-WhatsApp ctaHref (F4). */
+const usePlainCtaHref = Boolean(resolvedCtaHref) && !isCtaHrefWhatsapp
+const resolvedWhatsappHref =
+  (typeof whatsappHref === "string" && whatsappHref.trim()) ||
+  (isCtaHrefWhatsapp ? resolvedCtaHref : "")
+const renderCta =
+  showCta &&
+  !isShopChrome &&
+  Boolean(resolvedWhatsappHref || usePlainCtaHref || !overHero)
 
 /** Keep Workers preview `?host=` when returning to the homepage. */
 const hostParam = (Astro.url.searchParams.get("host") || "").trim()
@@ -211,9 +224,18 @@ const shopMenuBtnId = "shop-menu-open"
       )}
 
       {renderCta ? (
-        whatsappHref ? (
+        usePlainCtaHref ? (
           <TrackedCTA
-            href={whatsappHref}
+            href={resolvedCtaHref}
+            label={ctaLabel}
+            class={ctaClass}
+            ctaId="header-primary-cta"
+          >
+            <span>{ctaLabel}</span>
+          </TrackedCTA>
+        ) : resolvedWhatsappHref ? (
+          <TrackedCTA
+            href={resolvedWhatsappHref}
             label={ctaLabel}
             class={ctaClass}
             ctaId="header-whatsapp-cta"

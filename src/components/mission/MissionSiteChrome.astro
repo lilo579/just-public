@@ -1,0 +1,141 @@
+---
+/**
+ * Shared Header + Footer + SiteTheme shell for F4 mission informational routes.
+ * Uses chrome extracted from the host-bound public payload (nav, logos, legal, CTA).
+ */
+import Header from "../Header.astro"
+import Footer from "../Footer.astro"
+import SiteTheme from "../SiteTheme.astro"
+import CloudflareWebAnalytics from "../CloudflareWebAnalytics.astro"
+
+const {
+  chrome = null,
+  title = "",
+  description = "",
+  robots = "index,follow",
+  canonicalHref = "",
+  routeKind = "content_page",
+  host = "",
+} = Astro.props as {
+  chrome?: Record<string, any> | null
+  title?: string
+  description?: string
+  robots?: string
+  canonicalHref?: string
+  routeKind?: string
+  host?: string
+}
+
+const hasChrome = Boolean(chrome && typeof chrome === "object")
+const tokens =
+  hasChrome && chrome?.tokens && typeof chrome.tokens === "object"
+    ? chrome.tokens
+    : {
+        "--site-color-primary": "#1f4d3a",
+        "--site-color-secondary": "#e8efe9",
+        "--site-color-accent": "#c4a35a",
+        "--site-color-background": "#ffffff",
+        "--site-color-text": "#0f172a",
+      }
+const companyName =
+  (hasChrome && typeof chrome?.companyName === "string" && chrome.companyName) || "Site"
+const navItems =
+  hasChrome && Array.isArray(chrome?.navItems) ? chrome.navItems : []
+const legalLinks =
+  hasChrome && Array.isArray(chrome?.legalLinks) ? chrome.legalLinks : []
+const headerCtaLabel =
+  hasChrome &&
+  typeof chrome?.headerCtaLabel === "string" &&
+  chrome.headerCtaLabel.trim()
+    ? chrome.headerCtaLabel
+    : "Contato"
+const headerCtaHref =
+  hasChrome &&
+  typeof chrome?.headerCtaHref === "string" &&
+  chrome.headerCtaHref.trim()
+    ? chrome.headerCtaHref.trim()
+    : ""
+const whatsappHref =
+  hasChrome && typeof chrome?.whatsappHref === "string" ? chrome.whatsappHref : ""
+const footerSurface =
+  hasChrome && (chrome?.footerSurface === "dark" || chrome?.footerSurface === "light")
+    ? chrome.footerSurface
+    : "dark"
+const justSignatureBand = !hasChrome || chrome?.justSignatureBand !== false
+const fontLoadUrl =
+  typeof tokens?.__fontLoadUrl === "string" ? tokens.__fontLoadUrl : null
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <meta name="robots" content={robots} />
+    {canonicalHref && <link rel="canonical" href={canonicalHref} />}
+    {fontLoadUrl && <link rel="stylesheet" href={fontLoadUrl} />}
+    <CloudflareWebAnalytics />
+  </head>
+  <body data-route-kind={routeKind} data-mission-host={host}>
+    {hasChrome ? (
+      <SiteTheme tokens={tokens}>
+        <Header
+          siteTitle={companyName}
+          logoUrl={chrome?.logoUrl || ""}
+          logoOverHeroUrl={chrome?.logoOverHeroUrl || ""}
+          logoAlt={companyName}
+          whatsappHref={whatsappHref}
+          ctaHref={headerCtaHref || undefined}
+          pillChrome={chrome?.headerPillChrome !== false}
+          overHero={false}
+          ctaLabel={headerCtaLabel}
+          navItems={navItems}
+          ctaVariant="outline-on-dark"
+          navReveal="always"
+          chrome="default"
+          showCta={true}
+          homeHref="/"
+        />
+        <main class="mission-chrome__main">
+          <slot />
+        </main>
+        <Footer
+          footer={{
+            companyName,
+            logoUrl: chrome?.footerLogoUrl || chrome?.logoUrl || null,
+            tagline: chrome?.footerTagline || null,
+            whatsappNumber: chrome?.contact?.whatsappNumber ?? null,
+            whatsappVisible: chrome?.contact?.whatsappVisible === true,
+            email: chrome?.contact?.email ?? null,
+            address: chrome?.contact?.address ?? null,
+            socialLinks: Array.isArray(chrome?.socialLinks) ? chrome.socialLinks : [],
+          }}
+          justSignatureBand={justSignatureBand}
+          footerSurface={footerSurface}
+          layout="standard"
+          navItems={navItems}
+          whatsappHref={whatsappHref}
+          headerCtaLabel={headerCtaLabel}
+          legalLinks={legalLinks}
+        />
+      </SiteTheme>
+    ) : (
+      <main class="mission-chrome__main mission-chrome__main--bare">
+        <slot />
+      </main>
+    )}
+  </body>
+</html>
+
+<style>
+  .mission-chrome__main {
+    min-height: 50vh;
+  }
+
+  .mission-chrome__main--bare {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+  }
+</style>

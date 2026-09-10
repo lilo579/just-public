@@ -2,7 +2,10 @@
 /**
  * Allowlisted form_signup_shell bound to book-club-signup Edge Function.
  * Host comes from the request — never from a client-supplied tenantId.
+ * When chrome is present, wraps with MissionSiteChrome (Header/Footer/SiteTheme).
  */
+import MissionSiteChrome from "./MissionSiteChrome.astro"
+
 const {
   title,
   heading,
@@ -12,6 +15,7 @@ const {
   noindex = true,
   seo = {},
   signupUrl,
+  chrome = null,
 } = Astro.props
 
 const pageTitle = seo.title ? `${title} | ${seo.title}` : title
@@ -26,67 +30,70 @@ const endpoint =
     : "https://ehondnpqztvybvgsjnxe.supabase.co/functions/v1/book-club-signup")
 ---
 
-<html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{pageTitle}</title>
-    {description && <meta name="description" content={description} />}
-    <meta name="robots" content={robots} />
-    <link rel="canonical" href={canonicalHref} />
-  </head>
-  <body data-route-kind="form_signup_shell" data-mission-host={host}>
-    <main class="mission-form-shell">
-      <header>
-        <h1>{heading || title}</h1>
-        {body && <p>{body}</p>}
-      </header>
+<MissionSiteChrome
+  chrome={chrome}
+  title={pageTitle}
+  description={description}
+  robots={robots}
+  canonicalHref={canonicalHref}
+  routeKind="form_signup_shell"
+  host={host}
+>
+  <div class="mission-form-shell">
+    <header>
+      <h1>{heading || title}</h1>
+      {body && <p>{body}</p>}
+    </header>
 
-      <div id="mission-form-success" class="mission-form-shell__status" hidden role="status">
-        Solicitação recebida. Em breve entraremos em contato.
-      </div>
-      <div id="mission-form-error" class="mission-form-shell__status mission-form-shell__status--error" hidden role="alert">
-        Não foi possível enviar. Tente novamente em instantes.
-      </div>
+    <div id="mission-form-success" class="mission-form-shell__status" hidden role="status">
+      Solicitação recebida. Em breve entraremos em contato.
+    </div>
+    <div
+      id="mission-form-error"
+      class="mission-form-shell__status mission-form-shell__status--error"
+      hidden
+      role="alert"
+    >
+      Não foi possível enviar. Tente novamente em instantes.
+    </div>
 
-      <form
-        id="mission-signup-form"
-        class="mission-form-shell__form"
-        aria-label={heading || title}
-        data-endpoint={endpoint}
-        data-host={host}
-        data-path={path}
-      >
-        <label>
-          Nome completo
-          <input type="text" name="name" autocomplete="name" required />
-        </label>
-        <label>
-          E-mail
-          <input type="email" name="email" autocomplete="email" required />
-        </label>
-        <label>
-          Telefone / WhatsApp
-          <input type="tel" name="phone" autocomplete="tel" required />
-        </label>
-        <label>
-          Endereço de entrega
-          <textarea name="address" rows="3" required></textarea>
-        </label>
-        <label>
-          Nome para dedicatória (opcional)
-          <input type="text" name="dedication" autocomplete="off" />
-        </label>
-        {/* Honeypot */}
-        <label class="mission-form-shell__hp" aria-hidden="true">
-          Empresa
-          <input type="text" name="company" tabindex="-1" autocomplete="off" />
-        </label>
-        <button type="submit">Enviar solicitação</button>
-      </form>
-    </main>
-  </body>
-</html>
+    <form
+      id="mission-signup-form"
+      class="mission-form-shell__form"
+      aria-label={heading || title}
+      data-endpoint={endpoint}
+      data-host={host}
+      data-path={path}
+    >
+      <label>
+        Nome completo
+        <input type="text" name="name" autocomplete="name" required />
+      </label>
+      <label>
+        E-mail
+        <input type="email" name="email" autocomplete="email" required />
+      </label>
+      <label>
+        Telefone / WhatsApp
+        <input type="tel" name="phone" autocomplete="tel" required />
+      </label>
+      <label>
+        Endereço de entrega
+        <textarea name="address" rows="3" required></textarea>
+      </label>
+      <label>
+        Nome para dedicatória (opcional)
+        <input type="text" name="dedication" autocomplete="off" />
+      </label>
+      {/* Honeypot */}
+      <label class="mission-form-shell__hp" aria-hidden="true">
+        Empresa
+        <input type="text" name="company" tabindex="-1" autocomplete="off" />
+      </label>
+      <button type="submit">Enviar solicitação</button>
+    </form>
+  </div>
+</MissionSiteChrome>
 
 <script>
   const form = document.getElementById("mission-signup-form")

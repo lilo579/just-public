@@ -23,8 +23,96 @@ import {
   HostResolutionError,
   resolveRequestHost,
 } from "./publicHomepage"
+import { chooseHomepageRenderer } from "./publicHomepageHelpers.js"
+import { resolvePublicPresentationBinding } from "./publicPresentationBinding.js"
+import { themeTokensFromBranding } from "./themeFromBranding.js"
+import {
+  resolveHeaderLogoUrl,
+  resolveHeaderOverHeroLogoUrl,
+  resolveFooterLogoUrl,
+} from "@just/site-engine-authority"
 
 export { missionRoutesFromPayload }
+
+/**
+ * Extract Header/Footer chrome fields from a host-bound mission payload.
+ * @param {any} payload
+ */
+export function missionChromeFromPayload(payload) {
+  if (!payload || typeof payload !== "object") return null
+
+  const choice = chooseHomepageRenderer(payload)
+  const binding = resolvePublicPresentationBinding(payload, choice)
+  const presentationChrome =
+    binding?.chrome && typeof binding.chrome === "object" ? binding.chrome : {}
+  const branding = payload?.source?.meta?.branding ?? null
+  const contact = payload?.source?.contact ?? payload?.footer ?? null
+  const companyName =
+    contact?.companyName ||
+    payload?.footer?.companyName ||
+    "Site"
+
+  const whatsappDigits = String(contact?.whatsappNumber || "").replace(/\D/g, "")
+  const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : ""
+
+  const navItems = Array.isArray(presentationChrome.navItems)
+    ? presentationChrome.navItems
+    : []
+  const legalLinks = Array.isArray(presentationChrome.legalLinks)
+    ? presentationChrome.legalLinks
+    : []
+  const headerCtaLabel =
+    typeof presentationChrome.headerCtaLabel === "string" &&
+    presentationChrome.headerCtaLabel.trim()
+      ? presentationChrome.headerCtaLabel.trim()
+      : ""
+  const headerCtaHref =
+    typeof presentationChrome.headerCtaHref === "string" &&
+    presentationChrome.headerCtaHref.trim()
+      ? presentationChrome.headerCtaHref.trim()
+      : ""
+
+  const socialLinks = (
+    payload?.source?.meta?.footer?.socialLinks ||
+    payload?.footer?.socialLinks ||
+    []
+  ).filter((link) => typeof link?.url === "string" && link.url.trim())
+
+  return {
+    companyName,
+    branding,
+    contact: {
+      companyName,
+      email: contact?.email ?? payload?.footer?.email ?? null,
+      address: contact?.address ?? payload?.footer?.address ?? null,
+      whatsappNumber: contact?.whatsappNumber ?? payload?.footer?.whatsappNumber ?? null,
+      whatsappVisible:
+        contact?.whatsappVisible === true ||
+        payload?.footer?.whatsappVisible === true,
+    },
+    navItems,
+    legalLinks,
+    headerCtaLabel,
+    headerCtaHref,
+    whatsappHref,
+    logoUrl: resolveHeaderLogoUrl(branding, presentationChrome) || "",
+    logoOverHeroUrl:
+      resolveHeaderOverHeroLogoUrl(branding, presentationChrome) || "",
+    footerLogoUrl: resolveFooterLogoUrl(branding, presentationChrome) || "",
+    footerTagline: payload?.footer?.tagline ?? null,
+    footerSurface:
+      presentationChrome.footerSurface === "light" ||
+      presentationChrome.footerSurface === "dark"
+        ? presentationChrome.footerSurface
+        : "dark",
+    justSignatureBand: presentationChrome.justSignatureBand !== false,
+    headerPillChrome: presentationChrome.headerPillChrome !== false,
+    socialLinks,
+    tokens: themeTokensFromBranding(branding),
+    presentationProfile: binding?.profile ?? null,
+    family: binding?.family ?? "f4",
+  }
+}
 
 /**
  * @param {Request} request
@@ -97,6 +185,9 @@ export async function loadAllowlistedMissionPage(request, locals, path, kind) {
     ? buildCanonicalUrl(canonical, path)
     : `https://${host}${path}`
 
+  const chromeSource = payload || resolved.fixture || null
+  const chrome = missionChromeFromPayload(chromeSource)
+
   return {
     ok: true,
     host,
@@ -104,6 +195,7 @@ export async function loadAllowlistedMissionPage(request, locals, path, kind) {
     kind,
     route: resolved.route,
     payload,
+    chrome,
     seo: {
       title: typeof seoMeta.title === "string" ? seoMeta.title : "",
       description: typeof seoMeta.description === "string" ? seoMeta.description : "",
