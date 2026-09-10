@@ -1,0 +1,121 @@
+---
+/**
+ * F4 mission — recurring community support (presentation only; no billing).
+ */
+const { block } = Astro.props as {
+  block: {
+    type?: string
+    content?: {
+      title?: string | null
+      description?: string | null
+      benefits?: string[] | null
+      priceLabel?: string | null
+      imageUrl?: string | null
+      cta?: { label?: string; href?: string } | null
+    }
+  }
+}
+
+const content = block?.content ?? {}
+const title = typeof content.title === "string" ? content.title.trim() : ""
+const description =
+  typeof content.description === "string" ? content.description.trim() : ""
+const priceLabel =
+  typeof content.priceLabel === "string" ? content.priceLabel.trim() : ""
+const imageUrl = typeof content.imageUrl === "string" ? content.imageUrl.trim() : ""
+const benefits = Array.isArray(content.benefits)
+  ? content.benefits.filter((b) => typeof b === "string" && b.trim())
+  : []
+const cta =
+  content.cta && typeof content.cta.label === "string" && content.cta.label.trim()
+    ? content.cta
+    : null
+const show = Boolean(title || description || benefits.length || imageUrl)
+---
+
+{show && (
+  <section class="mission-recurring" aria-labelledby="mission-recurring-title">
+    <div class="mission-recurring__container">
+      {imageUrl && (
+        <div class="mission-recurring__media">
+          <img src={imageUrl} alt="" loading="lazy" role="presentation" />
+        </div>
+      )}
+      <div class="mission-recurring__body">
+        {title && (
+          <h2 id="mission-recurring-title" class="mission-recurring__title">
+            {title}
+          </h2>
+        )}
+        {priceLabel && <p class="mission-recurring__price">{priceLabel}</p>}
+        {description && <p class="mission-recurring__description">{description}</p>}
+        {benefits.length > 0 && (
+          <ul class="mission-recurring__benefits">
+            {benefits.map((benefit) => (
+              <li>{benefit}</li>
+            ))}
+          </ul>
+        )}
+        {cta?.label && (
+          <p class="mission-recurring__cta">
+            {cta.href ? <a href={cta.href}>{cta.label}</a> : <span>{cta.label}</span>}
+          </p>
+        )}
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .mission-recurring {
+    padding: 3rem 0;
+    background: var(--site-color-background, hsl(40 14% 97%));
+    color: var(--site-color-foreground, hsl(220 15% 16%));
+  }
+  .mission-recurring__container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: grid;
+    gap: 1.5rem;
+  }
+  @media (min-width: 800px) {
+    .mission-recurring__container {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      align-items: center;
+    }
+  }
+  .mission-recurring__media img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    aspect-ratio: 5 / 4;
+  }
+  .mission-recurring__title {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.4rem, 2.2vw, 1.85rem);
+    font-weight: 650;
+    color: var(--site-color-primary, hsl(220 20% 20%));
+  }
+  .mission-recurring__price {
+    margin: 0 0 0.75rem;
+    font-weight: 600;
+  }
+  .mission-recurring__description {
+    margin: 0;
+    line-height: 1.6;
+  }
+  .mission-recurring__benefits {
+    margin: 1rem 0 0;
+    padding-left: 1.1rem;
+    line-height: 1.55;
+  }
+  .mission-recurring__cta {
+    margin: 1.25rem 0 0;
+  }
+  .mission-recurring__cta a {
+    color: var(--site-color-primary, hsl(220 40% 28%));
+    font-weight: 600;
+  }
+</style>

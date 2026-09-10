@@ -4,6 +4,13 @@
  * Runtime: Web/ECMAScript APIs only (Workers-safe).
  */
 
+import {
+  FIXTURE_SYNTHETIC_F4,
+  SYNTHETIC_F4_HOST,
+} from "./syntheticF4MissionTenant.js"
+
+export { FIXTURE_SYNTHETIC_F4, SYNTHETIC_F4_HOST } from "./syntheticF4MissionTenant.js"
+
 const CAPABILITIES = Object.freeze({
   supportsHydration: false,
   supportsLazyLoading: false,
@@ -397,6 +404,7 @@ export const POC_FIXTURES_BY_HOST = Object.freeze({
   }),
   "www.justwebsites.com.br": FIXTURE_JUST_COMING_SOON,
   "justwebsites.com.br": FIXTURE_JUST_COMING_SOON,
+  [SYNTHETIC_F4_HOST]: FIXTURE_SYNTHETIC_F4,
 })
 
 /**

@@ -196,6 +196,19 @@ export function collectPublicSitemapPaths(input) {
     return out
   }
 
+  if (input?.family === "f4") {
+    const declared = Array.isArray(input?.missionRoutes)
+      ? input.missionRoutes
+          .map((route) =>
+            route && typeof route === "object" && typeof route.path === "string"
+              ? route.path
+              : "",
+          )
+          .filter(Boolean)
+      : []
+    return uniquePreserve(["/", ...declared])
+  }
+
   return ["/"]
 }
 

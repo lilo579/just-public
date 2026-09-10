@@ -1,0 +1,118 @@
+---
+/**
+ * F4 mission — active initiative (presentation bind-only).
+ * Institutional layout; uses theme CSS variables when present.
+ */
+const { block } = Astro.props as {
+  block: {
+    type?: string
+    content?: {
+      title?: string | null
+      subtitle?: string | null
+      description?: string | null
+      imageUrl?: string | null
+      imageAlt?: string | null
+      cta?: { label?: string; href?: string } | null
+    }
+  }
+}
+
+const content = block?.content ?? {}
+const title = typeof content.title === "string" ? content.title.trim() : ""
+const subtitle = typeof content.subtitle === "string" ? content.subtitle.trim() : ""
+const description =
+  typeof content.description === "string" ? content.description.trim() : ""
+const imageUrl = typeof content.imageUrl === "string" ? content.imageUrl.trim() : ""
+const imageAlt =
+  typeof content.imageAlt === "string" && content.imageAlt.trim()
+    ? content.imageAlt.trim()
+    : title || "Iniciativa"
+const cta =
+  content.cta && typeof content.cta.label === "string" && content.cta.label.trim()
+    ? content.cta
+    : null
+const show = Boolean(title || subtitle || description || imageUrl)
+---
+
+{show && (
+  <section class="mission-initiative" aria-labelledby="mission-initiative-title">
+    <div class="mission-initiative__container">
+      {imageUrl && (
+        <div class="mission-initiative__media">
+          <img src={imageUrl} alt={imageAlt} loading="lazy" />
+        </div>
+      )}
+      <div class="mission-initiative__body">
+        {title && (
+          <h2 id="mission-initiative-title" class="mission-initiative__title">
+            {title}
+          </h2>
+        )}
+        {subtitle && <p class="mission-initiative__subtitle">{subtitle}</p>}
+        {description && <p class="mission-initiative__description">{description}</p>}
+        {cta?.label && (
+          <p class="mission-initiative__cta">
+            {cta.href ? (
+              <a href={cta.href}>{cta.label}</a>
+            ) : (
+              <span>{cta.label}</span>
+            )}
+          </p>
+        )}
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .mission-initiative {
+    padding: 3rem 0;
+    background: var(--site-color-background, hsl(40 20% 98%));
+    color: var(--site-color-foreground, hsl(220 15% 16%));
+  }
+  .mission-initiative__container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: grid;
+    gap: 1.75rem;
+  }
+  @media (min-width: 768px) {
+    .mission-initiative__container {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      align-items: center;
+    }
+  }
+  .mission-initiative__media img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    aspect-ratio: 4 / 3;
+  }
+  .mission-initiative__title {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.5rem, 2.4vw, 2rem);
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    color: var(--site-color-primary, hsl(220 20% 20%));
+  }
+  .mission-initiative__subtitle {
+    margin: 0 0 0.75rem;
+    font-size: 1.05rem;
+    opacity: 0.85;
+  }
+  .mission-initiative__description {
+    margin: 0;
+    line-height: 1.6;
+  }
+  .mission-initiative__cta {
+    margin: 1.25rem 0 0;
+  }
+  .mission-initiative__cta a {
+    color: var(--site-color-primary, hsl(220 40% 28%));
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+</style>

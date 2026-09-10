@@ -19,6 +19,11 @@ import CtaBlock from "./blocks/CtaBlock.astro"
 import CatalogCategoryNavBlock from "./blocks/CatalogCategoryNavBlock.astro"
 import CatalogProductGridBlock from "./blocks/CatalogProductGridBlock.astro"
 import CatalogRichSectionBlock from "./blocks/CatalogRichSectionBlock.astro"
+import MissionInitiativeBlock from "./blocks/MissionInitiativeBlock.astro"
+import MissionProgressTrackBlock from "./blocks/MissionProgressTrackBlock.astro"
+import MissionPatronageBlock from "./blocks/MissionPatronageBlock.astro"
+import MissionRecurringSupportBlock from "./blocks/MissionRecurringSupportBlock.astro"
+import MissionHistoryCollectionBlock from "./blocks/MissionHistoryCollectionBlock.astro"
 import { enrichPlanPaintWithPresentationChrome } from "../lib/enrichPlanPaintWithPresentationChrome.js"
 
 import type {
@@ -460,6 +465,21 @@ const manifestoSectionId = editorial?.sectionIds?.manifesto || "manifesto-final"
       case "maker_story":
       case "fulfillment":
         return <CatalogRichSectionBlock block={paint.block} />
+
+      case "initiative":
+        return <MissionInitiativeBlock block={paint.block} />
+
+      case "progress_track":
+        return <MissionProgressTrackBlock block={paint.block} />
+
+      case "patronage":
+        return <MissionPatronageBlock block={paint.block} />
+
+      case "recurring_support":
+        return <MissionRecurringSupportBlock block={paint.block} />
+
+      case "history_collection":
+        return <MissionHistoryCollectionBlock block={paint.block} />
 
       default:
         return (

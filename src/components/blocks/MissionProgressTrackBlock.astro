@@ -1,0 +1,157 @@
+---
+/**
+ * F4 mission — ordered progress track + optional quantitative progress.
+ */
+const { block } = Astro.props as {
+  block: {
+    type?: string
+    content?: {
+      milestones?: { id?: string; label?: string; position?: number }[]
+      currentId?: string | null
+      quantitative?: {
+        current?: number
+        goal?: number
+        unitLabel?: string | null
+      } | null
+    }
+  }
+}
+
+const content = block?.content ?? {}
+const milestones = Array.isArray(content.milestones)
+  ? [...content.milestones]
+      .filter((m) => m && typeof m.label === "string" && m.label.trim())
+      .sort((a, b) => (Number(a.position) || 0) - (Number(b.position) || 0))
+  : []
+const currentId =
+  typeof content.currentId === "string" && content.currentId.trim()
+    ? content.currentId.trim()
+    : null
+const quantitative = content.quantitative
+const hasQuantitative =
+  quantitative &&
+  typeof quantitative.current === "number" &&
+  typeof quantitative.goal === "number" &&
+  quantitative.goal > 0
+const pct = hasQuantitative
+  ? Math.min(100, Math.round((quantitative.current / quantitative.goal) * 100))
+  : null
+const show = milestones.length > 0 || hasQuantitative
+---
+
+{show && (
+  <section class="mission-progress" aria-labelledby="mission-progress-title">
+    <div class="mission-progress__container">
+      <h2 id="mission-progress-title" class="mission-progress__title">
+        Progresso
+      </h2>
+
+      {milestones.length > 0 && (
+        <ol class="mission-progress__list">
+          {milestones.map((milestone) => {
+            const id = typeof milestone.id === "string" ? milestone.id : ""
+            const isCurrent = Boolean(currentId && id && id === currentId)
+            return (
+              <li
+                class:list={[
+                  "mission-progress__item",
+                  isCurrent && "mission-progress__item--current",
+                ]}
+                aria-current={isCurrent ? "step" : undefined}
+              >
+                <span class="mission-progress__marker" aria-hidden="true" />
+                <span class="mission-progress__label">{milestone.label}</span>
+              </li>
+            )
+          })}
+        </ol>
+      )}
+
+      {hasQuantitative && (
+        <div
+          class="mission-progress__meter"
+          role="group"
+          aria-label="Progresso quantitativo"
+        >
+          <div
+            class="mission-progress__bar"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={quantitative.goal}
+            aria-valuenow={quantitative.current}
+            aria-valuetext={`${quantitative.current} de ${quantitative.goal}${quantitative.unitLabel ? ` ${quantitative.unitLabel}` : ""}`}
+          >
+            <div class="mission-progress__fill" style={`width: ${pct}%`} />
+          </div>
+          <p class="mission-progress__numbers">
+            <span>{quantitative.current}</span>
+            <span aria-hidden="true"> / </span>
+            <span>{quantitative.goal}</span>
+            {quantitative.unitLabel ? <span> {quantitative.unitLabel}</span> : null}
+          </p>
+        </div>
+      )}
+    </div>
+  </section>
+)}
+
+<style>
+  .mission-progress {
+    padding: 2.5rem 0;
+    background: var(--site-color-background, hsl(40 16% 97%));
+    color: var(--site-color-foreground, hsl(220 15% 16%));
+  }
+  .mission-progress__container {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: grid;
+    gap: 1.5rem;
+  }
+  .mission-progress__title {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 650;
+    color: var(--site-color-primary, hsl(220 20% 20%));
+  }
+  .mission-progress__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.85rem;
+  }
+  .mission-progress__item {
+    display: grid;
+    grid-template-columns: 1rem 1fr;
+    gap: 0.75rem;
+    align-items: start;
+  }
+  .mission-progress__marker {
+    width: 0.7rem;
+    height: 0.7rem;
+    margin-top: 0.35rem;
+    border-radius: 999px;
+    background: hsl(220 10% 70%);
+  }
+  .mission-progress__item--current .mission-progress__marker {
+    background: var(--site-color-primary, hsl(150 25% 32%));
+  }
+  .mission-progress__item--current .mission-progress__label {
+    font-weight: 650;
+  }
+  .mission-progress__bar {
+    height: 0.55rem;
+    background: hsl(220 10% 88%);
+    overflow: hidden;
+  }
+  .mission-progress__fill {
+    height: 100%;
+    background: var(--site-color-primary, hsl(150 25% 32%));
+  }
+  .mission-progress__numbers {
+    margin: 0.5rem 0 0;
+    font-size: 0.95rem;
+    opacity: 0.9;
+  }
+</style>

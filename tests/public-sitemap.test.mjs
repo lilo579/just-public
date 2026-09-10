@@ -186,6 +186,22 @@ test("non-F3 and packaged JUST sitemaps keep current path sets", () => {
   )
 })
 
+test("F4 mission sitemap includes allowlisted declared routes", () => {
+  assert.deepEqual(
+    collectPublicSitemapPaths({
+      family: "f4",
+      tenantId: "f4-tenant",
+      missionRoutes: [
+        { kind: "content_page", path: "/privacy" },
+        { kind: "form_signup_shell", path: "/participate" },
+        { kind: "content_page", path: "/admin" },
+      ],
+    }),
+    ["/", "/privacy", "/participate"],
+  )
+  assert.deepEqual(collectPublicSitemapPaths({ family: "f4", tenantId: "f4-tenant" }), ["/"])
+})
+
 test("F3 tenant isolation is sequential and concurrent", async () => {
   const tenantA = "00000000-0000-4000-8000-aaa000000001"
   const tenantB = "00000000-0000-4000-8000-bbb000000002"
