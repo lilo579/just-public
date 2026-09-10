@@ -20,7 +20,7 @@
   "env": {
     "staging": {
       "name": "just-public-staging",
-      "workers_dev": false,
+      "workers_dev": true,
       "preview_urls": true,
       "vars": {
         "DEPLOY_ENV": "staging",
