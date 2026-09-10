@@ -143,7 +143,9 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     ? ctx.payload.routes
     : Array.isArray(ctx.payload?.source?.missionRoutes)
       ? ctx.payload.source.missionRoutes
-      : []
+      : Array.isArray(ctx.payload?.source?.mission?.routes)
+        ? ctx.payload.source.mission.routes
+        : []
 
   const paths = collectPublicSitemapPaths({
     packaged,

@@ -1,0 +1,47 @@
+---
+/**
+ * Shared mission content_page shell — title/heading/body from allowlisted route.
+ */
+const { title, heading, body, host, path, noindex = false, seo = {} } = Astro.props
+const pageTitle = seo.title ? `${title} | ${seo.title}` : title
+const description = seo.description || ""
+const robots = seo.robots || (noindex ? "noindex,nofollow" : "index,follow")
+const canonicalHref = seo.canonicalUrl || `https://${host}${path}`
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    {description && <meta name="description" content={description} />}
+    <meta name="robots" content={robots} />
+    <link rel="canonical" href={canonicalHref} />
+  </head>
+  <body data-route-kind="content_page" data-mission-host={host}>
+    <main class="mission-content-page">
+      <article>
+        <h1>{heading || title}</h1>
+        {body && <div class="mission-content-page__body" set:html={body.replace(/\n/g, "<br/>")} />}
+      </article>
+    </main>
+  </body>
+</html>
+
+<style>
+  .mission-content-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+    font-family: Georgia, "Times New Roman", serif;
+    color: hsl(220 15% 16%);
+    line-height: 1.6;
+  }
+  h1 {
+    font-size: 1.75rem;
+    margin: 0 0 1rem;
+  }
+  .mission-content-page__body {
+    margin: 0;
+  }
+</style>

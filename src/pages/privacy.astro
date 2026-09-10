@@ -1,64 +1,33 @@
 ---
 /**
- * Allowlisted F4 content page — `/privacy` for synthetic mission tenant only.
+ * Allowlisted F4 content page — `/privacy` for synthetic mission tenant.
  */
 export const prerender = false
 
-import { resolveAllowlistedMissionRoute } from "../lib/resolveAllowlistedMissionRoute.js"
-import { normalizeRequestHostname } from "../lib/publicHomepageHelpers.js"
+import MissionContentPage from "../components/mission/MissionContentPage.astro"
+import { loadAllowlistedMissionPage } from "../lib/loadAllowlistedMissionPage.js"
 
-const hostHeader = Astro.request.headers.get("host") || ""
-const hostResult = normalizeRequestHostname(hostHeader)
-const host = hostResult.ok ? hostResult.host : ""
-const resolved = resolveAllowlistedMissionRoute(host, "/privacy", "content_page")
+const mission = await loadAllowlistedMissionPage(
+  Astro.request,
+  Astro.locals,
+  "/privacy",
+  "content_page",
+)
 
-if (!resolved) {
+if (!mission.ok) {
   return new Response("Not found", {
-    status: 404,
+    status: mission.status || 404,
     headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
   })
 }
-
-const { route, fixture } = resolved
-const seo = fixture?.source?.meta?.seo ?? {}
-const title = route.title || "Privacidade"
-const heading = route.heading || title
-const body = route.body || ""
 ---
 
-<html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{seo.title ? `${title} | ${seo.title}` : title}</title>
-    {seo.description && <meta name="description" content={seo.description} />}
-    <meta name="robots" content="index,follow" />
-    <link rel="canonical" href={`https://${host}/privacy`} />
-  </head>
-  <body data-route-kind="content_page" data-mission-host={host}>
-    <main class="mission-content-page">
-      <article>
-        <h1>{heading}</h1>
-        <p>{body}</p>
-      </article>
-    </main>
-  </body>
-</html>
-
-<style>
-  .mission-content-page {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 3rem 1.5rem;
-    font-family: Georgia, "Times New Roman", serif;
-    color: hsl(220 15% 16%);
-    line-height: 1.6;
-  }
-  h1 {
-    font-size: 1.75rem;
-    margin: 0 0 1rem;
-  }
-  p {
-    margin: 0;
-  }
-</style>
+<MissionContentPage
+  title={mission.route.title || "Privacidade"}
+  heading={mission.route.heading || mission.route.title || "Privacidade"}
+  body={mission.route.body || ""}
+  host={mission.host}
+  path="/privacy"
+  noindex={mission.noindex}
+  seo={mission.seo}
+/>
