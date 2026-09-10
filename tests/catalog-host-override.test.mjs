@@ -34,6 +34,10 @@ test("buildCatalogHref appends host only when override is set", () => {
     buildCatalogHref("3djewish.com.br", "/catalogo", { category: "natlan" }),
     "/catalogo?category=natlan&host=3djewish.com.br",
   )
+  assert.equal(
+    buildCatalogHref("dorotpublications.com.br", "/#featured"),
+    "/?host=dorotpublications.com.br#featured",
+  )
 })
 
 test("applyHostOverrideToNavItems rewrites relative nav hrefs", () => {
@@ -41,11 +45,13 @@ test("applyHostOverrideToNavItems rewrites relative nav hrefs", () => {
     [
       { label: "Catálogo", href: "/catalogo" },
       { label: "Ext", href: "https://wa.me/1" },
+      { label: "Sobre", href: "/#about" },
     ],
     "3djewish.com.br",
   )
   assert.equal(items[0].href, "/catalogo?host=3djewish.com.br")
   assert.equal(items[1].href, "https://wa.me/1")
+  assert.equal(items[2].href, "/?host=3djewish.com.br#about")
 })
 
 test("/c uses publication noindex and does not treat raw ?host= as production authority", () => {

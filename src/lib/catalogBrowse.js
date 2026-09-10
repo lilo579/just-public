@@ -347,7 +347,7 @@ export function buildCatalogHref(hostOverride, path, params = {}) {
     if (value) url.searchParams.set(key, value);
   }
   if (hostOverride) url.searchParams.set("host", hostOverride);
-  return `${url.pathname}${url.search}`;
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 /**
