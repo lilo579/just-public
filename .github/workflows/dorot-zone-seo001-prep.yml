@@ -1,0 +1,127 @@
+# Dorot zone SEO-001 prep — Cloudflare zone settings only.
+# Worker custom domains / DNS NS are NOT mutated here.
+#
+# Applies the JUST SEO-001 zone posture used for other production tenants:
+# - Cloudflare managed robots OFF (Worker owns robots.txt)
+# - Always Use HTTPS OFF (Worker owns one-hop http+host redirects)
+#
+# Manual workflow_dispatch only. Requires secrets.CLOUDFLARE_API_TOKEN with
+# Zone Settings Write + Bot Management Edit on dorotpublications.com.br.
+
+name: Dorot Zone SEO001 Prep
+
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: "probe (read-only) | apply (mutate zone settings)"
+        required: true
+        default: "probe"
+        type: choice
+        options:
+          - probe
+          - apply
+      confirm:
+        description: "For apply: type APPLY_DOROT_ZONE_SEO001"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  zone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: cloudflare-preview
+    steps:
+      - name: Probe / apply Dorot zone SEO-001 settings
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PHASE: ${{ inputs.phase }}
+          CONFIRM: ${{ inputs.confirm }}
+          ZONE_ID: 97ae4a39144a06780749bae59a2a18f6
+        run: |
+          set -euo pipefail
+          test -n "${CLOUDFLARE_API_TOKEN:-}" || {
+            echo "CLOUDFLARE_API_TOKEN secret is required" >&2
+            exit 1
+          }
+
+          api() {
+            local method="$1" path="$2"
+            shift 2
+            curl -sS -X "$method" "https://api.cloudflare.com/client/v4${path}" \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              "$@"
+          }
+
+          echo "=== bot_management GET ==="
+          BOT="$(api GET "/zones/${ZONE_ID}/bot_management")"
+          echo "$BOT" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          print('success', d.get('success'), 'errors', d.get('errors'))
+          r=d.get('result') or {}
+          if isinstance(r, dict):
+            print('is_robots_txt_managed', r.get('is_robots_txt_managed'))
+          "
+
+          echo "=== always_use_https GET ==="
+          AUH="$(api GET "/zones/${ZONE_ID}/settings/always_use_https")"
+          echo "$AUH" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          print('success', d.get('success'), 'errors', d.get('errors'))
+          r=d.get('result') or {}
+          print('always_use_https', r.get('value') if isinstance(r, dict) else r)
+          "
+
+          if [ "$PHASE" = "probe" ]; then
+            echo "probe_complete"
+            exit 0
+          fi
+
+          if [ "$CONFIRM" != "APPLY_DOROT_ZONE_SEO001" ]; then
+            echo "confirm_required=APPLY_DOROT_ZONE_SEO001" >&2
+            exit 2
+          fi
+
+          echo "=== apply managed robots OFF ==="
+          # Preserve other bot_management fields; only flip is_robots_txt_managed.
+          PUT_BODY="$(echo "$BOT" | python3 -c '
+          import json,sys
+          d=json.load(sys.stdin)
+          if not d.get("success"):
+            raise SystemExit("bot_management GET failed")
+          cur=d.get("result") or {}
+          readonly={"stale_zone_configuration","using_latest_model"}
+          body={k:v for k,v in cur.items() if k not in readonly}
+          body["is_robots_txt_managed"]=False
+          print(json.dumps(body))
+          ')"
+          api PUT "/zones/${ZONE_ID}/bot_management" --data "$PUT_BODY" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          print('success', d.get('success'), 'errors', d.get('errors'))
+          r=d.get('result') or {}
+          print('is_robots_txt_managed', r.get('is_robots_txt_managed') if isinstance(r, dict) else None)
+          if not d.get('success'):
+            raise SystemExit(3)
+          "
+
+          echo "=== apply always_use_https OFF ==="
+          api PATCH "/zones/${ZONE_ID}/settings/always_use_https" \
+            --data '{"value":"off"}' | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          print('success', d.get('success'), 'errors', d.get('errors'))
+          r=d.get('result') or {}
+          print('always_use_https', r.get('value') if isinstance(r, dict) else r)
+          if not d.get('success'):
+            raise SystemExit(4)
+          "
+
+          echo "apply_complete"
