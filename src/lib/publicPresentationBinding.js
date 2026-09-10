@@ -6,10 +6,13 @@ import {
   DEFAULT_F1_PRESENTATION_PROFILE,
   isF1PresentationProfile,
   isF3PresentationProfile,
+  isF4PresentationProfile,
   resolveF1PresentationChrome,
   resolveF1PresentationProfile,
   resolveF3PresentationChrome,
   resolveF3PresentationProfile,
+  resolveF4PresentationChrome,
+  resolveF4PresentationProfile,
 } from "@just/site-engine-authority";
 import { resolveCinematicEditorialPolicy } from "./resolveCinematicEditorialPolicy.js";
 
@@ -58,6 +61,14 @@ export function resolvePublicPresentationBinding(homepage, choice) {
         family: "f3",
       };
     }
+    if (isF4PresentationProfile(planProfile)) {
+      const profile = resolveF4PresentationProfile(planProfile);
+      return {
+        profile,
+        chrome: { ...resolveF4PresentationChrome(profile), ...planChrome },
+        family: "f4",
+      };
+    }
     const profile = resolveF1PresentationProfile(planProfile);
     return {
       profile,
@@ -73,6 +84,14 @@ export function resolvePublicPresentationBinding(homepage, choice) {
         profile,
         chrome: resolveF3PresentationChrome(profile),
         family: "f3",
+      };
+    }
+    if (isF4PresentationProfile(fromSource)) {
+      const profile = resolveF4PresentationProfile(fromSource);
+      return {
+        profile,
+        chrome: resolveF4PresentationChrome(profile),
+        family: "f4",
       };
     }
     if (isF1PresentationProfile(fromSource)) {

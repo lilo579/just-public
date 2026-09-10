@@ -1,0 +1,98 @@
+---
+/**
+ * Allowlisted F4 form_signup_shell — presentation only (no submit handler).
+ * Path `/participate` for synthetic mission tenant.
+ */
+export const prerender = false
+
+import { resolveAllowlistedMissionRoute } from "../lib/resolveAllowlistedMissionRoute.js"
+import { normalizeRequestHostname } from "../lib/publicHomepageHelpers.js"
+
+const hostHeader = Astro.request.headers.get("host") || ""
+const hostResult = normalizeRequestHostname(hostHeader)
+const host = hostResult.ok ? hostResult.host : ""
+const resolved = resolveAllowlistedMissionRoute(host, "/participate", "form_signup_shell")
+
+if (!resolved) {
+  return new Response("Not found", {
+    status: 404,
+    headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
+  })
+}
+
+const { route, fixture } = resolved
+const seo = fixture?.source?.meta?.seo ?? {}
+const title = route.title || "Participar"
+const heading = route.heading || title
+const body = route.body || ""
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{seo.title ? `${title} | ${seo.title}` : title}</title>
+    {seo.description && <meta name="description" content={seo.description} />}
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="canonical" href={`https://${host}/participate`} />
+  </head>
+  <body data-route-kind="form_signup_shell" data-mission-host={host}>
+    <main class="mission-form-shell">
+      <header>
+        <h1>{heading}</h1>
+        {body && <p>{body}</p>}
+      </header>
+      <form class="mission-form-shell__form" aria-label={heading} onsubmit="return false">
+        <label>
+          Nome
+          <input type="text" name="name" autocomplete="name" disabled />
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" autocomplete="email" disabled />
+        </label>
+        <button type="submit" disabled>Enviar (indisponível neste foundation)</button>
+      </form>
+    </main>
+  </body>
+</html>
+
+<style>
+  .mission-form-shell {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+    font-family: Georgia, "Times New Roman", serif;
+    color: hsl(220 15% 16%);
+  }
+  h1 {
+    font-size: 1.75rem;
+    margin: 0 0 0.75rem;
+  }
+  header p {
+    margin: 0 0 1.5rem;
+    line-height: 1.55;
+  }
+  .mission-form-shell__form {
+    display: grid;
+    gap: 1rem;
+  }
+  label {
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.95rem;
+  }
+  input {
+    padding: 0.55rem 0.65rem;
+    border: 1px solid hsl(220 12% 75%);
+    background: hsl(40 20% 98%);
+  }
+  button {
+    margin-top: 0.5rem;
+    padding: 0.65rem 1rem;
+    border: 0;
+    background: hsl(220 12% 80%);
+    color: hsl(220 15% 25%);
+    font-weight: 600;
+  }
+</style>

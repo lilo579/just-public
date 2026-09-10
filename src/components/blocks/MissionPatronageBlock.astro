@@ -1,0 +1,132 @@
+---
+/**
+ * F4 mission — patronage / one-time support choices (presentation only).
+ */
+const { block } = Astro.props as {
+  block: {
+    type?: string
+    content?: {
+      headline?: string | null
+      description?: string | null
+      tiers?: {
+        id?: string
+        title?: string
+        description?: string | null
+        priceLabel?: string | null
+        cta?: { label?: string; href?: string } | null
+      }[]
+    }
+  }
+}
+
+const content = block?.content ?? {}
+const headline =
+  typeof content.headline === "string" ? content.headline.trim() : ""
+const description =
+  typeof content.description === "string" ? content.description.trim() : ""
+const tiers = Array.isArray(content.tiers)
+  ? content.tiers.filter((t) => t && typeof t.title === "string" && t.title.trim())
+  : []
+const show = Boolean(headline || description || tiers.length > 0)
+---
+
+{show && (
+  <section class="mission-patronage" aria-labelledby="mission-patronage-title">
+    <div class="mission-patronage__container">
+      {headline && (
+        <h2 id="mission-patronage-title" class="mission-patronage__title">
+          {headline}
+        </h2>
+      )}
+      {description && <p class="mission-patronage__description">{description}</p>}
+      {tiers.length > 0 && (
+        <ul class="mission-patronage__list">
+          {tiers.map((tier) => (
+            <li class="mission-patronage__tier">
+              <h3 class="mission-patronage__tier-title">{tier.title}</h3>
+              {tier.priceLabel && (
+                <p class="mission-patronage__price">{tier.priceLabel}</p>
+              )}
+              {tier.description && (
+                <p class="mission-patronage__tier-body">{tier.description}</p>
+              )}
+              {tier.cta?.label && (
+                <p class="mission-patronage__cta">
+                  {tier.cta.href ? (
+                    <a href={tier.cta.href}>{tier.cta.label}</a>
+                  ) : (
+                    <span>{tier.cta.label}</span>
+                  )}
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </section>
+)}
+
+<style>
+  .mission-patronage {
+    padding: 3rem 0;
+    background: var(--site-color-background, hsl(40 18% 96%));
+    color: var(--site-color-foreground, hsl(220 15% 16%));
+  }
+  .mission-patronage__container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: grid;
+    gap: 1.25rem;
+  }
+  .mission-patronage__title {
+    margin: 0;
+    font-size: clamp(1.4rem, 2.2vw, 1.85rem);
+    font-weight: 650;
+    color: var(--site-color-primary, hsl(220 20% 20%));
+  }
+  .mission-patronage__description {
+    margin: 0;
+    max-width: 42rem;
+    line-height: 1.6;
+    opacity: 0.9;
+  }
+  .mission-patronage__list {
+    list-style: none;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+  }
+  @media (min-width: 768px) {
+    .mission-patronage__list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .mission-patronage__tier {
+    padding: 1.1rem 0;
+    border-top: 1px solid hsl(220 12% 82%);
+  }
+  .mission-patronage__tier-title {
+    margin: 0 0 0.35rem;
+    font-size: 1.05rem;
+  }
+  .mission-patronage__price {
+    margin: 0 0 0.5rem;
+    font-weight: 600;
+    color: var(--site-color-primary, hsl(150 25% 30%));
+  }
+  .mission-patronage__tier-body {
+    margin: 0;
+    line-height: 1.5;
+    font-size: 0.95rem;
+  }
+  .mission-patronage__cta {
+    margin: 0.85rem 0 0;
+  }
+  .mission-patronage__cta a {
+    color: var(--site-color-primary, hsl(220 40% 28%));
+    font-weight: 600;
+  }
+</style>
