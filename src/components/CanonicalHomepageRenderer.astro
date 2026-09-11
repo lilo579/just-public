@@ -16,6 +16,7 @@ import InfoCardBlock from "./blocks/InfoCardBlock.astro"
 import TestimonialsBlock from "./blocks/TestimonialsBlock.astro"
 import ProofGalleryBlock from "./blocks/ProofGalleryBlock.astro"
 import CtaBlock from "./blocks/CtaBlock.astro"
+import MissionContactBlock from "./blocks/MissionContactBlock.astro"
 import CatalogCategoryNavBlock from "./blocks/CatalogCategoryNavBlock.astro"
 import CatalogProductGridBlock from "./blocks/CatalogProductGridBlock.astro"
 import CatalogRichSectionBlock from "./blocks/CatalogRichSectionBlock.astro"
@@ -255,7 +256,9 @@ const manifestoSectionId = editorial?.sectionIds?.manifesto || "manifesto-final"
                   ? "cinematic"
                   : layout.heroLayout === "catalog"
                     ? "catalog"
-                    : "standard"
+                    : layout.heroLayout === "editorial-split"
+                      ? "editorial-split"
+                      : "standard"
               }
               videoUrl={editorial?.heroVideoUrl ?? null}
               ctaIcon={editorial?.atmosphere === "pt_dark" ? "none" : "auto"}
@@ -318,7 +321,9 @@ const manifestoSectionId = editorial?.sectionIds?.manifesto || "manifesto-final"
             layout={
               layout.aboutLayout === "cinematic-authority"
                 ? "cinematic-authority"
-                : "standard"
+                : layout.aboutLayout === "editorial"
+                  ? "editorial"
+                  : "standard"
             }
             sectionId={typeof layout.sectionId === "string" ? layout.sectionId : undefined}
           />
@@ -432,7 +437,31 @@ const manifestoSectionId = editorial?.sectionIds?.manifesto || "manifesto-final"
           />
         )
 
-      case "cta_final":
+      case "cta_final": {
+        const ctaContent = (paint.block as any)?.content ?? {}
+        const formModeRaw =
+          typeof ctaContent.formMode === "string"
+            ? ctaContent.formMode
+            : typeof ctaContent.form_mode === "string"
+              ? ctaContent.form_mode
+              : ""
+        const formMode = formModeRaw.trim().toLowerCase()
+        const ctaSectionId =
+          typeof layout.sectionId === "string"
+            ? layout.sectionId
+            : isPtTrainer
+              ? manifestoSectionId
+              : undefined
+
+        if (formMode === "whatsapp_compose") {
+          return (
+            <MissionContactBlock
+              block={paint.block}
+              sectionId={typeof ctaSectionId === "string" ? ctaSectionId : "contact"}
+            />
+          )
+        }
+
         return (
           <CtaBlock
             block={paint.block as CtaBlockType}
@@ -445,15 +474,10 @@ const manifestoSectionId = editorial?.sectionIds?.manifesto || "manifesto-final"
                   "/presentation/cinematic_v1/pt/manifesto-portrait.png"
                 : ((paint.block as any)?.content?.manifestoImageUrl as string) || null
             }
-            sectionId={
-              typeof layout.sectionId === "string"
-                ? layout.sectionId
-                : isPtTrainer
-                  ? manifestoSectionId
-                  : undefined
-            }
+            sectionId={ctaSectionId}
           />
         )
+      }
 
       case "category_nav":
         return <CatalogCategoryNavBlock block={paint.block} layout={layout} />

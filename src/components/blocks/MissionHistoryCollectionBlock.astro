@@ -1,11 +1,12 @@
 ---
 /**
- * F4 mission — completed initiatives / history collection.
+ * F4 mission — completed initiatives / history collection (editorial grid).
  */
 const { block } = Astro.props as {
   block: {
     type?: string
     content?: {
+      eyebrow?: string | null
       title?: string | null
       items?: {
         id?: string
@@ -19,6 +20,8 @@ const { block } = Astro.props as {
 }
 
 const content = block?.content ?? {}
+const eyebrow =
+  typeof content.eyebrow === "string" ? content.eyebrow.trim() : ""
 const title =
   typeof content.title === "string" && content.title.trim()
     ? content.title.trim()
@@ -36,9 +39,17 @@ const show = items.length > 0
     aria-labelledby="mission-history-title"
   >
     <div class="mission-history__container">
-      <h2 id="mission-history-title" class="mission-history__title">
-        {title}
-      </h2>
+      <header class="mission-history__header">
+        {eyebrow && (
+          <div class="mission-history__eyebrow-row">
+            <span class="mission-history__gold-rule" aria-hidden="true" />
+            <span class="mission-history__eyebrow">{eyebrow}</span>
+          </div>
+        )}
+        <h2 id="mission-history-title" class="mission-history__title">
+          {title}
+        </h2>
+      </header>
       <ul class="mission-history__list">
         {items.map((item) => {
           const alt =
@@ -47,13 +58,19 @@ const show = items.length > 0
               : item.title || "Iniciativa"
           return (
             <li class="mission-history__item">
-              {item.imageUrl && (
-                <img
-                  class="mission-history__image"
-                  src={item.imageUrl}
-                  alt={alt}
-                  loading="lazy"
-                />
+              {item.imageUrl ? (
+                <div class="mission-history__media">
+                  <div class="mission-history__frame" aria-hidden="true" />
+                  <img
+                    class="mission-history__image"
+                    src={item.imageUrl}
+                    alt={alt}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+              ) : (
+                <div class="mission-history__media mission-history__media--empty" aria-hidden="true" />
               )}
               <div class="mission-history__copy">
                 <h3 class="mission-history__item-title">{item.title}</h3>
@@ -71,21 +88,44 @@ const show = items.length > 0
 
 <style>
   .mission-history {
-    padding: 3rem 0;
+    padding: clamp(4rem, 8vw, 7rem) 0;
     background: var(--site-color-background, hsl(40 16% 98%));
-    color: var(--site-color-foreground, hsl(220 15% 16%));
+    color: var(--site-color-text, hsl(220 15% 16%));
   }
   .mission-history__container {
-    max-width: 1100px;
+    max-width: 76rem;
     margin: 0 auto;
     padding: 0 1.5rem;
     display: grid;
-    gap: 1.25rem;
+    gap: 2.5rem;
+  }
+  .mission-history__header {
+    display: grid;
+    gap: 1rem;
+  }
+  .mission-history__eyebrow-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .mission-history__gold-rule {
+    width: 2.75rem;
+    height: 1px;
+    background: var(--site-color-accent, hsl(40 45% 55%));
+  }
+  .mission-history__eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 45%)) 80%, var(--site-color-primary));
   }
   .mission-history__title {
     margin: 0;
-    font-size: 1.35rem;
-    font-weight: 650;
+    font-family: var(--site-font-heading, Georgia, serif);
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
     color: var(--site-color-primary, hsl(220 20% 20%));
   }
   .mission-history__list {
@@ -93,18 +133,33 @@ const show = items.length > 0
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 1.25rem;
+    gap: 2rem;
   }
   @media (min-width: 720px) {
     .mission-history__list {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2.5rem 1.75rem;
     }
   }
   .mission-history__item {
     display: grid;
-    gap: 0.75rem;
+    gap: 1rem;
+  }
+  .mission-history__media {
+    position: relative;
+  }
+  .mission-history__media--empty {
+    aspect-ratio: 16 / 10;
+    background: color-mix(in srgb, var(--site-color-primary, hsl(220 40% 16%)) 8%, transparent);
+  }
+  .mission-history__frame {
+    position: absolute;
+    inset: -0.65rem;
+    border: 1px solid color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 30%, transparent);
+    pointer-events: none;
   }
   .mission-history__image {
+    position: relative;
     display: block;
     width: 100%;
     height: auto;
@@ -113,11 +168,14 @@ const show = items.length > 0
   }
   .mission-history__item-title {
     margin: 0;
-    font-size: 1.05rem;
+    font-family: var(--site-font-heading, Georgia, serif);
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--site-color-primary, hsl(220 20% 20%));
   }
   .mission-history__subtitle {
-    margin: 0.25rem 0 0;
-    opacity: 0.8;
+    margin: 0.35rem 0 0;
+    color: var(--site-color-text-muted, hsl(220 10% 40%));
     font-size: 0.95rem;
   }
 </style>
