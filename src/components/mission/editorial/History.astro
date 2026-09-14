@@ -1,0 +1,55 @@
+---
+// Presentation markup/class names restored from the pre-cutover reference.
+// All tenant values are supplied by the canonical painted plan / structured chrome.
+import SectionHeading from "./SectionHeading.astro";
+const {content} = Astro.props;
+const publishedSection = {title:content.title,eyebrow:content.eyebrow};
+const books = (content.items || []).map(b=>({...b,coverImage:b.imageUrl,coverAlt:b.imageAlt || b.title,status:content.statusLabel}));
+---
+<section id="published" class="section-band-dense bg-ivory-warm">
+      <div class="container-editorial">
+        <SectionHeading eyebrow={publishedSection.eyebrow} title={publishedSection.title} />
+
+        <div class="mt-16 lg:mt-20 grid sm:grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-12">
+          {books.map((book) => (
+            <article
+              class="group mx-auto w-full max-w-[18rem] sm:mx-0 sm:max-w-none"
+            >
+              <figure class="relative mx-auto w-full max-w-[16rem] sm:max-w-[18rem] sm:mx-0">
+                <div
+                  class="pointer-events-none absolute -inset-3 border border-gold/30 transition-colors duration-500 group-hover:border-gold/45"
+                  aria-hidden="true"
+                />
+                <div class="relative flex aspect-[3/4] items-center justify-center overflow-visible p-3 sm:p-4">
+                  {book.coverImage ? (
+                    <img
+                      src={book.coverImage}
+                      alt={book.coverAlt}
+                      width={710}
+                      height={948}
+                      loading="lazy"
+                      decoding="async"
+                      class="relative max-h-full max-w-full h-auto w-auto object-contain"
+                    />
+                  ) : null}
+                </div>
+              </figure>
+
+              <div class="mt-7 text-center sm:text-left">
+                <div class="text-[10px] uppercase tracking-[0.22em] text-bronze">
+                  {book.status}
+                </div>
+                <h3 class="mt-2.5 font-serif text-[1.5rem] text-navy-deep leading-snug tracking-tight">
+                  {book.title}
+                </h3>
+                {book.subtitle && (
+                  <p class="mt-1.5 font-serif italic text-[1.05rem] text-bronze/90 leading-snug">
+                    {book.subtitle}
+                  </p>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>

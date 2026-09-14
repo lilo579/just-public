@@ -1,0 +1,31 @@
+---
+// Presentation markup/class names restored from the pre-cutover reference.
+// All tenant values are supplied by the canonical painted plan / structured chrome.
+const { eyebrow, title, lead, align = "left", light = false } = Astro.props;
+---
+<div class={`${align === "center" ? "text-center mx-auto" : ""} max-w-3xl`}>
+      {eyebrow && (
+        <div class={`flex items-center gap-3 ${align === "center" ? "justify-center" : ""}`}>
+          <span class="gold-rule" />
+          <span class="eyebrow" style={light ? { color: "var(--gold)" } : undefined}>
+            {eyebrow}
+          </span>
+        </div>
+      )}
+      <h2
+        class={`mt-6 font-serif text-balance text-[2.25rem] sm:text-5xl lg:text-[3.35rem] leading-[1.08] tracking-[-0.02em] ${
+          light ? "text-ivory" : "text-navy-deep"
+        }`}
+      >
+        {title}
+      </h2>
+      {lead && (
+        <p
+          class={`mt-7 text-[1.0625rem] sm:text-lg leading-[1.85] ${
+            align === "center" ? "mx-auto max-w-2xl" : "max-w-2xl"
+          } ${light ? "text-ivory/75" : "text-muted-foreground"}`}
+        >
+          {lead}
+        </p>
+      )}
+    </div>

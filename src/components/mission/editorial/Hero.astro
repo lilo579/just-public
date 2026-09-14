@@ -1,0 +1,136 @@
+---
+// Presentation markup/class names restored from the pre-cutover reference.
+// All tenant values are supplied by the canonical painted plan / structured chrome.
+const arrowClassName =
+  "absolute top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-navy-deep/55 text-white shadow-md backdrop-blur-[2px] transition-colors hover:bg-navy-deep/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
+
+
+import CTAButton from "./CTAButton.astro";
+const { content } = Astro.props;
+const primaryCta = content?.primaryCta || content?.primaryCTA || null;
+const secondaryCta = content?.secondaryCta || content?.secondaryCTA || null;
+const heroContent = {
+  ...content,
+  headline: content?.title,
+  subheadline: content?.subtitle,
+  primaryCta,
+  secondaryCta: secondaryCta ? { ...secondaryCta, variant: "secondary" } : null,
+};
+const heroSlides = (
+  content?.slides?.length
+    ? content.slides
+    : content?.imageUrl
+      ? [{ imageUrl: content.imageUrl, alt: "" }]
+      : []
+).map((s) => ({
+  src: s.imageUrl || s.src || "",
+  alt: s.alt || "",
+})).filter((s) => s.src);
+---
+<section id="top" class="relative pt-28 pb-24 sm:pt-32 lg:pt-44 lg:pb-40 overflow-hidden">
+      <div class="container-editorial">
+        <div class="grid lg:grid-cols-12 gap-14 lg:gap-20 items-center">
+          <div class="lg:col-span-7">
+            <div class="flex items-center gap-3">
+              <span class="gold-rule" />
+              <span class="eyebrow">{heroContent.eyebrow}</span>
+            </div>
+            <h1 class="mt-10 font-serif text-balance text-[2.75rem] sm:text-5xl lg:text-[4.5rem] leading-[1.05] tracking-[-0.02em] text-navy-deep">
+              {heroContent.headline}
+            </h1>
+            <p class="mt-9 max-w-xl text-[1.0625rem] sm:text-lg leading-[1.85] text-muted-foreground">
+              {heroContent.subheadline}
+            </p>
+            <div class="mt-12 flex flex-wrap gap-4">
+              {heroContent.primaryCta?.label ? <CTAButton cta={heroContent.primaryCta} /> : null}
+              {heroContent.secondaryCta?.label ? <CTAButton cta={heroContent.secondaryCta} /> : null}
+            </div>
+          </div>
+
+          <div class="lg:col-span-5 lg:pl-2">
+            <div class="relative mx-auto max-w-md lg:max-w-none">
+              <div
+                class="absolute -inset-5 sm:-inset-7 border border-gold/25 pointer-events-none"
+                aria-hidden="true"
+              />
+              <div
+                class="absolute -bottom-5 -right-5 sm:-bottom-7 sm:-right-7 w-28 h-28 sm:w-36 sm:h-36 bg-gold/15 -z-10"
+                aria-hidden="true"
+              />
+              <div class="relative">
+    <div
+      class="relative w-full aspect-[3/4] max-h-[40rem] sm:max-h-[44rem] lg:max-h-[48rem] bg-background"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Imagens do Hero"
+      tabindex={0}
+      data-editorial-carousel
+    >
+      
+      <div data-editorial-viewport class="h-full overflow-hidden">
+        <div class="flex h-full">
+          {heroSlides.map((slide, index) => (
+            <div
+              class="relative flex h-full min-w-0 shrink-0 grow-0 basis-full items-center justify-center overflow-hidden bg-background px-3 py-4 sm:px-4 sm:py-5"
+              role="group"
+              aria-roledescription="slide"
+              aria-label={`${index + 1} of ${heroSlides.length}`}
+            >
+              <div class="hero-book-cover">
+                <img
+                  src={slide.src}
+                  alt={slide.alt}
+                  width={710}
+                  height={948}
+                  {...(index === 0
+                    ? { fetchpriority: "high" }
+                    : { loading: "lazy" })}
+                  decoding="async"
+                  draggable={false}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        aria-label="Previous slide"
+        data-editorial-prev
+        class={`${arrowClassName} left-3`}
+      >
+        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <button
+        type="button"
+        aria-label="Next slide"
+        data-editorial-next
+        class={`${arrowClassName} right-3`}
+      >
+        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+<script>
+import EmblaCarousel from "embla-carousel";
+for (const root of document.querySelectorAll<HTMLElement>("[data-editorial-carousel]")) {
+ const viewport=root.querySelector<HTMLElement>("[data-editorial-viewport]");
+ if(!viewport) continue;
+ const media=matchMedia("(prefers-reduced-motion: reduce)");
+ const api=EmblaCarousel(viewport,{loop:true,align:"start",duration:media.matches?0:25,watchDrag:true});
+ let timer:ReturnType<typeof setInterval>;
+ const restart=()=>{clearInterval(timer);if(!media.matches)timer=setInterval(()=>api.scrollNext(),3000);};
+ root.querySelector("[data-editorial-prev]")?.addEventListener("click",()=>{api.scrollPrev();restart();});
+ root.querySelector("[data-editorial-next]")?.addEventListener("click",()=>{api.scrollNext();restart();});
+ root.addEventListener("keydown",e=>{if(e.key==="ArrowLeft"||e.key==="ArrowRight"){e.preventDefault();e.key==="ArrowLeft"?api.scrollPrev():api.scrollNext();restart();}});
+ api.on("pointerUp",restart);
+ media.addEventListener("change",()=>{api.reInit({duration:media.matches?0:25});restart();});
+ restart();
+}
+</script>

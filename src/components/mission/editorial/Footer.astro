@@ -1,0 +1,118 @@
+---
+// Presentation markup/class names restored from the pre-cutover reference.
+// All tenant values are supplied by the canonical painted plan / structured chrome.
+const {chrome}=Astro.props;
+const publishingHouse={name:chrome.companyName,logoAlt:chrome.companyName,logoFooter:chrome.footerLogoUrl};
+const contact={email:chrome.contact?.email,whatsappDisplay:chrome.contact?.whatsappNumber};
+const whatsappHref=chrome.whatsappHref;
+const emailHref=contact.email ? `mailto:${contact.email}` : "";
+const navigation=chrome.navItems || [];
+const footerLegalLinks=chrome.legalLinks || [];
+const socialLinks=(chrome.socialLinks || []).map(s=>({label:s.type,href:s.url}));
+const footerContent={tagline:chrome.footerTagline,navigationLabel:chrome.navigationLabel || "Navegação",contactLabel:chrome.contactLabel || "Fale conosco",followLabel:chrome.followLabel || "Siga-nos",whatsappPrefix:"WhatsApp ·",rightsTemplate:"Todos os direitos reservados.",domain:chrome.domain || ""};
+
+---
+<footer class="bg-navy-deep text-ivory border-t border-ivory/10">
+      <div class="container-editorial py-16 lg:py-20 grid lg:grid-cols-12 gap-12 lg:gap-16">
+        <div class="lg:col-span-5">
+          <img
+            src={publishingHouse.logoFooter}
+            alt={publishingHouse.logoAlt}
+            width={220}
+            height={146}
+            class="h-14 w-auto"
+          />
+          <p class="mt-6 font-serif italic text-gold/95 text-lg leading-snug max-w-sm">
+            {footerContent.tagline}
+          </p>
+        </div>
+
+        <div class="lg:col-span-3">
+          <div class="eyebrow" style={{ color: "var(--gold)" }}>
+            {footerContent.navigationLabel}
+          </div>
+          <ul class="mt-5 space-y-2.5">
+            {navigation.map((n) => (
+              <li>
+                <a
+                  href={n.href}
+                  class="text-sm text-ivory/65 hover:text-gold transition-colors duration-500"
+                >
+                  {n.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div class="lg:col-span-4 space-y-8">
+          <div>
+            <div class="eyebrow" style={{ color: "var(--gold)" }}>
+              {footerContent.contactLabel}
+            </div>
+            <ul class="mt-5 space-y-2.5 text-sm">
+              {chrome.contact?.whatsappVisible && <li>
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-conversion="general-whatsapp"
+                  class="text-ivory/65 hover:text-gold transition-colors duration-500"
+                >
+                  {footerContent.whatsappPrefix} {contact.whatsappDisplay}
+                </a>
+              </li>}
+              {chrome.contact?.emailVisible !== false && contact.email && <li>
+                <a
+                  href={emailHref}
+                  data-conversion="general-email"
+                  class="text-ivory/65 hover:text-gold transition-colors duration-500 break-all"
+                >
+                  {contact.email}
+                </a>
+              </li>}
+            </ul>
+          </div>
+          {socialLinks.length > 0 && (
+            <div>
+              <div class="eyebrow" style={{ color: "var(--gold)" }}>
+                {footerContent.followLabel}
+              </div>
+              <ul class="mt-5 flex gap-6 text-sm">
+                {socialLinks.map((s) => (
+                  <li>
+                    <a
+                      href={s.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-ivory/65 hover:text-gold transition-colors duration-500"
+                    >
+                      {s.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div class="border-t border-ivory/10">
+        <div class="container-editorial py-6 flex flex-wrap items-center justify-between gap-4 text-xs text-ivory/45">
+          <span>
+            © {new Date().getFullYear()} {publishingHouse.name}. {footerContent.rightsTemplate}
+          </span>
+          <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+            {footerLegalLinks.map((link) => (
+              <a
+                href={link.href}
+                class="text-ivory/45 hover:text-gold transition-colors duration-500"
+              >
+                {link.label}
+              </a>
+            ))}
+            <span class="tracking-[0.2em] uppercase">{footerContent.domain}</span>
+          </div>
+        </div>
+      </div>
+    </footer>

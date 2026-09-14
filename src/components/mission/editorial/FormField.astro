@@ -1,0 +1,19 @@
+---
+// Presentation markup/class names restored from the pre-cutover reference.
+// All tenant values are supplied by the canonical painted plan / structured chrome.
+  const base =
+    "w-full bg-transparent border-0 border-b border-border focus:border-navy-deep focus:outline-none focus:ring-0 py-3.5 text-[1.0625rem] text-foreground placeholder:text-muted-foreground/60 transition-colors duration-500";
+
+const {label,name,type="text",textarea=false,required=false}=Astro.props;
+---
+<label class="block">
+      <span class="eyebrow block mb-2.5">
+        {label}
+        {required && " *"}
+      </span>
+      {textarea ? (
+        <textarea name={name} rows={4} required={required} class={base} />
+      ) : (
+        <input type={type} name={name} required={required} class={base} />
+      )}
+    </label>

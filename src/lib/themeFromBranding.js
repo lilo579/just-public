@@ -47,6 +47,21 @@ const FONT_ALLOWLIST = {
     body: '"Lato", ui-sans-serif, system-ui, sans-serif',
     load: "/fonts/lato/lato.css",
   },
+  /**
+   * F4 mission editorial — serif headings (Cormorant Garamond) + Inter/system body.
+   * Self-hosted when /fonts/cormorant/ is present (same pattern as Lato).
+   */
+  editorial_serif: {
+    heading: '"Cormorant Garamond", "Cormorant", Georgia, serif',
+    body: '"Inter", ui-sans-serif, system-ui, -apple-system, sans-serif',
+    load: "/fonts/cormorant/cormorant.css",
+  },
+  /** Alias for Hub / cinematic editorial typography key. */
+  editorial: {
+    heading: '"Cormorant Garamond", "Cormorant", Georgia, serif',
+    body: '"Inter", ui-sans-serif, system-ui, -apple-system, sans-serif',
+    load: "/fonts/cormorant/cormorant.css",
+  },
   /** M5 JUST institutional — F3-owned self-hosted Geist + Inter. */
   just_institutional: {
     heading: '"Geist", "Inter", ui-sans-serif, system-ui, sans-serif',
@@ -256,10 +271,24 @@ export function themeTokensFromBranding(branding, extras = null) {
     : DEFAULTS["--site-color-background"]
 
   const density = resolveDensityTokens(extras?.density)
-  const radius = resolveRadiusToken(extras?.radius, "md")
-  const buttonRadius = resolveRadiusToken(extras?.buttonRadius ?? extras?.radius, "md")
-  const cardRadius = resolveRadiusToken(extras?.cardRadius ?? extras?.radius, "md")
-  const imageRadius = resolveRadiusToken(extras?.imageRadius ?? extras?.radius, "md")
+  // Editorial serif tenants prefer tighter radii (sm) when Hub omits radius extras.
+  // Other tenants keep md defaults; allowlisted sm/none still win when set explicitly.
+  const isEditorialSerif =
+    fonts.key === "editorial_serif" || fonts.key === "editorial"
+  const radiusFallback = isEditorialSerif ? "sm" : "md"
+  const radius = resolveRadiusToken(extras?.radius, radiusFallback)
+  const buttonRadius = resolveRadiusToken(
+    extras?.buttonRadius ?? extras?.radius,
+    radiusFallback,
+  )
+  const cardRadius = resolveRadiusToken(
+    extras?.cardRadius ?? extras?.radius,
+    radiusFallback,
+  )
+  const imageRadius = resolveRadiusToken(
+    extras?.imageRadius ?? extras?.radius,
+    radiusFallback,
+  )
   const shadow = resolveShadowToken(extras?.shadow, "none")
   const surfaceAlt = sanitizeCssColor(
     extras?.surfaceAlt,

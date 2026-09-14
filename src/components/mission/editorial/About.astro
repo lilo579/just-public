@@ -1,0 +1,40 @@
+---
+// Presentation markup/class names restored from the pre-cutover reference.
+// All tenant values are supplied by the canonical painted plan / structured chrome.
+const {content} = Astro.props;
+const aboutSection = {eyebrow:content.eyebrow, image:content.imageUrl || content.photoUrl, imageAlt:content.imageAlt || "", headline:content.title, statement:content.body};
+---
+<section id="about" class="section-band bg-ivory-warm">
+      <div class="container-editorial grid lg:grid-cols-12 gap-14 lg:gap-16 items-start">
+        <div class="lg:col-span-7 order-2 lg:order-1">
+          <div class="relative max-w-2xl mx-auto lg:max-w-none lg:pr-2 lg:sticky lg:top-28">
+            <div
+              class="absolute -inset-3 sm:-inset-4 border border-gold/35"
+              aria-hidden="true"
+            />
+            <img
+              src={aboutSection.image}
+              alt={aboutSection.imageAlt}
+              width={1024}
+              height={584}
+              loading="lazy"
+              decoding="async"
+              class="relative w-full h-auto aspect-[4/3] lg:aspect-[5/4] object-cover object-[22%_center] sm:object-[18%_center] lg:object-left"
+            />
+          </div>
+        </div>
+
+        <div class="lg:col-span-5 order-1 lg:order-2">
+          <div class="flex items-center gap-3">
+            <span class="gold-rule" />
+            <span class="eyebrow">{aboutSection.eyebrow}</span>
+          </div>
+          <h2 class="mt-6 font-serif text-[2.25rem] sm:text-5xl text-navy-deep leading-[1.08] tracking-[-0.02em] text-balance">
+            {aboutSection.headline}
+          </h2>
+          <p class="mt-8 max-w-md text-[1.0625rem] sm:text-lg leading-[1.85] text-muted-foreground">
+            {aboutSection.statement}
+          </p>
+        </div>
+      </div>
+    </section>

@@ -1,0 +1,459 @@
+---
+/**
+ * F4 mission contact — navy band + WhatsApp compose form (vanilla JS).
+ * Mirrors Dorot Contact.tsx without React dependencies.
+ */
+const { block, sectionId = "contact" } = Astro.props as {
+  block: {
+    type?: string
+    content?: {
+      title?: string | null
+      body?: string | null
+      eyebrow?: string | null
+      buttonLabel?: string | null
+      formMode?: string | null
+      form_mode?: string | null
+      companyName?: string | null
+      whatsappLabel?: string | null
+      emailLabel?: string | null
+      form?: {
+        nameLabel?: string
+        emailLabel?: string
+        phoneLabel?: string
+        messageLabel?: string
+        submitLabel?: string
+        note?: string
+        errorRequired?: string
+      } | null
+      labels?: {
+        name?: string
+        email?: string
+        phone?: string
+        message?: string
+        submit?: string
+        note?: string
+        errorRequired?: string
+      } | null
+      contact?: {
+        whatsappNumber?: string | null
+        whatsappDisplay?: string | null
+        email?: string | null
+      } | null
+      primaryCTA?: {
+        href?: string
+        label?: string
+        visible?: boolean
+        type?: string
+      } | null
+    }
+  }
+  sectionId?: string
+}
+
+const content = block?.content ?? {}
+const title = typeof content.title === "string" ? content.title.trim() : ""
+const body = typeof content.body === "string" ? content.body.trim() : ""
+const eyebrow =
+  typeof content.eyebrow === "string" && content.eyebrow.trim()
+    ? content.eyebrow.trim()
+    : "Contato"
+const companyName =
+  typeof content.companyName === "string" && content.companyName.trim()
+    ? content.companyName.trim()
+    : ""
+
+const formOverrides = content.form ?? content.labels ?? {}
+const nameLabel =
+  (typeof formOverrides.nameLabel === "string" && formOverrides.nameLabel) ||
+  (typeof (formOverrides as { name?: string }).name === "string" &&
+    (formOverrides as { name?: string }).name) ||
+  "Nome"
+const emailLabel =
+  (typeof formOverrides.emailLabel === "string" && formOverrides.emailLabel) ||
+  (typeof (formOverrides as { email?: string }).email === "string" &&
+    (formOverrides as { email?: string }).email) ||
+  "E-mail"
+const phoneLabel =
+  (typeof formOverrides.phoneLabel === "string" && formOverrides.phoneLabel) ||
+  (typeof (formOverrides as { phone?: string }).phone === "string" &&
+    (formOverrides as { phone?: string }).phone) ||
+  "Telefone"
+const messageLabel =
+  (typeof formOverrides.messageLabel === "string" && formOverrides.messageLabel) ||
+  (typeof (formOverrides as { message?: string }).message === "string" &&
+    (formOverrides as { message?: string }).message) ||
+  "Mensagem"
+const submitLabel =
+  (typeof formOverrides.submitLabel === "string" && formOverrides.submitLabel) ||
+  (typeof (formOverrides as { submit?: string }).submit === "string" &&
+    (formOverrides as { submit?: string }).submit) ||
+  (typeof content.buttonLabel === "string" && content.buttonLabel.trim()) ||
+  "Enviar pelo WhatsApp"
+const note =
+  (typeof formOverrides.note === "string" && formOverrides.note) ||
+  "Ao enviar, abrimos o WhatsApp com sua mensagem pronta."
+const errorRequired =
+  (typeof formOverrides.errorRequired === "string" && formOverrides.errorRequired) ||
+  (typeof (formOverrides as { errorRequired?: string }).errorRequired === "string" &&
+    (formOverrides as { errorRequired?: string }).errorRequired) ||
+  "Preencha nome, e-mail e mensagem para continuar."
+
+const whatsappLabel =
+  typeof content.whatsappLabel === "string" && content.whatsappLabel.trim()
+    ? content.whatsappLabel.trim()
+    : "WhatsApp"
+const emailLabelSide =
+  typeof content.emailLabel === "string" && content.emailLabel.trim()
+    ? content.emailLabel.trim()
+    : "E-mail"
+
+function digitsFromHref(href: string) {
+  try {
+    const u = new URL(href)
+    if (!u.hostname.includes("wa.me") && !u.hostname.includes("api.whatsapp.com")) {
+      return ""
+    }
+    const pathDigits = u.pathname.replace(/\D/g, "")
+    if (pathDigits) return pathDigits
+    return (u.searchParams.get("phone") || "").replace(/\D/g, "")
+  } catch {
+    const match = href.match(/wa\.me\/(\d+)/)
+    return match?.[1] || ""
+  }
+}
+
+const contactWhatsapp =
+  typeof content.contact?.whatsappNumber === "string"
+    ? content.contact.whatsappNumber.replace(/\D/g, "")
+    : ""
+const ctaHref =
+  typeof content.primaryCTA?.href === "string" ? content.primaryCTA.href.trim() : ""
+const whatsappNumber = contactWhatsapp || digitsFromHref(ctaHref)
+const whatsappDisplay =
+  (typeof content.contact?.whatsappDisplay === "string" &&
+    content.contact.whatsappDisplay.trim()) ||
+  (whatsappNumber ? `+${whatsappNumber}` : "")
+const email =
+  typeof content.contact?.email === "string" && content.contact.email.trim()
+    ? content.contact.email.trim()
+    : ""
+const whatsappHref = whatsappNumber ? `https://wa.me/${whatsappNumber}` : ""
+const emailHref = email ? `mailto:${email}` : ""
+const show = Boolean(title || body || whatsappNumber)
+---
+
+{show && (
+  <section id={sectionId || "contact"} class="mission-contact" data-mission-contact>
+    <div class="mission-contact__container">
+      <div class="mission-contact__copy">
+        <div class="mission-contact__eyebrow-row">
+          <span class="mission-contact__gold-rule" aria-hidden="true" />
+          <span class="mission-contact__eyebrow">{eyebrow}</span>
+        </div>
+        {title && <h2 class="mission-contact__title">{title}</h2>}
+        {body && <p class="mission-contact__lead">{body}</p>}
+
+        <dl class="mission-contact__meta">
+          {whatsappHref && (
+            <div>
+              <dt>{whatsappLabel}</dt>
+              <dd>
+                <a href={whatsappHref} target="_blank" rel="noopener noreferrer">
+                  {whatsappDisplay || whatsappHref}
+                </a>
+              </dd>
+            </div>
+          )}
+          {emailHref && (
+            <div>
+              <dt>{emailLabelSide}</dt>
+              <dd>
+                <a href={emailHref}>{email}</a>
+              </dd>
+            </div>
+          )}
+        </dl>
+      </div>
+
+      <form
+        class="mission-contact__form"
+        data-mission-contact-form
+        data-whatsapp-number={whatsappNumber}
+        data-company-name={companyName}
+        data-error-required={errorRequired}
+        novalidate
+      >
+        <label class="mission-contact__field">
+          <span class="mission-contact__label">{nameLabel} *</span>
+          <input type="text" name="name" required autocomplete="name" />
+        </label>
+        <div class="mission-contact__row">
+          <label class="mission-contact__field">
+            <span class="mission-contact__label">{emailLabel} *</span>
+            <input type="email" name="email" required autocomplete="email" />
+          </label>
+          <label class="mission-contact__field">
+            <span class="mission-contact__label">{phoneLabel}</span>
+            <input type="tel" name="phone" autocomplete="tel" />
+          </label>
+        </div>
+        <label class="mission-contact__field">
+          <span class="mission-contact__label">{messageLabel} *</span>
+          <textarea name="message" rows="4" required></textarea>
+        </label>
+
+        <p
+          class="mission-contact__error"
+          data-mission-contact-error
+          role="alert"
+          tabindex="-1"
+          hidden
+        ></p>
+
+        <div class="mission-contact__actions">
+          <p class="mission-contact__note">{note}</p>
+          <button type="submit">{submitLabel}</button>
+        </div>
+      </form>
+    </div>
+  </section>
+)}
+
+<script>
+  function buildMessage(fields, companyName) {
+    const phoneLine = fields.phone ? `\nTelefone: ${fields.phone}` : ""
+    const intro = companyName
+      ? `Olá! Entrei em contato pelo site de ${companyName}.`
+      : "Olá! Entrei em contato pelo site."
+    return [
+      intro,
+      "",
+      `Nome: ${fields.name}`,
+      `E-mail: ${fields.email}${phoneLine}`,
+      `Mensagem: ${fields.message}`,
+    ].join("\n")
+  }
+
+  function initMissionContactForms() {
+    document.querySelectorAll("[data-mission-contact-form]").forEach((form) => {
+      if (!(form instanceof HTMLFormElement)) return
+      if (form.dataset.ready === "1") return
+      form.dataset.ready = "1"
+
+      const errorEl = form.querySelector("[data-mission-contact-error]")
+      form.addEventListener("submit", (event) => {
+        event.preventDefault()
+        const data = new FormData(form)
+        const name = String(data.get("name") ?? "").trim()
+        const email = String(data.get("email") ?? "").trim()
+        const phone = String(data.get("phone") ?? "").trim()
+        const message = String(data.get("message") ?? "").trim()
+        const number = String(form.dataset.whatsappNumber || "").replace(/\D/g, "")
+        const companyName = String(form.dataset.companyName || "").trim()
+        const requiredMsg =
+          String(form.dataset.errorRequired || "").trim() ||
+          "Preencha nome, e-mail e mensagem para continuar."
+
+        if (errorEl instanceof HTMLElement) {
+          errorEl.hidden = true
+          errorEl.textContent = ""
+        }
+
+        if (!name || !email || !message) {
+          if (errorEl instanceof HTMLElement) {
+            errorEl.hidden = false
+            errorEl.textContent = requiredMsg
+            errorEl.focus()
+          }
+          return
+        }
+
+        if (!number) {
+          if (errorEl instanceof HTMLElement) {
+            errorEl.hidden = false
+            errorEl.textContent = "Número de WhatsApp indisponível."
+            errorEl.focus()
+          }
+          return
+        }
+
+        const text = buildMessage({ name, email, phone, message }, companyName)
+        const url = `https://wa.me/${number}?text=${encodeURIComponent(text)}`
+        window.open(url, "_blank", "noopener,noreferrer")
+      })
+    })
+  }
+
+  initMissionContactForms()
+  document.addEventListener("astro:page-load", initMissionContactForms)
+</script>
+
+<style>
+  .mission-contact {
+    padding: clamp(4rem, 8vw, 7rem) 0;
+    background: var(--site-color-primary, hsl(220 40% 16%));
+    color: var(--site-color-text-inverse, #f7f3ea);
+  }
+  .mission-contact__container {
+    max-width: 76rem;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: grid;
+    gap: 3.5rem;
+  }
+  @media (min-width: 1024px) {
+    .mission-contact__container {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: 6rem;
+      align-items: start;
+    }
+  }
+  .mission-contact__eyebrow-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .mission-contact__gold-rule {
+    width: 2.75rem;
+    height: 1px;
+    background: var(--site-color-accent, hsl(40 45% 55%));
+  }
+  .mission-contact__eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--site-color-accent, hsl(40 45% 55%));
+  }
+  .mission-contact__title {
+    margin: 1.5rem 0 0;
+    font-family: var(--site-font-heading, Georgia, serif);
+    font-size: clamp(2.25rem, 4vw, 3rem);
+    font-weight: 500;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: var(--site-color-text-inverse, #fff);
+  }
+  .mission-contact__lead {
+    margin: 1.75rem 0 0;
+    max-width: 28rem;
+    font-size: 1.0625rem;
+    line-height: 1.85;
+    color: color-mix(in srgb, var(--site-color-text-inverse, #fff) 70%, transparent);
+  }
+  .mission-contact__meta {
+    margin: 3rem 0 0;
+    display: grid;
+    gap: 2rem;
+  }
+  .mission-contact__meta dt {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--site-color-accent, hsl(40 45% 55%));
+  }
+  .mission-contact__meta dd {
+    margin: 0.75rem 0 0;
+  }
+  .mission-contact__meta a {
+    font-family: var(--site-font-heading, Georgia, serif);
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+    color: var(--site-color-text-inverse, #fff);
+    text-decoration: none;
+    word-break: break-word;
+  }
+  .mission-contact__meta a:hover {
+    color: var(--site-color-accent, hsl(40 45% 55%));
+  }
+  .mission-contact__form {
+    background: var(--site-color-background, #f7f3ea);
+    color: var(--site-color-text, hsl(220 15% 16%));
+    padding: 2.25rem 1.75rem;
+    display: grid;
+    gap: 1.75rem;
+  }
+  @media (min-width: 640px) {
+    .mission-contact__form {
+      padding: 2.75rem 2.5rem;
+    }
+  }
+  .mission-contact__row {
+    display: grid;
+    gap: 1.75rem;
+  }
+  @media (min-width: 640px) {
+    .mission-contact__row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .mission-contact__field {
+    display: grid;
+    gap: 0.65rem;
+  }
+  .mission-contact__label {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 45%)) 80%, var(--site-color-primary));
+  }
+  .mission-contact__field input,
+  .mission-contact__field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 0;
+    border-bottom: 1px solid var(--site-color-card-border, hsl(30 8% 88%));
+    border-radius: 0;
+    background: transparent;
+    padding: 0.85rem 0;
+    font: inherit;
+    font-size: 1.0625rem;
+    color: inherit;
+  }
+  .mission-contact__field input:focus,
+  .mission-contact__field textarea:focus {
+    outline: none;
+    border-bottom-color: var(--site-color-primary, hsl(220 40% 16%));
+  }
+  .mission-contact__error {
+    margin: 0;
+    color: #b42318;
+    font-size: 0.9rem;
+  }
+  .mission-contact__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    padding-top: 0.5rem;
+  }
+  .mission-contact__note {
+    margin: 0;
+    max-width: 18rem;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: var(--site-color-text-muted, hsl(220 10% 40%));
+  }
+  .mission-contact__form button {
+    min-height: 2.75rem;
+    padding: 0.875rem 2rem;
+    border: 1px solid var(--site-color-primary, hsl(220 40% 16%));
+    border-radius: var(--site-radius-button, 0.125rem);
+    background: var(--site-color-primary, hsl(220 40% 16%));
+    color: var(--site-color-text-inverse, #fff);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .mission-contact__form button:hover {
+    background: color-mix(in srgb, var(--site-color-primary, hsl(220 40% 16%)) 88%, white);
+  }
+  .mission-contact__form button:focus-visible {
+    outline: 2px solid var(--site-color-accent, hsl(40 45% 55%));
+    outline-offset: 4px;
+  }
+</style>

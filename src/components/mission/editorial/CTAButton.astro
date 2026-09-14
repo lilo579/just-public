@@ -1,0 +1,22 @@
+---
+// Presentation markup/class names restored from the pre-cutover reference.
+// All tenant values are supplied by the canonical painted plan / structured chrome.
+const base =
+  "inline-flex items-center justify-center min-h-11 px-8 py-3.5 text-[0.6875rem] uppercase tracking-[0.22em] font-medium transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold";
+
+const variants = {
+  primary:
+    "bg-navy-deep text-ivory border border-navy-deep hover:bg-navy",
+  secondary:
+    "bg-transparent text-navy-deep border border-navy-deep/35 hover:border-navy-deep hover:bg-navy-deep/5",
+  ghost:
+    "bg-transparent text-navy-deep border-b border-gold pb-1 px-0 tracking-[0.2em] hover:text-bronze min-h-0",
+};
+
+
+const {cta, class: className = ""} = Astro.props;
+const href = cta?.href || "#";
+const external = /^https?:/.test(href);
+const variant = cta?.variant || "primary";
+---
+<a href={href} class={`${base} ${variants[variant]} ${className}`} target={external ? "_blank" : undefined} rel={external ? "noopener noreferrer" : undefined} data-conversion={cta?.conversionId}>{cta?.label}</a>

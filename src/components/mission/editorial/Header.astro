@@ -1,0 +1,116 @@
+---
+// Presentation markup/class names restored from the pre-cutover reference.
+// All tenant values are supplied by the canonical painted plan / structured chrome.
+const {chrome}=Astro.props;
+const scrolled=false,open=false;
+const navigation=chrome.navItems || [];
+const publishingHouse={logoAlt:chrome.companyName,logoMark:chrome.logoMarkUrl || chrome.logoUrl,logoCompact:chrome.logoUrl};
+const headerContent={homeHref:"/",patronCta:{label:chrome.headerCtaLabel,href:chrome.headerCtaHref},menuToggleLabel:chrome.menuToggleLabel || "Alternar menu"};
+---
+) => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <header data-editorial-header
+      class={`fixed top-0 inset-x-0 z-50 transition-[background-color,border-color,backdrop-filter] duration-500 ${
+        scrolled
+          ? "bg-ivory/92 backdrop-blur-md border-b border-border/50"
+          : "bg-transparent border-b border-transparent"
+      }`}
+    >
+      <div class="container-editorial flex items-center justify-between h-[4.75rem]">
+        <a
+          href={headerContent.homeHref}
+          aria-label={publishingHouse.logoAlt}
+          class="flex items-center min-h-11 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+        >
+          <img
+            src={publishingHouse.logoMark}
+            alt=""
+            width={48}
+            height={48}
+            class="h-10 w-10 sm:hidden"
+            aria-hidden="true"
+          />
+          <img
+            src={publishingHouse.logoCompact}
+            alt={publishingHouse.logoAlt}
+            width={180}
+            height={60}
+            class="hidden sm:block h-11 w-auto"
+          />
+        </a>
+
+        <nav class="hidden lg:flex items-center gap-6 xl:gap-9" aria-label="Principal">
+          {navigation.map((item) => (
+            <a
+              href={item.href}
+              class="text-[0.6875rem] uppercase tracking-[0.2em] text-muted-foreground hover:text-navy-deep transition-colors duration-500"
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
+        <a
+          href={headerContent.patronCta.href}
+          class="hidden lg:inline-flex items-center min-h-11 text-[0.6875rem] uppercase tracking-[0.2em] text-navy-deep border-b border-gold pb-0.5 hover:text-bronze transition-colors duration-500"
+        >
+          {headerContent.patronCta.label}
+        </a>
+
+        <button
+          type="button"
+          aria-label={headerContent.menuToggleLabel}
+          aria-expanded="false" data-editorial-menu-toggle
+          class="lg:hidden min-h-11 min-w-11 grid place-items-center text-navy-deep"
+          
+        >
+          <div class="space-y-1.5" aria-hidden="true">
+            <span
+              class={`block h-px w-6 bg-current transition-transform duration-500 ${open ? "translate-y-1.5 rotate-45" : ""}`}
+            />
+            <span
+              class={`block h-px w-6 bg-current transition-opacity duration-500 ${open ? "opacity-0" : ""}`}
+            />
+            <span
+              class={`block h-px w-6 bg-current transition-transform duration-500 ${open ? "-translate-y-1.5 -rotate-45" : ""}`}
+            />
+          </div>
+        </button>
+      </div>
+
+      {true && (
+        <div data-editorial-menu hidden class="lg:hidden border-t border-border/50 bg-ivory">
+          <nav class="container-editorial py-7 flex flex-col gap-5" aria-label="Mobile">
+            {navigation.map((item) => (
+              <a
+                href={item.href}
+                
+                class="text-sm uppercase tracking-[0.2em] text-muted-foreground hover:text-navy-deep transition-colors duration-500 py-1"
+              >
+                {item.label}
+              </a>
+            ))}
+            <a
+              href={headerContent.patronCta.href}
+              
+              class="mt-2 inline-flex w-fit items-center min-h-11 text-sm uppercase tracking-[0.2em] text-navy-deep border-b border-gold pb-0.5 hover:text-bronze transition-colors duration-500"
+            >
+              {headerContent.patronCta.label}
+            </a>
+          </nav>
+        </div>
+      )}
+    </header>
+<script>
+for(const header of document.querySelectorAll<HTMLElement>("[data-editorial-header]")){
+ const update=()=>{header.classList.toggle("bg-ivory/92",scrollY>24);header.classList.toggle("backdrop-blur-md",scrollY>24);header.classList.toggle("border-border/50",scrollY>24);header.classList.toggle("bg-transparent",scrollY<=24);};
+ update();addEventListener("scroll",update,{passive:true});
+ const toggle=header.querySelector<HTMLButtonElement>("[data-editorial-menu-toggle]");
+ const menu=header.querySelector<HTMLElement>("[data-editorial-menu]");
+ const set=(open:boolean)=>{if(!menu||!toggle)return;menu.hidden=!open;toggle.setAttribute("aria-expanded",String(open));const spans=toggle.querySelectorAll("span");spans[0]?.classList.toggle("translate-y-1.5",open);spans[0]?.classList.toggle("rotate-45",open);spans[1]?.classList.toggle("opacity-0",open);spans[2]?.classList.toggle("-translate-y-1.5",open);spans[2]?.classList.toggle("-rotate-45",open);};
+ toggle?.addEventListener("click",()=>set(toggle.getAttribute("aria-expanded")!=="true"));
+ menu?.querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>set(false)));
+}
+</script>

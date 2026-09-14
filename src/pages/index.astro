@@ -4,6 +4,10 @@ export const prerender = false
 import type { ResolvedHomepage } from "../contracts/homepage"
 import HomepageRenderer from "../components/legacy/HomepageRenderer.astro"
 import CanonicalHomepageRenderer from "../components/CanonicalHomepageRenderer.astro"
+import EditorialHeader from "../components/mission/editorial/Header.astro"
+import EditorialFooter from "../components/mission/editorial/Footer.astro"
+import EditorialSignature from "../components/mission/editorial/Signature.astro"
+import EditorialFloatingWhatsApp from "../components/mission/editorial/FloatingWhatsApp.astro"
 import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
 import SiteTheme from "../components/SiteTheme.astro"
@@ -225,6 +229,11 @@ const isCinematicPresentation = presentationProfile === "f1.presentation.cinemat
 const isF3Presentation = presentationFamily === "f3"
 const isF4Presentation = presentationFamily === "f4"
 const presentationChrome = presentationBinding.chrome
+const isEditorialMission =
+  isF4Presentation &&
+  presentationChrome &&
+  typeof presentationChrome === "object" &&
+  (presentationChrome as { heroLayout?: string }).heroLayout === "editorial-split"
 const cinematicAtmosphere =
   presentationChrome &&
   typeof presentationChrome === "object" &&
@@ -546,6 +555,8 @@ const modeLeadForm = resolveComingSoonLeadForm(siteModeConfig)
 const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
   ? siteModeConfig.legalLinks
   : null
+const editorialChrome = { ...presentationChrome, companyName:brandingName, logoUrl:brandingLogo, logoMarkUrl:brandingMeta?.logoUrl, footerLogoUrl:footerLogoForRender, footerTagline:footer.tagline, navItems:headerNavItems, headerCtaLabel, headerCtaHref, legalLinks:chromeLegalLinks, contact:homepageWithSource.source?.contact, socialLinks:footer.socialLinks, whatsappHref, domain:host };
+
 ---
 
 <html lang="pt-BR">
@@ -581,6 +592,7 @@ const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
     <CloudflareWebAnalytics />
   </head>
   <body>
+    {isEditorialMission && <><link rel="stylesheet" href="/presentation/mission-editorial/reference.css" /><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&amp;family=Inter:wght@300;400;500;600&amp;display=swap" /></>}
     <SiteTheme tokens={tokens}>
       {isInterstitialMode ? (
         <div data-site-mode={siteMode} data-renderer="site-mode">
@@ -619,7 +631,7 @@ const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
       ) : isJustInstitutionalNormal ? (
         <JustInstitutionalHomepage />
       ) : (
-        <div
+        <div class={isEditorialMission ? "mission-editorial" : undefined}
           data-f1-presentation={!isF3Presentation ? presentationProfile : undefined}
           data-f3-presentation={isF3Presentation ? presentationProfile : undefined}
           {...(isCinematicPresentation
@@ -629,7 +641,7 @@ const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
               }
             : {})}
         >
-          <Header
+          {isEditorialMission ? <EditorialHeader chrome={editorialChrome} /> : <Header
             siteTitle={brandingName}
             logoUrl={brandingLogo}
             logoOverHeroUrl={brandingLogoOverHero}
@@ -644,10 +656,10 @@ const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
             navReveal={headerNavReveal}
             chrome={isF3Presentation ? "shop" : "default"}
             showCta={!isF3Presentation}
-          />
+          />}
 
           <main
-            class:list={["page-shell", isF3Presentation && "page-shell--shop"]}
+            class:list={[!isEditorialMission && "page-shell", isF3Presentation && "page-shell--shop"]}
             data-renderer={choice.mode}
             data-f1-presentation={!isF3Presentation ? presentationProfile : undefined}
             data-f3-presentation={isF3Presentation ? presentationProfile : undefined}
@@ -677,6 +689,7 @@ const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
             ) : choice.mode === "canonical" ? (
               <CanonicalHomepageRenderer
                 plan={choice.plan}
+                editorialChrome={editorialChrome}
                 presentationChrome={presentationChrome}
               />
             ) : (
@@ -686,7 +699,7 @@ const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
             )}
           </main>
 
-          <Footer
+          {isEditorialMission ? <><EditorialSignature /><EditorialFooter chrome={editorialChrome} /></> : <Footer
             footer={{
               ...footer,
               companyName: brandingName,
@@ -714,8 +727,8 @@ const modeLegalLinks = Array.isArray(siteModeConfig.legalLinks)
             whatsappHref={whatsappHref}
             headerCtaLabel={headerCtaLabel}
             legalLinks={chromeLegalLinks}
-          />
-          {whatsappHref && <WhatsAppFloat href={whatsappHref} />}
+          />}
+          {whatsappHref && (isEditorialMission ? <EditorialFloatingWhatsApp href={whatsappHref} /> : <WhatsAppFloat href={whatsappHref} />)}
         </div>
       )}
     </SiteTheme>
