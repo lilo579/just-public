@@ -1,0 +1,19 @@
+---
+// Presentation markup/class names restored from the pre-cutover reference.
+// All tenant values are supplied by the canonical painted plan / structured chrome.
+const {class: className,coverImage,coverAlt} = Astro.props;
+---
+<figure class={className}>
+      <div class="absolute -inset-3 sm:-inset-4 border border-gold/30" aria-hidden="true" />
+      <div class="relative bg-ivory/5 p-2 sm:p-2.5">
+        <img
+          src={coverImage}
+          alt={coverAlt}
+          width={1164}
+          height={1600}
+          loading="lazy"
+          decoding="async"
+          class="relative w-full h-auto object-contain shadow-[0_40px_90px_-30px_rgba(0,0,0,0.7)]"
+        />
+      </div>
+    </figure>

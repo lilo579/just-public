@@ -4,6 +4,13 @@
  * Expects `node.paint` (final block + layout) from Hub compile.
  * Optionally enriches paint from F1 presentation chrome (cinematic_v1).
  */
+import EditorialHero from "./mission/editorial/Hero.astro"
+import EditorialFeatured from "./mission/editorial/Featured.astro"
+import EditorialRecurring from "./mission/editorial/Recurring.astro"
+import EditorialPatronage from "./mission/editorial/Patronage.astro"
+import EditorialHistory from "./mission/editorial/History.astro"
+import EditorialAbout from "./mission/editorial/About.astro"
+import EditorialContact from "./mission/editorial/Contact.astro"
 import HeroBlock from "./blocks/HeroBlock.astro"
 import TrustBlock from "./blocks/TrustBlock.astro"
 import ServicesBlock from "./blocks/ServicesBlock.astro"
@@ -16,7 +23,6 @@ import InfoCardBlock from "./blocks/InfoCardBlock.astro"
 import TestimonialsBlock from "./blocks/TestimonialsBlock.astro"
 import ProofGalleryBlock from "./blocks/ProofGalleryBlock.astro"
 import CtaBlock from "./blocks/CtaBlock.astro"
-import MissionContactBlock from "./blocks/MissionContactBlock.astro"
 import CatalogCategoryNavBlock from "./blocks/CatalogCategoryNavBlock.astro"
 import CatalogProductGridBlock from "./blocks/CatalogProductGridBlock.astro"
 import CatalogRichSectionBlock from "./blocks/CatalogRichSectionBlock.astro"
@@ -43,9 +49,10 @@ import type {
   TrustBlock as TrustBlockType,
 } from "../contracts/homepage"
 
-const { plan: rawPlan, showDiagnostics = false, presentationChrome = null } = Astro.props as {
+const { plan: rawPlan, showDiagnostics = false, presentationChrome = null, editorialChrome = null } = Astro.props as {
   plan: SerializableHomepageRenderPlan
   showDiagnostics?: boolean
+  editorialChrome?: any
   presentationChrome?: unknown
 }
 
@@ -97,6 +104,10 @@ function commentFor(node: SerializableHomepageRenderNode, reason: string) {
   const safeReason = sanitizeCommentValue(reason)
   return `<!-- CanonicalHomepageRenderer skipped node id=${safeId} componentKey=${safeKey} reason=${safeReason} -->`
 }
+
+const isEditorialMission = (rawPlan.presentation?.chrome as any)?.heroLayout === "editorial-split" && rawPlan.presentation?.profile?.startsWith("f4.");
+const editorialProgress = rawPlan.nodes?.find(n => n.paint?.component === "progress_track")?.paint?.block?.content || {};
+const hasEditorialInitiative = rawPlan.nodes?.some(n => n.paint?.component === "initiative");
 
 const orderedNodes = [...(plan.nodes ?? [])].sort((left, right) => left.order - right.order)
 
@@ -245,6 +256,42 @@ const manifestoSectionId = editorial?.sectionIds?.manifesto || "manifesto-final"
     const { paint } = entry
     const layout = paint.layout ?? {}
 
+    if (isEditorialMission) {
+      const block = paint.block as any
+      const content = {
+        ...(block?.content || {}),
+        // Painted CTAs live on the block root for shared Hero/CTA shells.
+        primaryCta: block?.content?.primaryCta ?? block?.primaryCTA ?? null,
+        secondaryCta: block?.content?.secondaryCta ?? block?.secondaryCTA ?? null,
+        primaryCTA: block?.primaryCTA ?? block?.content?.primaryCta ?? null,
+        secondaryCTA: block?.secondaryCTA ?? block?.content?.secondaryCta ?? null,
+        cta: block?.content?.cta ?? block?.primaryCTA ?? null,
+      }
+      switch (paint.component) {
+        case "hero":
+          return <EditorialHero content={content} />
+        case "initiative":
+          return <EditorialFeatured content={content} progress={editorialProgress} />
+        case "progress_track":
+          if (hasEditorialInitiative) return null
+          break
+        case "recurring_support":
+          return <EditorialRecurring content={content} />
+        case "patronage":
+          return <EditorialPatronage content={content} />
+        case "history_collection":
+          return <EditorialHistory content={content} />
+        case "about":
+          return <EditorialAbout content={content} />
+        case "cta_final":
+          return (
+            <EditorialContact
+              content={content}
+              chrome={editorialChrome || { contact: content.contact }}
+            />
+          )
+      }
+    }
     switch (paint.component) {
       case "hero":
         return (
@@ -256,9 +303,7 @@ const manifestoSectionId = editorial?.sectionIds?.manifesto || "manifesto-final"
                   ? "cinematic"
                   : layout.heroLayout === "catalog"
                     ? "catalog"
-                    : layout.heroLayout === "editorial-split"
-                      ? "editorial-split"
-                      : "standard"
+                    : "standard"
               }
               videoUrl={editorial?.heroVideoUrl ?? null}
               ctaIcon={editorial?.atmosphere === "pt_dark" ? "none" : "auto"}
@@ -321,9 +366,7 @@ const manifestoSectionId = editorial?.sectionIds?.manifesto || "manifesto-final"
             layout={
               layout.aboutLayout === "cinematic-authority"
                 ? "cinematic-authority"
-                : layout.aboutLayout === "editorial"
-                  ? "editorial"
-                  : "standard"
+                : "standard"
             }
             sectionId={typeof layout.sectionId === "string" ? layout.sectionId : undefined}
           />
@@ -437,31 +480,7 @@ const manifestoSectionId = editorial?.sectionIds?.manifesto || "manifesto-final"
           />
         )
 
-      case "cta_final": {
-        const ctaContent = (paint.block as any)?.content ?? {}
-        const formModeRaw =
-          typeof ctaContent.formMode === "string"
-            ? ctaContent.formMode
-            : typeof ctaContent.form_mode === "string"
-              ? ctaContent.form_mode
-              : ""
-        const formMode = formModeRaw.trim().toLowerCase()
-        const ctaSectionId =
-          typeof layout.sectionId === "string"
-            ? layout.sectionId
-            : isPtTrainer
-              ? manifestoSectionId
-              : undefined
-
-        if (formMode === "whatsapp_compose") {
-          return (
-            <MissionContactBlock
-              block={paint.block}
-              sectionId={typeof ctaSectionId === "string" ? ctaSectionId : "contact"}
-            />
-          )
-        }
-
+      case "cta_final":
         return (
           <CtaBlock
             block={paint.block as CtaBlockType}
@@ -474,10 +493,15 @@ const manifestoSectionId = editorial?.sectionIds?.manifesto || "manifesto-final"
                   "/presentation/cinematic_v1/pt/manifesto-portrait.png"
                 : ((paint.block as any)?.content?.manifestoImageUrl as string) || null
             }
-            sectionId={ctaSectionId}
+            sectionId={
+              typeof layout.sectionId === "string"
+                ? layout.sectionId
+                : isPtTrainer
+                  ? manifestoSectionId
+                  : undefined
+            }
           />
         )
-      }
 
       case "category_nav":
         return <CatalogCategoryNavBlock block={paint.block} layout={layout} />

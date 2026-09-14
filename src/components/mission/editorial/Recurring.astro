@@ -1,0 +1,77 @@
+---
+// Presentation markup/class names restored from the pre-cutover reference.
+// All tenant values are supplied by the canonical painted plan / structured chrome.
+const {content}=Astro.props;
+const bookClub={...content,headline:content.title,price:content.priceLabel,period:content.periodLabel};
+const formatCurrency=n=>n;
+---
+<section id="book-club" class="section-band">
+      <div class="container-editorial">
+        <div class="grid items-start gap-14 lg:grid-cols-12 lg:gap-20">
+          <div class="lg:col-span-6">
+            <div class="flex items-center gap-3">
+              <span class="gold-rule" />
+              <span class="eyebrow">{bookClub.eyebrow}</span>
+            </div>
+            <h2 class="mt-6 font-serif text-[2.25rem] leading-[1.08] tracking-[-0.02em] text-balance text-navy-deep sm:text-5xl lg:text-[3.35rem]">
+              {bookClub.headline}
+            </h2>
+            <p class="mt-7 max-w-xl text-[1.0625rem] leading-[1.85] text-muted-foreground sm:text-lg">
+              {bookClub.description}
+            </p>
+            <p class="mt-6 max-w-xl font-serif text-xl italic leading-snug text-bronze sm:text-[1.35rem]">
+              {bookClub.highlight}
+            </p>
+            <p class="mt-5 text-[0.9375rem] leading-relaxed text-muted-foreground">
+              {bookClub.cadence}
+            </p>
+
+            <div class="mt-11">
+              <a
+                href={bookClub.cta.href}
+                data-conversion="book-club"
+                class="inline-flex min-h-11 items-center justify-center border border-navy-deep bg-navy-deep px-8 py-3.5 text-[0.6875rem] font-medium uppercase tracking-[0.22em] text-ivory transition-colors duration-500 hover:bg-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+              >
+                {bookClub.cta.label}
+              </a>
+            </div>
+          </div>
+
+          <div class="lg:col-span-6">
+            <aside
+              aria-label="Participação no Clube"
+              class="relative overflow-visible rounded-sm border border-gold/35 bg-ivory px-7 py-9 shadow-[0_18px_48px_-20px_rgba(10,22,38,0.22),0_4px_14px_-8px_rgba(10,22,38,0.1)] sm:px-9 sm:py-10 lg:px-10 lg:py-11"
+            >
+              <div class="eyebrow">{bookClub.subscriptionLabel}</div>
+              <div class="mt-3 flex items-baseline gap-2.5">
+                <span class="font-serif text-5xl tracking-tight text-navy-deep sm:text-6xl">
+                  {formatCurrency(bookClub.price, bookClub.currency)}
+                </span>
+                <span class="text-sm text-navy-deep/70">/ {bookClub.period}</span>
+              </div>
+
+              <div class="mt-6 h-px w-full bg-gold/45" aria-hidden="true" />
+
+              <ul class="mt-6 space-y-4">
+                {bookClub.benefits.map((benefit, index) => {
+                  const icon = index === 1 ? "gift" : "book";
+                  return (
+                    <li class="flex gap-3.5 text-navy-deep/90">
+                      <span
+                        class="mt-0.5 flex size-5 shrink-0 items-center justify-center text-gold"
+                        aria-hidden="true"
+                      >
+                        <svg class="size-[1.125rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 7v14M3 18V3h3c3 0 6 1 6 4 0-3 3-4 6-4h3v15h-3c-3 0-6 1-6 3 0-2-3-3-6-3z"/></svg>
+                      </span>
+                      <span class="min-w-0 text-[0.9375rem] leading-[1.7]">{benefit}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <figure class="relative mt-8 w-full max-w-full overflow-hidden sm:-mx-[10%] sm:w-[120%] sm:max-w-none sm:overflow-visible" aria-label={content.imageLabel}><img src={content.imageUrl} alt={content.imageAlt || ""} width="1024" height="526" class="block h-auto w-full max-w-full select-none" draggable="false" /></figure>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </section>

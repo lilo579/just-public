@@ -60,9 +60,6 @@ const statement =
       : []) || [];
 const isManifesto = ghost.length > 0 || statement.length > 0;
 const resolvedSectionId = sectionId || (isCinematic ? (isManifesto ? "manifesto-final" : "contato") : "cta-final");
-const isMissionContact =
-  !isCinematic &&
-  (resolvedSectionId === "contact" || resolvedSectionId === "contato");
 const resolvedManifestoImage =
   (typeof manifestoImageUrl === "string" && manifestoImageUrl.trim()) ||
   (typeof block.content.manifestoImageUrl === "string" && block.content.manifestoImageUrl.trim()) ||
@@ -70,15 +67,7 @@ const resolvedManifestoImage =
 ---
 
 {(title || body || showButton || showLeadForm || (isCinematic && (microcopy || closingPullQuote || isManifesto))) && (
-  <section
-    class:list={[
-      "cta",
-      isCinematic && "cta--cinematic",
-      isManifesto && "cta--manifesto",
-      isMissionContact && "cta--mission-contact",
-    ]}
-    id={resolvedSectionId}
-  >
+  <section class:list={["cta", isCinematic && "cta--cinematic", isManifesto && "cta--manifesto"]} id={resolvedSectionId}>
     {isCinematic && isManifesto ? (
       <div class="cta__manifesto-art" data-f1-manifesto-art>
         <div class="cta__manifesto-glow" aria-hidden="true"></div>
@@ -323,53 +312,6 @@ const resolvedManifestoImage =
       padding-left: 1.25rem;
       padding-right: 1.25rem;
     }
-  }
-
-  /* —— F4 mission contact dark band (non–whatsapp_compose CTA) —— */
-  .cta--mission-contact {
-    padding: clamp(4rem, 8vw, 6.5rem) 0;
-    background: var(--site-color-primary, hsl(220 40% 16%));
-  }
-
-  .cta--mission-contact .cta__inner {
-    max-width: 42rem;
-    text-align: left;
-  }
-
-  .cta--mission-contact h2 {
-    color: var(--site-color-text-inverse, #fff);
-    font-family: var(--site-font-heading, Georgia, serif);
-    font-weight: 500;
-    letter-spacing: -0.02em;
-  }
-
-  .cta--mission-contact p {
-    color: color-mix(in srgb, var(--site-color-text-inverse, #fff) 72%, transparent);
-  }
-
-  .cta--mission-contact :global(a.cta__button) {
-    border-radius: var(--site-radius-button, 0.125rem);
-    background: transparent;
-    border: 1px solid color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 70%, transparent);
-    color: var(--site-color-text-inverse, #fff);
-    box-shadow: none;
-    font-size: 0.6875rem;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    font-weight: 500;
-    min-height: 2.75rem;
-    padding: 0.875rem 2rem;
-  }
-
-  .cta--mission-contact :global(a.cta__button:hover) {
-    background: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 16%, transparent);
-    border-color: var(--site-color-accent, hsl(40 45% 55%));
-    box-shadow: none;
-  }
-
-  .cta--mission-contact :global(.cta__button-icon),
-  .cta--mission-contact :global(.cta__button-svg) {
-    color: var(--site-color-text-inverse, #fff);
   }
 
   /* —— cinematic-band —— */

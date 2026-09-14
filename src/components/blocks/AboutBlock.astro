@@ -9,25 +9,13 @@ const { block, layout = "standard", sectionId } = Astro.props as {
   block: AboutBlockType & {
     content: AboutBlockType["content"] & {
       stats?: AboutStat[] | null;
-      imageUrl?: string | null;
-      eyebrow?: string | null;
     };
   };
-  layout?: "standard" | "cinematic-authority" | "editorial";
+  layout?: "standard" | "cinematic-authority";
   sectionId?: string;
 };
 
-const { title, body, photoUrl: photoUrlRaw } = block.content;
-const imageUrlAlt =
-  typeof (block.content as { imageUrl?: string | null }).imageUrl === "string"
-    ? (block.content as { imageUrl?: string }).imageUrl!.trim()
-    : "";
-const photoUrl =
-  (typeof photoUrlRaw === "string" && photoUrlRaw.trim()) || imageUrlAlt || null;
-const eyebrow =
-  typeof (block.content as { eyebrow?: string | null }).eyebrow === "string"
-    ? (block.content as { eyebrow?: string }).eyebrow!.trim()
-    : "";
+const { title, body, photoUrl } = block.content;
 const stats = ((block.content as { stats?: AboutStat[] }).stats ?? []).filter(
   (stat) => stat?.value || stat?.label
 );
@@ -37,13 +25,12 @@ const paragraphs = body
   : [];
 
 const isCinematic = layout === "cinematic-authority";
-const isEditorial = layout === "editorial";
 const statIcons: StatIcon[] = ["heart", "users", "star", "circle"];
 ---
 
 {(title || paragraphs.length > 0 || photoUrl || (isCinematic && stats.length > 0)) && (
   <section
-    class:list={["about", isCinematic && "about--cinematic", isEditorial && "about--editorial"]}
+    class:list={["about", isCinematic && "about--cinematic"]}
     id={sectionId}
   >
     {!isCinematic && <div class="about__overlay" aria-hidden="true"></div>}
@@ -95,14 +82,11 @@ const statIcons: StatIcon[] = ["heart", "users", "star", "circle"];
             {photoUrl && (
               <div class="about__media">
                 <div class="about__media-inner">
-                  <div class="about__editorial-frame" aria-hidden="true"></div>
                   <div class="about__frame">
                     <img
                       src={photoUrl}
                       alt={`${title || "Foto"}`}
                       class="about__image"
-                      loading="lazy"
-                      decoding="async"
                     />
                   </div>
                 </div>
@@ -113,12 +97,6 @@ const statIcons: StatIcon[] = ["heart", "users", "star", "circle"];
               "about__content",
               photoUrl ? "about__content--with-photo" : "about__content--full"
             ]}>
-              {eyebrow && (
-                <div class="about__eyebrow-row">
-                  <span class="about__gold-rule" aria-hidden="true" />
-                  <span class="about__eyebrow">{eyebrow}</span>
-                </div>
-              )}
               {title && <h2>{title}</h2>}
 
               {paragraphs.length > 0 && (
@@ -165,14 +143,6 @@ const statIcons: StatIcon[] = ["heart", "users", "star", "circle"];
     background: #ffffff;
   }
 
-  .about--editorial .about__overlay {
-    background: color-mix(
-      in srgb,
-      var(--site-color-background, hsl(40 18% 96%)) 92%,
-      var(--site-color-accent, hsl(40 30% 70%))
-    );
-  }
-
   .about__container {
     position: relative;
     z-index: 1;
@@ -180,48 +150,6 @@ const statIcons: StatIcon[] = ["heart", "users", "star", "circle"];
     margin: 0 auto;
     padding-left: 1.5rem;
     padding-right: 1.5rem;
-  }
-
-  .about--editorial .about__container {
-    max-width: 76rem;
-  }
-
-  .about__eyebrow-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .about__gold-rule {
-    width: 2.75rem;
-    height: 1px;
-    background: var(--site-color-accent, hsl(40 45% 55%));
-  }
-
-  .about__eyebrow {
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.24em;
-    text-transform: uppercase;
-    color: color-mix(
-      in srgb,
-      var(--site-color-accent, hsl(40 45% 45%)) 80%,
-      var(--site-color-primary)
-    );
-  }
-
-  .about__editorial-frame {
-    display: none;
-  }
-
-  .about--editorial .about__editorial-frame {
-    display: block;
-    position: absolute;
-    inset: -0.85rem;
-    border: 1px solid color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 35%, transparent);
-    pointer-events: none;
-    z-index: 1;
   }
 
   .about__grid {
@@ -254,24 +182,6 @@ const statIcons: StatIcon[] = ["heart", "users", "star", "circle"];
     border: 1px solid hsl(30 8% 88% / 0.3);
   }
 
-  .about--editorial .about__frame {
-    aspect-ratio: 4 / 3;
-    border-radius: var(--site-radius-image, 0.125rem);
-    box-shadow: none;
-    border: none;
-    background: transparent;
-  }
-
-  @media (min-width: 1024px) {
-    .about--editorial .about__frame {
-      aspect-ratio: 5 / 4;
-    }
-
-    .about--editorial .about__editorial-frame {
-      inset: -1rem;
-    }
-  }
-
   .about__image {
     width: 100%;
     height: 100%;
@@ -288,14 +198,6 @@ const statIcons: StatIcon[] = ["heart", "users", "star", "circle"];
     font-weight: 700;
     color: hsl(220 15% 15%);
     text-align: left;
-  }
-
-  .about--editorial h2 {
-    font-weight: 500;
-    letter-spacing: -0.02em;
-    line-height: 1.08;
-    color: var(--site-color-primary, hsl(220 40% 16%));
-    font-size: clamp(2.25rem, 4vw, 3rem);
   }
 
   .about__body {

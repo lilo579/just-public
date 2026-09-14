@@ -27,7 +27,8 @@
     "@astrojs/cloudflare": "^12.6.13",
     "@just/site-engine-authority": "file:../just-auth-nexus/src/site-engine/authority",
     "@supabase/supabase-js": "^2.98.0",
-    "astro": "^5.17.1"
+    "astro": "^5.17.1",
+    "embla-carousel": "^8.6.0"
   },
   "devDependencies": {
     "wrangler": "^4.59.2"

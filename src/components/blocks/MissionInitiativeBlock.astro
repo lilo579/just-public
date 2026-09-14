@@ -1,27 +1,23 @@
 ---
 /**
- * F4 mission — active initiative (FeaturedBook navy-band feel).
+ * F4 mission — active initiative (presentation bind-only).
+ * Institutional layout; uses theme CSS variables when present.
  */
 const { block } = Astro.props as {
   block: {
     type?: string
     content?: {
-      eyebrow?: string | null
       title?: string | null
       subtitle?: string | null
       description?: string | null
       imageUrl?: string | null
       imageAlt?: string | null
       cta?: { label?: string; href?: string } | null
-      ctaLabel?: string | null
-      ctaHref?: string | null
     }
   }
 }
 
 const content = block?.content ?? {}
-const eyebrow =
-  typeof content.eyebrow === "string" ? content.eyebrow.trim() : "Em destaque"
 const title = typeof content.title === "string" ? content.title.trim() : ""
 const subtitle = typeof content.subtitle === "string" ? content.subtitle.trim() : ""
 const description =
@@ -31,28 +27,10 @@ const imageAlt =
   typeof content.imageAlt === "string" && content.imageAlt.trim()
     ? content.imageAlt.trim()
     : title || "Iniciativa"
-let cta =
+const cta =
   content.cta && typeof content.cta.label === "string" && content.cta.label.trim()
-    ? {
-        label: content.cta.label.trim(),
-        href:
-          typeof content.cta.href === "string" && content.cta.href.trim()
-            ? content.cta.href.trim()
-            : "",
-      }
+    ? content.cta
     : null
-if (!cta && typeof content.ctaLabel === "string" && content.ctaLabel.trim()) {
-  cta = {
-    label: content.ctaLabel.trim(),
-    href:
-      typeof content.ctaHref === "string" && content.ctaHref.trim()
-        ? content.ctaHref.trim()
-        : "",
-  }
-}
-const paragraphs = description
-  ? description.split(/\n\n+/).map((p) => p.trim()).filter(Boolean)
-  : []
 const show = Boolean(title || subtitle || description || imageUrl)
 ---
 
@@ -60,44 +38,25 @@ const show = Boolean(title || subtitle || description || imageUrl)
   <section class="mission-initiative" id="featured" aria-labelledby="mission-initiative-title">
     <div class="mission-initiative__container">
       {imageUrl && (
-        <div class="mission-initiative__media mission-initiative__media--desktop">
-          <div class="mission-initiative__frame" aria-hidden="true" />
-          <div class="mission-initiative__cover">
-            <img src={imageUrl} alt={imageAlt} loading="lazy" decoding="async" />
-          </div>
+        <div class="mission-initiative__media">
+          <img src={imageUrl} alt={imageAlt} loading="lazy" />
         </div>
       )}
       <div class="mission-initiative__body">
-        {eyebrow && (
-          <div class="mission-initiative__eyebrow-row">
-            <span class="mission-initiative__gold-rule" aria-hidden="true" />
-            <span class="mission-initiative__eyebrow">{eyebrow}</span>
-          </div>
-        )}
         {title && (
           <h2 id="mission-initiative-title" class="mission-initiative__title">
             {title}
           </h2>
         )}
         {subtitle && <p class="mission-initiative__subtitle">{subtitle}</p>}
-        {imageUrl && (
-          <div class="mission-initiative__media mission-initiative__media--mobile">
-            <div class="mission-initiative__frame" aria-hidden="true" />
-            <div class="mission-initiative__cover">
-              <img src={imageUrl} alt={imageAlt} loading="lazy" decoding="async" />
-            </div>
-          </div>
-        )}
-        {paragraphs.length > 0 && (
-          <div class="mission-initiative__copy">
-            {paragraphs.map((paragraph) => (
-              <p>{paragraph}</p>
-            ))}
-          </div>
-        )}
+        {description && <p class="mission-initiative__description">{description}</p>}
         {cta?.label && (
           <p class="mission-initiative__cta">
-            {cta.href ? <a href={cta.href}>{cta.label}</a> : <span>{cta.label}</span>}
+            {cta.href ? (
+              <a href={cta.href}>{cta.label}</a>
+            ) : (
+              <span>{cta.label}</span>
+            )}
           </p>
         )}
       </div>
@@ -107,133 +66,53 @@ const show = Boolean(title || subtitle || description || imageUrl)
 
 <style>
   .mission-initiative {
-    padding: clamp(4.5rem, 9vw, 8rem) 0;
-    background: var(--site-color-primary, hsl(220 40% 16%));
-    color: var(--site-color-text-inverse, #f7f3ea);
+    padding: 3rem 0;
+    background: var(--site-color-background, hsl(40 20% 98%));
+    color: var(--site-color-foreground, hsl(220 15% 16%));
   }
   .mission-initiative__container {
-    max-width: 76rem;
+    max-width: 1280px;
     margin: 0 auto;
     padding: 0 1.5rem;
     display: grid;
-    gap: 3.5rem;
+    gap: 1.75rem;
   }
-  @media (min-width: 1024px) {
+  @media (min-width: 768px) {
     .mission-initiative__container {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-      gap: 6rem;
-      align-items: start;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      align-items: center;
     }
   }
-  .mission-initiative__media {
-    position: relative;
-    max-width: 22rem;
-    margin: 0 auto;
-  }
-  .mission-initiative__media--desktop {
-    display: none;
-  }
-  .mission-initiative__media--mobile {
-    display: block;
-    margin-top: 2.5rem;
-  }
-  @media (min-width: 1024px) {
-    .mission-initiative__media--desktop {
-      display: block;
-      position: sticky;
-      top: 7rem;
-      max-width: none;
-      margin: 0;
-    }
-    .mission-initiative__media--mobile {
-      display: none;
-    }
-  }
-  .mission-initiative__frame {
-    position: absolute;
-    inset: -0.85rem;
-    border: 1px solid color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 30%, transparent);
-    pointer-events: none;
-  }
-  .mission-initiative__cover {
-    position: relative;
-    padding: 0.55rem;
-    background: color-mix(in srgb, var(--site-color-text-inverse, #fff) 5%, transparent);
-  }
-  .mission-initiative__cover img {
+  .mission-initiative__media img {
     display: block;
     width: 100%;
     height: auto;
-    object-fit: contain;
-    box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.7);
-  }
-  .mission-initiative__eyebrow-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-  .mission-initiative__gold-rule {
-    width: 2.75rem;
-    height: 1px;
-    background: var(--site-color-accent, hsl(40 45% 55%));
-  }
-  .mission-initiative__eyebrow {
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.24em;
-    text-transform: uppercase;
-    color: var(--site-color-accent, hsl(40 45% 55%));
+    object-fit: cover;
+    aspect-ratio: 4 / 3;
   }
   .mission-initiative__title {
-    margin: 1.5rem 0 0;
-    font-family: var(--site-font-heading, Georgia, serif);
-    font-size: clamp(2.5rem, 5vw, 4rem);
-    font-weight: 500;
-    line-height: 1.02;
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.5rem, 2.4vw, 2rem);
+    font-weight: 650;
     letter-spacing: -0.02em;
-    color: var(--site-color-text-inverse, #fff);
+    color: var(--site-color-primary, hsl(220 20% 20%));
   }
   .mission-initiative__subtitle {
-    margin: 1rem 0 0;
-    font-family: var(--site-font-heading, Georgia, serif);
-    font-style: italic;
-    font-size: clamp(1.2rem, 2vw, 1.5rem);
-    line-height: 1.3;
-    color: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 95%, white);
+    margin: 0 0 0.75rem;
+    font-size: 1.05rem;
+    opacity: 0.85;
   }
-  .mission-initiative__copy {
-    margin-top: 2.25rem;
-    max-width: 42rem;
-    display: grid;
-    gap: 1.25rem;
-  }
-  .mission-initiative__copy p {
+  .mission-initiative__description {
     margin: 0;
-    font-size: 1.0625rem;
-    line-height: 1.85;
-    color: color-mix(in srgb, var(--site-color-text-inverse, #fff) 78%, transparent);
+    line-height: 1.6;
   }
   .mission-initiative__cta {
-    margin: 2.5rem 0 0;
+    margin: 1.25rem 0 0;
   }
   .mission-initiative__cta a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 2.75rem;
-    padding: 0.875rem 2rem;
-    border: 1px solid color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 70%, transparent);
-    border-radius: var(--site-radius-button, 0.125rem);
-    background: transparent;
-    color: var(--site-color-text-inverse, #fff);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    text-decoration: none;
-  }
-  .mission-initiative__cta a:hover {
-    background: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 16%, transparent);
-    border-color: var(--site-color-accent, hsl(40 45% 55%));
+    color: var(--site-color-primary, hsl(220 40% 28%));
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
 </style>

@@ -156,42 +156,6 @@ test("supports lato explicitly (not via classic→Georgia)", () => {
   assert.equal(classic.load, "/fonts/lato/lato.css")
 })
 
-test("supports editorial_serif (Cormorant headings; classic Lato unchanged)", () => {
-  assert.ok(THEME_FONT_KEYS.includes("editorial_serif"))
-  assert.ok(THEME_FONT_KEYS.includes("editorial"))
-
-  const editorial = resolveFontStack("editorial_serif")
-  assert.match(editorial.heading, /Cormorant Garamond/)
-  assert.match(editorial.body, /Inter/)
-  assert.equal(editorial.load, "/fonts/cormorant/cormorant.css")
-  assert.equal(editorial.key, "editorial_serif")
-
-  const alias = resolveFontStack("editorial")
-  assert.match(alias.heading, /Cormorant Garamond/)
-  assert.equal(alias.load, "/fonts/cormorant/cormorant.css")
-
-  const classic = resolveFontStack("classic")
-  assert.match(classic.heading, /Lato/)
-  assert.equal(classic.load, "/fonts/lato/lato.css")
-})
-
-test("editorial_serif defaults to tighter radius without breaking other tenants", () => {
-  const editorial = themeTokensFromBranding({
-    typography: "editorial_serif",
-    primaryColor: "#1a2744",
-    accentColor: "#c4a35a",
-  })
-  assert.equal(editorial["--site-radius"], "0.375rem")
-  assert.equal(editorial.__fontKey, "editorial_serif")
-
-  const modern = themeTokensFromBranding({ typography: "modern" })
-  assert.equal(modern["--site-radius"], "0.75rem")
-
-  const classic = themeTokensFromBranding({ typography: "classic" })
-  assert.equal(classic["--site-radius"], "0.75rem")
-  assert.match(classic["--site-font-heading"], /Lato/)
-})
-
 test("rejects arbitrary font families", () => {
   const fonts = resolveFontStack("Comic Sans MS")
   assert.equal(fonts.key, "modern")

@@ -1,289 +1,121 @@
 ---
 /**
- * F4 mission — recurring community support (Book Club–style split layout).
+ * F4 mission — recurring community support (presentation only; no billing).
  */
 const { block } = Astro.props as {
   block: {
     type?: string
     content?: {
-      eyebrow?: string | null
       title?: string | null
       description?: string | null
-      highlight?: string | null
       benefits?: string[] | null
       priceLabel?: string | null
-      periodLabel?: string | null
-      subscriptionLabel?: string | null
       imageUrl?: string | null
-      imageAlt?: string | null
       cta?: { label?: string; href?: string } | null
-      ctaLabel?: string | null
-      ctaHref?: string | null
     }
   }
 }
 
 const content = block?.content ?? {}
-const eyebrow =
-  typeof content.eyebrow === "string" ? content.eyebrow.trim() : ""
 const title = typeof content.title === "string" ? content.title.trim() : ""
 const description =
   typeof content.description === "string" ? content.description.trim() : ""
-const highlight =
-  typeof content.highlight === "string" ? content.highlight.trim() : ""
 const priceLabel =
   typeof content.priceLabel === "string" ? content.priceLabel.trim() : ""
-const periodLabel =
-  typeof content.periodLabel === "string" ? content.periodLabel.trim() : ""
-const subscriptionLabel =
-  typeof content.subscriptionLabel === "string"
-    ? content.subscriptionLabel.trim()
-    : "Participação"
 const imageUrl = typeof content.imageUrl === "string" ? content.imageUrl.trim() : ""
-const imageAlt =
-  typeof content.imageAlt === "string" && content.imageAlt.trim()
-    ? content.imageAlt.trim()
-    : "Nome nos livros"
 const benefits = Array.isArray(content.benefits)
   ? content.benefits.filter((b) => typeof b === "string" && b.trim())
   : []
-let cta =
+const cta =
   content.cta && typeof content.cta.label === "string" && content.cta.label.trim()
-    ? {
-        label: content.cta.label.trim(),
-        href:
-          typeof content.cta.href === "string" && content.cta.href.trim()
-            ? content.cta.href.trim()
-            : "",
-      }
+    ? content.cta
     : null
-if (!cta && typeof content.ctaLabel === "string" && content.ctaLabel.trim()) {
-  cta = {
-    label: content.ctaLabel.trim(),
-    href:
-      typeof content.ctaHref === "string" && content.ctaHref.trim()
-        ? content.ctaHref.trim()
-        : "",
-  }
-}
 const show = Boolean(title || description || benefits.length || imageUrl)
 ---
 
 {show && (
   <section class="mission-recurring" id="book-club" aria-labelledby="mission-recurring-title">
     <div class="mission-recurring__container">
+      {imageUrl && (
+        <div class="mission-recurring__media">
+          <img src={imageUrl} alt="" loading="lazy" role="presentation" />
+        </div>
+      )}
       <div class="mission-recurring__body">
-        {eyebrow && (
-          <div class="mission-recurring__eyebrow-row">
-            <span class="mission-recurring__gold-rule" aria-hidden="true" />
-            <span class="mission-recurring__eyebrow">{eyebrow}</span>
-          </div>
-        )}
         {title && (
           <h2 id="mission-recurring-title" class="mission-recurring__title">
             {title}
           </h2>
         )}
+        {priceLabel && <p class="mission-recurring__price">{priceLabel}</p>}
         {description && <p class="mission-recurring__description">{description}</p>}
-        {highlight && <p class="mission-recurring__highlight">{highlight}</p>}
+        {benefits.length > 0 && (
+          <ul class="mission-recurring__benefits">
+            {benefits.map((benefit) => (
+              <li>{benefit}</li>
+            ))}
+          </ul>
+        )}
         {cta?.label && (
           <p class="mission-recurring__cta">
             {cta.href ? <a href={cta.href}>{cta.label}</a> : <span>{cta.label}</span>}
           </p>
         )}
       </div>
-
-      <aside class="mission-recurring__card" aria-label={subscriptionLabel}>
-        <div class="mission-recurring__card-label">{subscriptionLabel}</div>
-        {priceLabel && (
-          <div class="mission-recurring__price-row">
-            <span class="mission-recurring__price">{priceLabel}</span>
-            {periodLabel && (
-              <span class="mission-recurring__period">/ {periodLabel}</span>
-            )}
-          </div>
-        )}
-        <div class="mission-recurring__divider" aria-hidden="true" />
-        {benefits.length > 0 && (
-          <ul class="mission-recurring__benefits">
-            {benefits.map((benefit) => (
-              <li>
-                <span class="mission-recurring__benefit-mark" aria-hidden="true" />
-                <span>{benefit}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {imageUrl && (
-          <figure class="mission-recurring__inset">
-            <img src={imageUrl} alt={imageAlt} loading="lazy" decoding="async" />
-          </figure>
-        )}
-      </aside>
     </div>
   </section>
 )}
 
 <style>
   .mission-recurring {
-    padding: clamp(4rem, 8vw, 7rem) 0;
+    padding: 3rem 0;
     background: var(--site-color-background, hsl(40 14% 97%));
-    color: var(--site-color-text, hsl(220 15% 16%));
+    color: var(--site-color-foreground, hsl(220 15% 16%));
   }
   .mission-recurring__container {
-    max-width: 76rem;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 0 1.5rem;
     display: grid;
-    gap: 3.5rem;
+    gap: 1.5rem;
   }
-  @media (min-width: 1024px) {
+  @media (min-width: 800px) {
     .mission-recurring__container {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 5rem;
-      align-items: start;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      align-items: center;
     }
   }
-  .mission-recurring__eyebrow-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-  .mission-recurring__gold-rule {
-    width: 2.75rem;
-    height: 1px;
-    background: var(--site-color-accent, hsl(40 45% 55%));
-  }
-  .mission-recurring__eyebrow {
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.24em;
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 45%)) 80%, var(--site-color-primary));
-  }
-  .mission-recurring__title {
-    margin: 1.5rem 0 0;
-    font-family: var(--site-font-heading, Georgia, serif);
-    font-size: clamp(2.25rem, 4vw, 3.35rem);
-    font-weight: 500;
-    line-height: 1.08;
-    letter-spacing: -0.02em;
-    color: var(--site-color-primary, hsl(220 20% 20%));
-  }
-  .mission-recurring__description {
-    margin: 1.75rem 0 0;
-    max-width: 36rem;
-    line-height: 1.85;
-    font-size: 1.0625rem;
-    color: var(--site-color-text-muted, hsl(220 10% 40%));
-  }
-  .mission-recurring__highlight {
-    margin: 1.5rem 0 0;
-    max-width: 36rem;
-    font-family: var(--site-font-heading, Georgia, serif);
-    font-style: italic;
-    font-size: clamp(1.2rem, 2vw, 1.35rem);
-    line-height: 1.35;
-    color: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 45%)) 70%, var(--site-color-primary));
-  }
-  .mission-recurring__cta {
-    margin: 2.75rem 0 0;
-  }
-  .mission-recurring__cta a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 2.75rem;
-    padding: 0.875rem 2rem;
-    border: 1px solid var(--site-color-primary, hsl(220 40% 16%));
-    border-radius: var(--site-radius-button, 0.125rem);
-    background: var(--site-color-primary, hsl(220 40% 16%));
-    color: var(--site-color-text-inverse, #fff);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    text-decoration: none;
-  }
-  .mission-recurring__cta a:hover {
-    background: color-mix(in srgb, var(--site-color-primary, hsl(220 40% 16%)) 88%, white);
-  }
-  .mission-recurring__card {
-    position: relative;
-    padding: 2.25rem 1.75rem;
-    border: 1px solid color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 35%, transparent);
-    border-radius: var(--site-radius-card, 0.25rem);
-    background: var(--site-color-card, #fff);
-    box-shadow: 0 18px 48px -20px color-mix(in srgb, var(--site-color-primary, #0a1626) 22%, transparent);
-  }
-  @media (min-width: 640px) {
-    .mission-recurring__card {
-      padding: 2.5rem 2.25rem;
-    }
-  }
-  .mission-recurring__card-label {
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.24em;
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 45%)) 80%, var(--site-color-primary));
-  }
-  .mission-recurring__price-row {
-    margin-top: 0.75rem;
-    display: flex;
-    align-items: baseline;
-    gap: 0.65rem;
-    flex-wrap: wrap;
-  }
-  .mission-recurring__price {
-    font-family: var(--site-font-heading, Georgia, serif);
-    font-size: clamp(2.75rem, 5vw, 3.75rem);
-    font-weight: 500;
-    letter-spacing: -0.02em;
-    color: var(--site-color-primary, hsl(220 40% 16%));
-  }
-  .mission-recurring__period {
-    font-size: 0.875rem;
-    color: color-mix(in srgb, var(--site-color-primary, hsl(220 40% 16%)) 70%, transparent);
-  }
-  .mission-recurring__divider {
-    margin-top: 1.5rem;
-    height: 1px;
-    width: 100%;
-    background: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 45%, transparent);
-  }
-  .mission-recurring__benefits {
-    list-style: none;
-    margin: 1.5rem 0 0;
-    padding: 0;
-    display: grid;
-    gap: 1rem;
-  }
-  .mission-recurring__benefits li {
-    display: flex;
-    gap: 0.85rem;
-    color: color-mix(in srgb, var(--site-color-primary, hsl(220 40% 16%)) 90%, transparent);
-    font-size: 0.9375rem;
-    line-height: 1.7;
-  }
-  .mission-recurring__benefit-mark {
-    width: 0.55rem;
-    height: 0.55rem;
-    margin-top: 0.45rem;
-    flex-shrink: 0;
-    border-radius: 999px;
-    background: var(--site-color-accent, hsl(40 45% 55%));
-  }
-  .mission-recurring__inset {
-    margin: 1.75rem 0 0;
-    border: 1px solid color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 28%, transparent);
-    overflow: hidden;
-  }
-  .mission-recurring__inset img {
+  .mission-recurring__media img {
     display: block;
     width: 100%;
     height: auto;
-    aspect-ratio: 16 / 10;
     object-fit: cover;
+    aspect-ratio: 5 / 4;
+  }
+  .mission-recurring__title {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.4rem, 2.2vw, 1.85rem);
+    font-weight: 650;
+    color: var(--site-color-primary, hsl(220 20% 20%));
+  }
+  .mission-recurring__price {
+    margin: 0 0 0.75rem;
+    font-weight: 600;
+  }
+  .mission-recurring__description {
+    margin: 0;
+    line-height: 1.6;
+  }
+  .mission-recurring__benefits {
+    margin: 1rem 0 0;
+    padding-left: 1.1rem;
+    line-height: 1.55;
+  }
+  .mission-recurring__cta {
+    margin: 1.25rem 0 0;
+  }
+  .mission-recurring__cta a {
+    color: var(--site-color-primary, hsl(220 40% 28%));
+    font-weight: 600;
   }
 </style>

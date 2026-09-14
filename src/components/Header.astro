@@ -28,8 +28,6 @@ const {
   showCta = true,
   /** Homepage href for the brand/logo mark. */
   homeHref = "",
-  /** F4 mission editorial: serif wordmark + underline/gold CTA (not SaaS pill). */
-  missionEditorial = false,
 } = Astro.props as {
   siteTitle?: string
   logoUrl?: string
@@ -46,7 +44,6 @@ const {
   chrome?: "default" | "shop"
   showCta?: boolean
   homeHref?: string
-  missionEditorial?: boolean
 }
 
 const isShopChrome = chrome === "shop"
@@ -147,7 +144,6 @@ const shopMenuBtnId = "shop-menu-open"
   data-nav-reveal={overHero ? navReveal : undefined}
   data-cta-variant={overHero ? ctaVariant : undefined}
   data-chrome={isShopChrome ? "shop" : "default"}
-  data-mission-editorial={missionEditorial ? "true" : undefined}
   id="site-header"
 >
   <div class="site-header__shell">
@@ -639,54 +635,6 @@ const shopMenuBtnId = "shop-menu-open"
     font-weight: 600;
     font-size: 1rem;
     letter-spacing: -0.01em;
-  }
-
-  .site-header[data-mission-editorial="true"] .site-header__brand span {
-    font-family: var(--site-font-heading, Georgia, serif);
-    font-weight: 500;
-    font-size: 1.35rem;
-    letter-spacing: -0.02em;
-    color: var(--site-color-primary, #111827);
-  }
-
-  .site-header[data-mission-editorial="true"] .site-header__nav-link {
-    font-size: 0.6875rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--site-color-text-muted, hsl(220 10% 40%));
-  }
-
-  .site-header[data-mission-editorial="true"] .site-header__nav-link:hover {
-    color: var(--site-color-primary, hsl(220 40% 16%));
-  }
-
-  .site-header[data-mission-editorial="true"]:not(.site-header--over-hero)
-    :global(a.site-header__cta:not(.f1-cta)) {
-    border: none;
-    border-radius: 0;
-    border-bottom: 1px solid var(--site-color-accent, hsl(40 45% 55%));
-    background: transparent;
-    color: var(--site-color-primary, hsl(220 40% 16%));
-    min-height: 2.75rem;
-    padding: 0.35rem 0 0.15rem;
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    box-shadow: none;
-  }
-
-  .site-header[data-mission-editorial="true"]:not(.site-header--over-hero)
-    :global(a.site-header__cta:not(.f1-cta):hover),
-  .site-header[data-mission-editorial="true"]:not(.site-header--over-hero)
-    :global(a.site-header__cta:not(.f1-cta):focus-visible) {
-    background: transparent;
-    color: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 45%)) 70%, var(--site-color-primary));
-    outline: none;
-  }
-
-  .site-header[data-mission-editorial="true"] :global(.site-header__cta-icon) {
-    display: none;
   }
 
   .site-header__logo {

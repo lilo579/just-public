@@ -4,17 +4,11 @@ import TrackedCTA from "../TrackedCTA.astro";
 import MessageCircleIcon from "../icons/MessageCircleIcon.astro";
 import WhatsAppIcon from "../icons/WhatsAppIcon.astro";
 
-type HeroSlide = { imageUrl?: string; src?: string; alt?: string };
-
 const { block, layout = "standard", videoUrl = null, ctaIcon = "auto", omitPoster = false } = Astro.props as {
   block: HeroBlockType & {
-    content: HeroBlockType["content"] & {
-      imageUrl?: string | null;
-      videoUrl?: string | null;
-      slides?: HeroSlide[] | null;
-    };
+    content: HeroBlockType["content"] & { imageUrl?: string | null; videoUrl?: string | null };
   };
-  layout?: "standard" | "cinematic" | "catalog" | "editorial-split";
+  layout?: "standard" | "cinematic" | "catalog";
   videoUrl?: string | null;
   /** auto = MessageCircle on cinematic; none = label only (PT Golden Master). */
   ctaIcon?: "auto" | "none";
@@ -31,22 +25,6 @@ const resolvedVideoUrl =
   (typeof (block.content as { videoUrl?: string }).videoUrl === "string"
     ? (block.content as { videoUrl?: string }).videoUrl
     : null);
-const rawSlides = Array.isArray((block.content as { slides?: HeroSlide[] }).slides)
-  ? ((block.content as { slides?: HeroSlide[] }).slides as HeroSlide[])
-  : [];
-const slides = rawSlides
-  .map((slide) => {
-    const src =
-      (typeof slide?.imageUrl === "string" && slide.imageUrl.trim()) ||
-      (typeof slide?.src === "string" && slide.src.trim()) ||
-      "";
-    if (!src) return null;
-    return {
-      src,
-      alt: typeof slide?.alt === "string" && slide.alt.trim() ? slide.alt.trim() : "",
-    };
-  })
-  .filter(Boolean) as { src: string; alt: string }[];
 const primaryCTA = block.primaryCTA;
 const secondaryCTA = (block as { secondaryCTA?: typeof primaryCTA }).secondaryCTA;
 const showPrimaryCTA =
@@ -67,35 +45,21 @@ const isSecondaryWhatsapp =
   secondaryCTA?.type === "whatsapp" || Boolean(secondaryCTA?.href?.includes("wa.me"));
 const isCinematic = layout === "cinematic";
 const isCatalog = layout === "catalog";
-const isEditorialSplit = layout === "editorial-split";
 const secondaryCtaClass = isCinematic
   ? "hero__cta hero__cta--secondary f1-cta f1-cta--outline-on-dark"
-  : isEditorialSplit
-    ? "hero__cta hero__cta--secondary hero__cta--editorial-secondary"
-    : "hero__cta hero__cta--secondary";
+  : "hero__cta hero__cta--secondary";
 const ctaClass = isCinematic
   ? "hero__cta f1-cta f1-cta--solid"
-  : isEditorialSplit
-    ? "hero__cta hero__cta--editorial-primary"
+  : isCatalog
+    ? "hero__cta"
     : "hero__cta";
-const showCtaIcon = ctaIcon !== "none" && !isCatalog && !isEditorialSplit;
-const showMedia =
-  ((isCinematic || isCatalog) && Boolean(resolvedVideoUrl || imageUrl)) ||
-  (isEditorialSplit && (slides.length > 0 || Boolean(imageUrl)));
-const showCarousel = isEditorialSplit && slides.length > 0;
-const showFramedImage = isEditorialSplit && !showCarousel && Boolean(imageUrl);
+const showCtaIcon = ctaIcon !== "none" && !isCatalog;
+const showMedia = (isCinematic || isCatalog) && Boolean(resolvedVideoUrl || imageUrl);
 ---
 
-{(hasCopy || visibleMetrics.length > 0 || (isEditorialSplit && showMedia)) && (
-  <section
-    class:list={[
-      "hero",
-      isCinematic && "hero--cinematic",
-      isCatalog && "hero--catalog",
-      isEditorialSplit && "hero--editorial-split",
-    ]}
-  >
-    {showMedia && !isEditorialSplit && (
+{(hasCopy || visibleMetrics.length > 0) && (
+  <section class:list={["hero", isCinematic && "hero--cinematic", isCatalog && "hero--catalog"]}>
+    {showMedia && (
       <div class="hero__media" aria-hidden="true">
         {resolvedVideoUrl ? (
           <video
@@ -117,22 +81,9 @@ const showFramedImage = isEditorialSplit && !showCarousel && Boolean(imageUrl);
     )}
 
     <div class="hero__container">
-      <div
-        class:list={[
-          "hero__layout",
-          visibleMetrics.length > 0 && !isCinematic && !isCatalog && !isEditorialSplit && "hero__layout--split",
-          isEditorialSplit && "hero__layout--editorial",
-        ]}
-      >
+      <div class:list={["hero__layout", visibleMetrics.length > 0 && !isCinematic && !isCatalog && "hero__layout--split"]}>
         <div class="hero__content">
-          {isEditorialSplit && eyebrow ? (
-            <div class="hero__eyebrow-row">
-              <span class="hero__gold-rule" aria-hidden="true" />
-              <span class="hero__eyebrow">{eyebrow}</span>
-            </div>
-          ) : (
-            eyebrow && <span class="hero__eyebrow">{eyebrow}</span>
-          )}
+          {eyebrow && <span class="hero__eyebrow">{eyebrow}</span>}
 
           {isCatalog && highlight && !eyebrow ? (
             <span class="hero__highlight">{highlight}</span>
@@ -193,70 +144,7 @@ const showFramedImage = isEditorialSplit && !showCarousel && Boolean(imageUrl);
           )}
         </div>
 
-        {isEditorialSplit && showMedia && (
-          <div class="hero__editorial-media">
-            <div class="hero__editorial-frame" aria-hidden="true" />
-            <div class="hero__editorial-accent" aria-hidden="true" />
-            {showCarousel ? (
-              <div
-                class="hero__carousel"
-                role="region"
-                aria-roledescription="carousel"
-                aria-label="Imagens do Hero"
-                tabindex="0"
-                data-hero-carousel
-                data-autoplay-ms="3000"
-              >
-                <div class="hero__carousel-viewport">
-                  <div class="hero__carousel-track" data-hero-carousel-track>
-                    {slides.map((slide, index) => (
-                      <div
-                        class="hero__carousel-slide"
-                        role="group"
-                        aria-roledescription="slide"
-                        aria-label={`${index + 1} of ${slides.length}`}
-                        data-hero-slide
-                        hidden={index !== 0}
-                      >
-                        <div class="hero__book-cover">
-                          <img
-                            src={slide.src}
-                            alt={slide.alt}
-                            loading={index === 0 ? "eager" : "lazy"}
-                            decoding="async"
-                            draggable="false"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  class="hero__carousel-btn hero__carousel-btn--prev"
-                  aria-label="Previous slide"
-                  data-hero-carousel-prev
-                >
-                  <span aria-hidden="true">‹</span>
-                </button>
-                <button
-                  type="button"
-                  class="hero__carousel-btn hero__carousel-btn--next"
-                  aria-label="Next slide"
-                  data-hero-carousel-next
-                >
-                  <span aria-hidden="true">›</span>
-                </button>
-              </div>
-            ) : showFramedImage ? (
-              <div class="hero__book-cover">
-                <img src={imageUrl!} alt="" loading="eager" decoding="async" />
-              </div>
-            ) : null}
-          </div>
-        )}
-
-        {!isCinematic && !isEditorialSplit && visibleMetrics.length > 0 && (
+        {!isCinematic && visibleMetrics.length > 0 && (
           <aside class="hero__metrics" aria-label="Metricas">
             {visibleMetrics.map((metric) => (
               <article class="hero__metric">
@@ -272,79 +160,6 @@ const showFramedImage = isEditorialSplit && !showCarousel && Boolean(imageUrl);
       </div>
     </div>
   </section>
-)}
-
-{showCarousel && (
-  <script>
-    function initHeroCarousels() {
-      const roots = document.querySelectorAll("[data-hero-carousel]");
-      roots.forEach((root) => {
-        if (!(root instanceof HTMLElement)) return;
-        if (root.dataset.carouselReady === "1") return;
-        root.dataset.carouselReady = "1";
-
-        const slides = Array.from(root.querySelectorAll("[data-hero-slide]"));
-        if (slides.length < 2) return;
-
-        let index = 0;
-        let timer = null;
-        const autoplayMs = Number(root.dataset.autoplayMs || "3000");
-        const reduced =
-          typeof window.matchMedia === "function" &&
-          window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-        function show(next) {
-          index = (next + slides.length) % slides.length;
-          slides.forEach((slide, i) => {
-            if (slide instanceof HTMLElement) slide.hidden = i !== index;
-          });
-        }
-
-        function stop() {
-          if (timer != null) {
-            window.clearInterval(timer);
-            timer = null;
-          }
-        }
-
-        function start() {
-          stop();
-          if (reduced || autoplayMs <= 0) return;
-          timer = window.setInterval(() => show(index + 1), autoplayMs);
-        }
-
-        const prev = root.querySelector("[data-hero-carousel-prev]");
-        const next = root.querySelector("[data-hero-carousel-next]");
-        prev?.addEventListener("click", () => {
-          show(index - 1);
-          start();
-        });
-        next?.addEventListener("click", () => {
-          show(index + 1);
-          start();
-        });
-
-        root.addEventListener("keydown", (event) => {
-          if (!(event instanceof KeyboardEvent)) return;
-          if (event.key === "ArrowLeft") {
-            event.preventDefault();
-            show(index - 1);
-            start();
-          } else if (event.key === "ArrowRight") {
-            event.preventDefault();
-            show(index + 1);
-            start();
-          }
-        });
-
-        show(0);
-        start();
-      });
-    }
-
-    initHeroCarousels();
-    document.addEventListener("astro:page-load", initHeroCarousels);
-  </script>
 )}
 
 <style>
@@ -728,269 +543,6 @@ const showFramedImage = isEditorialSplit && !showCarousel && Boolean(imageUrl);
     .hero--cinematic .hero__container {
       padding-top: 8rem;
       padding-bottom: 6.5rem;
-    }
-  }
-
-  /* —— F4 mission editorial-split —— */
-  .hero--editorial-split {
-    background: var(--site-color-background, hsl(40 20% 97%));
-    overflow: hidden;
-  }
-
-  .hero--editorial-split .hero__container {
-    max-width: 76rem;
-    padding-top: 7rem;
-    padding-bottom: 5rem;
-  }
-
-  .hero__layout--editorial {
-    align-items: center;
-    gap: 3.5rem;
-  }
-
-  .hero--editorial-split .hero__content {
-    max-width: none;
-  }
-
-  .hero__eyebrow-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0;
-  }
-
-  .hero__gold-rule {
-    display: inline-block;
-    width: 2.75rem;
-    height: 1px;
-    background: var(--site-color-accent, hsl(40 45% 55%));
-    flex-shrink: 0;
-  }
-
-  .hero--editorial-split .hero__eyebrow {
-    margin: 0;
-    color: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 45%)) 70%, var(--site-color-primary, hsl(220 30% 20%)));
-    letter-spacing: 0.24em;
-    font-size: 0.6875rem;
-    font-weight: 500;
-  }
-
-  .hero--editorial-split h1 {
-    margin-top: 2.5rem;
-    color: var(--site-color-primary, hsl(220 40% 16%));
-    font-family: var(--site-font-heading, Georgia, serif);
-    font-size: clamp(2.75rem, 5.5vw, 4.5rem);
-    font-weight: 500;
-    line-height: 1.05;
-    letter-spacing: -0.02em;
-    white-space: normal;
-  }
-
-  .hero--editorial-split .hero__subtitle {
-    margin-top: 2.25rem;
-    max-width: 36rem;
-    color: var(--site-color-text-muted, hsl(220 10% 40%));
-    font-size: clamp(1.0625rem, 1.4vw, 1.125rem);
-    line-height: 1.85;
-  }
-
-  .hero--editorial-split .hero__cta-row {
-    margin-top: 3rem;
-    gap: 1rem;
-  }
-
-  .hero--editorial-split :global(a.hero__cta--editorial-primary) {
-    border-radius: var(--site-radius-button, 0.125rem);
-    min-height: 2.75rem;
-    padding: 0.875rem 2rem;
-    background: var(--site-color-primary, hsl(220 40% 16%));
-    color: var(--site-color-text-inverse, #fff);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    box-shadow: none;
-  }
-
-  .hero--editorial-split :global(a.hero__cta--editorial-primary:hover) {
-    background: color-mix(in srgb, var(--site-color-primary, hsl(220 40% 16%)) 88%, white);
-    box-shadow: none;
-  }
-
-  .hero--editorial-split :global(a.hero__cta--editorial-secondary) {
-    border-radius: var(--site-radius-button, 0.125rem);
-    min-height: 2.75rem;
-    padding: 0.875rem 2rem;
-    border: 1px solid color-mix(in srgb, var(--site-color-primary, hsl(220 40% 16%)) 55%, transparent);
-    background: transparent;
-    color: var(--site-color-primary, hsl(220 40% 16%));
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    box-shadow: none;
-  }
-
-  .hero--editorial-split :global(a.hero__cta--editorial-secondary:hover) {
-    background: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 12%, transparent);
-    border-color: var(--site-color-accent, hsl(40 45% 55%));
-  }
-
-  .hero__editorial-media {
-    position: relative;
-    margin-inline: auto;
-    max-width: 28rem;
-    width: 100%;
-  }
-
-  .hero__editorial-frame {
-    position: absolute;
-    inset: -1.25rem;
-    border: 1px solid color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 25%, transparent);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .hero__editorial-accent {
-    position: absolute;
-    bottom: -1.25rem;
-    right: -1.25rem;
-    width: 7rem;
-    height: 7rem;
-    background: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 15%, transparent);
-    z-index: 0;
-    pointer-events: none;
-  }
-
-  .hero__carousel {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    aspect-ratio: 3 / 4;
-    max-height: 40rem;
-    background: var(--site-color-background, #fff);
-    outline: none;
-  }
-
-  .hero__carousel:focus-visible {
-    outline: 2px solid var(--site-color-accent, hsl(40 45% 55%));
-    outline-offset: 4px;
-  }
-
-  .hero__carousel-viewport {
-    height: 100%;
-    overflow: hidden;
-  }
-
-  .hero__carousel-track {
-    height: 100%;
-  }
-
-  .hero__carousel-slide {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    box-sizing: border-box;
-  }
-
-  .hero__carousel-slide[hidden] {
-    display: none;
-  }
-
-  .hero__book-cover {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    line-height: 0;
-  }
-
-  .hero__book-cover img {
-    display: block;
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-  }
-
-  .hero__carousel-btn {
-    position: absolute;
-    top: 50%;
-    z-index: 2;
-    transform: translateY(-50%);
-    width: 2.5rem;
-    height: 2.5rem;
-    border: none;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--site-color-primary, hsl(220 40% 16%)) 55%, transparent);
-    color: #fff;
-    font-size: 1.5rem;
-    line-height: 1;
-    cursor: pointer;
-    backdrop-filter: blur(2px);
-  }
-
-  .hero__carousel-btn:hover,
-  .hero__carousel-btn:focus-visible {
-    background: color-mix(in srgb, var(--site-color-primary, hsl(220 40% 16%)) 70%, transparent);
-    outline: 2px solid #fff;
-    outline-offset: 2px;
-  }
-
-  .hero__carousel-btn--prev {
-    left: 0.75rem;
-  }
-
-  .hero__carousel-btn--next {
-    right: 0.75rem;
-  }
-
-  @media (min-width: 640px) {
-    .hero__carousel {
-      max-height: 44rem;
-    }
-
-    .hero__editorial-frame {
-      inset: -1.75rem;
-    }
-
-    .hero__editorial-accent {
-      bottom: -1.75rem;
-      right: -1.75rem;
-      width: 9rem;
-      height: 9rem;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .hero--editorial-split .hero__container {
-      padding-top: 11rem;
-      padding-bottom: 10rem;
-    }
-
-    .hero__layout--editorial {
-      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-      gap: 5rem;
-    }
-
-    .hero__editorial-media {
-      max-width: none;
-    }
-
-    .hero__carousel {
-      max-height: 48rem;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hero__carousel-btn {
-      transition: none;
     }
   }
 </style>

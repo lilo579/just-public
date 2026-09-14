@@ -1,35 +1,25 @@
 ---
 /**
- * F4 mission — patronage / one-time support choices (editorial cards).
+ * F4 mission — patronage / one-time support choices (presentation only).
  */
 const { block } = Astro.props as {
   block: {
     type?: string
     content?: {
-      eyebrow?: string | null
       headline?: string | null
       description?: string | null
       tiers?: {
         id?: string
         title?: string
         description?: string | null
-        tagline?: string | null
         priceLabel?: string | null
-        benefits?: string[] | null
-        featured?: boolean
-        featuredBadge?: string | null
-        availableLabel?: string | null
         cta?: { label?: string; href?: string } | null
-        ctaLabel?: string | null
-        ctaHref?: string | null
       }[]
     }
   }
 }
 
 const content = block?.content ?? {}
-const eyebrow =
-  typeof content.eyebrow === "string" ? content.eyebrow.trim() : ""
 const headline =
   typeof content.headline === "string" ? content.headline.trim() : ""
 const description =
@@ -37,40 +27,7 @@ const description =
 const tiers = Array.isArray(content.tiers)
   ? content.tiers.filter((t) => t && typeof t.title === "string" && t.title.trim())
   : []
-
-function resolveTierCta(tier: (typeof tiers)[number]) {
-  if (tier.cta && typeof tier.cta.label === "string" && tier.cta.label.trim()) {
-    return {
-      label: tier.cta.label.trim(),
-      href:
-        typeof tier.cta.href === "string" && tier.cta.href.trim()
-          ? tier.cta.href.trim()
-          : "",
-    }
-  }
-  const label =
-    typeof tier.ctaLabel === "string" && tier.ctaLabel.trim()
-      ? tier.ctaLabel.trim()
-      : ""
-  if (!label) return null
-  return {
-    label,
-    href:
-      typeof tier.ctaHref === "string" && tier.ctaHref.trim()
-        ? tier.ctaHref.trim()
-        : "",
-  }
-}
-
 const show = Boolean(headline || description || tiers.length > 0)
-const colClass =
-  tiers.length >= 4
-    ? "mission-patronage__list--4"
-    : tiers.length === 3
-      ? "mission-patronage__list--3"
-      : tiers.length === 2
-        ? "mission-patronage__list--2"
-        : "mission-patronage__list--1"
 ---
 
 {show && (
@@ -80,82 +37,34 @@ const colClass =
     aria-labelledby="mission-patronage-title"
   >
     <div class="mission-patronage__container">
-      {(eyebrow || headline) && (
-        <header class="mission-patronage__header">
-          {eyebrow && (
-            <div class="mission-patronage__eyebrow-row">
-              <span class="mission-patronage__gold-rule" aria-hidden="true" />
-              <span class="mission-patronage__eyebrow">{eyebrow}</span>
-            </div>
-          )}
-          {headline && (
-            <h2 id="mission-patronage-title" class="mission-patronage__title">
-              {headline}
-            </h2>
-          )}
-          {description && (
-            <p class="mission-patronage__description">{description}</p>
-          )}
-        </header>
+      {headline && (
+        <h2 id="mission-patronage-title" class="mission-patronage__title">
+          {headline}
+        </h2>
       )}
-      {!headline && description && (
-        <p class="mission-patronage__description">{description}</p>
-      )}
+      {description && <p class="mission-patronage__description">{description}</p>}
       {tiers.length > 0 && (
-        <ul class:list={["mission-patronage__list", colClass]}>
-          {tiers.map((tier) => {
-            const benefits = Array.isArray(tier.benefits)
-              ? tier.benefits.filter((b) => typeof b === "string" && b.trim())
-              : []
-            const cta = resolveTierCta(tier)
-            const tagline =
-              (typeof tier.tagline === "string" && tier.tagline.trim()) ||
-              (typeof tier.description === "string" && tier.description.trim()) ||
-              ""
-            const featured = tier.featured === true
-            return (
-              <li
-                class:list={[
-                  "mission-patronage__tier",
-                  featured && "mission-patronage__tier--featured",
-                ]}
-              >
-                {featured && tier.featuredBadge && (
-                  <div class="mission-patronage__badge">{tier.featuredBadge}</div>
-                )}
-                <div class="mission-patronage__rule" aria-hidden="true" />
-                <h3 class="mission-patronage__tier-title">{tier.title}</h3>
-                {tier.priceLabel && (
-                  <p class="mission-patronage__price">{tier.priceLabel}</p>
-                )}
-                {tagline && (
-                  <p class="mission-patronage__tier-body">{tagline}</p>
-                )}
-                {tier.availableLabel && (
-                  <p class="mission-patronage__available">{tier.availableLabel}</p>
-                )}
-                {benefits.length > 0 && (
-                  <ul class="mission-patronage__benefits">
-                    {benefits.map((benefit) => (
-                      <li>
-                        <span class="mission-patronage__bullet" aria-hidden="true" />
-                        <span>{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {cta?.label && (
-                  <p class="mission-patronage__cta">
-                    {cta.href ? (
-                      <a href={cta.href}>{cta.label}</a>
-                    ) : (
-                      <span>{cta.label}</span>
-                    )}
-                  </p>
-                )}
-              </li>
-            )
-          })}
+        <ul class="mission-patronage__list">
+          {tiers.map((tier) => (
+            <li class="mission-patronage__tier">
+              <h3 class="mission-patronage__tier-title">{tier.title}</h3>
+              {tier.priceLabel && (
+                <p class="mission-patronage__price">{tier.priceLabel}</p>
+              )}
+              {tier.description && (
+                <p class="mission-patronage__tier-body">{tier.description}</p>
+              )}
+              {tier.cta?.label && (
+                <p class="mission-patronage__cta">
+                  {tier.cta.href ? (
+                    <a href={tier.cta.href}>{tier.cta.label}</a>
+                  ) : (
+                    <span>{tier.cta.label}</span>
+                  )}
+                </p>
+              )}
+            </li>
+          ))}
         </ul>
       )}
     </div>
@@ -164,211 +73,64 @@ const colClass =
 
 <style>
   .mission-patronage {
-    padding: clamp(4rem, 8vw, 7rem) 0;
-    background: color-mix(in srgb, var(--site-color-background, hsl(40 18% 96%)) 88%, var(--site-color-accent, hsl(40 30% 70%)));
-    color: var(--site-color-text, hsl(220 15% 16%));
+    padding: 3rem 0;
+    background: var(--site-color-background, hsl(40 18% 96%));
+    color: var(--site-color-foreground, hsl(220 15% 16%));
   }
   .mission-patronage__container {
-    max-width: 76rem;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 0 1.5rem;
     display: grid;
-    gap: 2.5rem;
-  }
-  .mission-patronage__header {
-    text-align: center;
-    max-width: 42rem;
-    margin: 0 auto;
-    display: grid;
-    gap: 1rem;
-    justify-items: center;
-  }
-  .mission-patronage__eyebrow-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-  .mission-patronage__gold-rule {
-    width: 2.75rem;
-    height: 1px;
-    background: var(--site-color-accent, hsl(40 45% 55%));
-  }
-  .mission-patronage__eyebrow {
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.24em;
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 45%)) 80%, var(--site-color-primary));
+    gap: 1.25rem;
   }
   .mission-patronage__title {
     margin: 0;
-    font-family: var(--site-font-heading, Georgia, serif);
-    font-size: clamp(1.75rem, 3vw, 2.75rem);
-    font-weight: 500;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
+    font-size: clamp(1.4rem, 2.2vw, 1.85rem);
+    font-weight: 650;
     color: var(--site-color-primary, hsl(220 20% 20%));
   }
   .mission-patronage__description {
     margin: 0;
     max-width: 42rem;
-    line-height: 1.7;
-    color: var(--site-color-text-muted, hsl(220 10% 40%));
+    line-height: 1.6;
+    opacity: 0.9;
   }
   .mission-patronage__list {
     list-style: none;
-    margin: 0;
+    margin: 0.5rem 0 0;
     padding: 0;
     display: grid;
-    gap: 1.25rem;
+    gap: 1rem;
   }
   @media (min-width: 768px) {
-    .mission-patronage__list--2,
-    .mission-patronage__list--3,
-    .mission-patronage__list--4 {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-  @media (min-width: 1100px) {
-    .mission-patronage__list--3 {
+    .mission-patronage__list {
       grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-    .mission-patronage__list--4 {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
   .mission-patronage__tier {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    padding: 2.25rem 1.75rem;
-    border: 1px solid color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 35%, transparent);
-    border-radius: var(--site-radius-card, 0.25rem);
-    background: var(--site-color-card, #fff);
-    box-shadow: 0 16px 40px -22px color-mix(in srgb, var(--site-color-primary, #0a1626) 18%, transparent);
-  }
-  .mission-patronage__tier--featured {
-    background: var(--site-color-primary, hsl(220 40% 16%));
-    color: var(--site-color-text-inverse, #fff);
-    border-color: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 55%, transparent);
-  }
-  .mission-patronage__badge {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    z-index: 1;
-    transform: translate(-50%, -50%);
-    white-space: nowrap;
-    border: 1px solid color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 50%, transparent);
-    background: var(--site-color-background, #fff);
-    color: var(--site-color-primary, hsl(220 40% 16%));
-    padding: 0.35rem 0.9rem;
-    font-size: 0.625rem;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-  }
-  .mission-patronage__rule {
-    width: 2rem;
-    height: 1px;
-    margin-bottom: 1.25rem;
-    background: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 75%, transparent);
-  }
-  .mission-patronage__tier--featured .mission-patronage__rule {
-    background: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 70%, transparent);
+    padding: 1.1rem 0;
+    border-top: 1px solid hsl(220 12% 82%);
   }
   .mission-patronage__tier-title {
-    margin: 0;
-    font-family: var(--site-font-heading, Georgia, serif);
-    font-size: 1.75rem;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    color: var(--site-color-accent, hsl(40 45% 50%));
+    margin: 0 0 0.35rem;
+    font-size: 1.05rem;
   }
   .mission-patronage__price {
-    margin: 1.1rem 0 0;
-    font-family: var(--site-font-heading, Georgia, serif);
-    font-size: 2.2rem;
-    font-weight: 500;
-    line-height: 1;
-    color: var(--site-color-primary, hsl(220 40% 16%));
-  }
-  .mission-patronage__tier--featured .mission-patronage__price {
-    color: var(--site-color-text-inverse, #fff);
+    margin: 0 0 0.5rem;
+    font-weight: 600;
+    color: var(--site-color-primary, hsl(150 25% 30%));
   }
   .mission-patronage__tier-body {
-    margin: 1rem 0 0;
-    line-height: 1.7;
-    font-size: 0.9375rem;
-    color: var(--site-color-text-muted, hsl(220 10% 40%));
-  }
-  .mission-patronage__tier--featured .mission-patronage__tier-body {
-    color: color-mix(in srgb, var(--site-color-text-inverse, #fff) 70%, transparent);
-  }
-  .mission-patronage__available {
-    margin: 1.1rem 0 0;
-    font-size: 0.625rem;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--site-color-accent, hsl(40 45% 50%));
-  }
-  .mission-patronage__benefits {
-    list-style: none;
-    margin: 1.75rem 0 0;
-    padding: 0;
-    display: grid;
-    gap: 0.85rem;
-    flex: 1;
-  }
-  .mission-patronage__benefits li {
-    display: flex;
-    gap: 0.75rem;
-    font-size: 0.9375rem;
-    line-height: 1.55;
-  }
-  .mission-patronage__bullet {
-    width: 0.75rem;
-    height: 1px;
-    margin-top: 0.7rem;
-    flex-shrink: 0;
-    background: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 80%, transparent);
-  }
-  .mission-patronage__tier--featured .mission-patronage__benefits li {
-    color: color-mix(in srgb, var(--site-color-text-inverse, #fff) 88%, transparent);
+    margin: 0;
+    line-height: 1.5;
+    font-size: 0.95rem;
   }
   .mission-patronage__cta {
-    margin: 2rem 0 0;
-    padding-top: 1.5rem;
-    border-top: 1px solid color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 25%, transparent);
-  }
-  .mission-patronage__tier--featured .mission-patronage__cta {
-    border-top-color: color-mix(in srgb, var(--site-color-text-inverse, #fff) 15%, transparent);
+    margin: 0.85rem 0 0;
   }
   .mission-patronage__cta a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    min-height: 2.75rem;
-    padding: 0.75rem 1rem;
-    border: 1px solid color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 70%, transparent);
-    border-radius: var(--site-radius-button, 0.125rem);
-    color: var(--site-color-accent, hsl(40 45% 45%));
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    text-decoration: none;
-  }
-  .mission-patronage__tier--featured .mission-patronage__cta a {
-    background: var(--site-color-accent, hsl(40 45% 55%));
-    border-color: var(--site-color-accent, hsl(40 45% 55%));
-    color: var(--site-color-primary, hsl(220 40% 16%));
-  }
-  .mission-patronage__cta a:hover {
-    background: color-mix(in srgb, var(--site-color-accent, hsl(40 45% 55%)) 12%, transparent);
-  }
-  .mission-patronage__tier--featured .mission-patronage__cta a:hover {
-    background: var(--site-color-background, #fff);
-    border-color: var(--site-color-background, #fff);
+    color: var(--site-color-primary, hsl(220 40% 28%));
+    font-weight: 600;
   }
 </style>

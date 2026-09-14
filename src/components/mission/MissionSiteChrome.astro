@@ -87,7 +87,7 @@ const fontLoadUrl =
           logoAlt={companyName}
           whatsappHref={whatsappHref}
           ctaHref={headerCtaHref || undefined}
-          pillChrome={false}
+          pillChrome={chrome?.headerPillChrome !== false}
           overHero={false}
           ctaLabel={headerCtaLabel}
           navItems={navItems}
@@ -96,9 +96,8 @@ const fontLoadUrl =
           chrome="default"
           showCta={true}
           homeHref="/"
-          missionEditorial={true}
         />
-        <main class="mission-chrome__main mission-chrome__main--editorial">
+        <main class="mission-chrome__main">
           <slot />
         </main>
         <Footer
@@ -132,18 +131,6 @@ const fontLoadUrl =
 <style>
   .mission-chrome__main {
     min-height: 50vh;
-  }
-
-  .mission-chrome__main--editorial {
-    background: var(--site-color-background, #fff);
-    color: var(--site-color-text, #0f172a);
-    font-family: var(--site-font-body, system-ui, sans-serif);
-  }
-
-  .mission-chrome__main--editorial :global(h1),
-  .mission-chrome__main--editorial :global(h2),
-  .mission-chrome__main--editorial :global(h3) {
-    font-family: var(--site-font-heading, Georgia, serif);
   }
 
   .mission-chrome__main--bare {

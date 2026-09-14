@@ -1,0 +1,152 @@
+---
+// Presentation markup/class names restored from the pre-cutover reference.
+// All tenant values are supplied by the canonical painted plan / structured chrome.
+import SectionHeading from "./SectionHeading.astro";
+import CTAButton from "./CTAButton.astro";
+const tierVisuals = {
+  diamond: {
+    card: "bg-navy-deep text-ivory border-gold/55 shadow-[0_20px_48px_-22px_rgba(10,22,38,0.45),0_6px_16px_-10px_rgba(10,22,38,0.22)] lg:pt-12",
+    rule: "bg-gold/70",
+    title: "text-gold",
+    price: "text-ivory",
+    tagline: "text-ivory/70",
+    bullet: "bg-gold/80",
+    benefit: "text-ivory/85",
+    divider: "border-ivory/15",
+    cta: "!bg-gold !text-navy-deep !border-gold hover:!bg-ivory hover:!border-ivory w-full",
+  },
+  gold: {
+    card: "bg-ivory border-gold/40 shadow-[0_16px_40px_-22px_rgba(10,22,38,0.16),0_4px_12px_-8px_rgba(10,22,38,0.08)]",
+    haze: "bg-[radial-gradient(120%_70%_at_50%_0%,color-mix(in_oklch,var(--gold)_14%,transparent)_0%,transparent_72%)]",
+    rule: "bg-gold/75",
+    title: "text-gold",
+    price: "text-navy-deep",
+    tagline: "text-muted-foreground",
+    bullet: "bg-gold/80",
+    benefit: "text-navy-deep/90",
+    divider: "border-gold/25",
+    cta: "!bg-transparent !text-gold !border-gold/70 hover:!bg-gold/10 hover:!border-gold hover:!text-gold w-full",
+  },
+  silver: {
+    card: "bg-ivory border-[color-mix(in_oklch,oklch(0.62_0.02_250)_42%,transparent)] shadow-[0_16px_40px_-22px_rgba(10,22,38,0.16),0_4px_12px_-8px_rgba(10,22,38,0.08)]",
+    haze: "bg-[radial-gradient(120%_70%_at_50%_0%,oklch(0.78_0.015_250_/_0.22)_0%,transparent_72%)]",
+    rule: "bg-[oklch(0.62_0.02_250_/_0.85)]",
+    title: "text-[oklch(0.55_0.02_250)]",
+    price: "text-navy-deep",
+    tagline: "text-muted-foreground",
+    bullet: "bg-[oklch(0.62_0.02_250_/_0.85)]",
+    benefit: "text-navy-deep/90",
+    divider: "border-[color-mix(in_oklch,oklch(0.62_0.02_250)_28%,transparent)]",
+    cta: "!bg-transparent !text-[oklch(0.48_0.02_250)] !border-[oklch(0.62_0.02_250_/_0.75)] hover:!bg-[oklch(0.62_0.02_250_/_0.08)] hover:!border-[oklch(0.55_0.02_250)] hover:!text-[oklch(0.42_0.02_250)] w-full",
+  },
+  bronze: {
+    card: "bg-ivory border-bronze/35 shadow-[0_16px_40px_-22px_rgba(10,22,38,0.16),0_4px_12px_-8px_rgba(10,22,38,0.08)]",
+    haze: "bg-[radial-gradient(120%_70%_at_50%_0%,color-mix(in_oklch,var(--bronze)_12%,transparent)_0%,transparent_72%)]",
+    rule: "bg-bronze/75",
+    title: "text-bronze",
+    price: "text-navy-deep",
+    tagline: "text-muted-foreground",
+    bullet: "bg-bronze/80",
+    benefit: "text-navy-deep/90",
+    divider: "border-bronze/25",
+    cta: "!bg-transparent !text-bronze !border-bronze/70 hover:!bg-bronze/10 hover:!border-bronze hover:!text-bronze w-full",
+  },
+};
+
+
+const { content } = Astro.props;
+const levels = (content.tiers || []).map((t) => ({
+  ...t,
+  name: t.title,
+  tagline: t.description,
+  benefits: Array.isArray(t.benefits) ? t.benefits : [],
+  price: t.priceLabel,
+  cta:
+    t.cta && typeof t.cta === "object"
+      ? t.cta
+      : t.ctaLabel
+        ? { label: t.ctaLabel, href: t.ctaHref }
+        : null,
+}));
+const formatCurrency = (n) => n;
+---
+<section id="sponsorship" class="section-band bg-ivory-warm">
+      <div class="container-editorial">
+        <SectionHeading
+          eyebrow={content.eyebrow || content.description}
+          title={content.headline}
+          align="center"
+        />
+
+        <div class="mt-14 grid gap-5 md:grid-cols-2 lg:mt-20 lg:grid-cols-4 lg:gap-6">
+          {levels.map((level) => {
+            const visual = tierVisuals[level.id] ?? tierVisuals.bronze;
+
+            return (
+              <article
+                class={`relative flex flex-col rounded-sm border px-7 py-9 transition-colors duration-500 lg:px-8 lg:py-10 ${
+                  level.featured ? "overflow-visible" : "overflow-hidden"
+                } ${visual.card}`}
+              >
+                {visual.haze && (
+                  <div
+                    class={`pointer-events-none absolute inset-x-0 top-0 h-[42%] ${visual.haze}`}
+                    aria-hidden="true"
+                  />
+                )}
+
+                {level.featured && level.featuredBadge && (
+                  <div class="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap border border-gold/50 bg-ivory px-3.5 py-1.5 text-[10px] uppercase leading-none tracking-[0.22em] text-navy-deep">
+                    {level.featuredBadge}
+                  </div>
+                )}
+
+                <div class="relative z-[1] flex h-full flex-col">
+                  <div class={`mb-6 h-px w-8 ${visual.rule}`} aria-hidden="true" />
+
+                  <h3
+                    class={`font-serif text-[1.75rem] leading-none tracking-tight ${visual.title}`}
+                  >
+                    {level.name}
+                  </h3>
+                  <div
+                    class={`mt-5 font-serif text-[2.35rem] leading-none tracking-tight ${visual.price}`}
+                  >
+                    {formatCurrency(level.price, level.currency)}
+                  </div>
+                  <p class={`mt-4 text-[0.9375rem] leading-[1.7] ${visual.tagline}`}>
+                    {level.tagline}
+                  </p>
+
+                  {level.availableLabel && (
+                    <div
+                      class={`mt-5 text-[10px] uppercase tracking-[0.22em] ${
+                        level.featured ? "text-gold/90" : visual.title
+                      }`}
+                    >
+                      {level.availableLabel}
+                    </div>
+                  )}
+
+                  <ul class={`mt-8 flex-1 space-y-3.5 text-[0.9375rem] ${visual.benefit}`}>
+                    {level.benefits.map((b) => (
+                      <li class="flex gap-3 leading-[1.55]">
+                        <span
+                          class={`mt-2.5 h-px w-3 shrink-0 ${visual.bullet}`}
+                          aria-hidden="true"
+                        />
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div class={`mt-9 border-t pt-7 ${visual.divider}`}>
+                    {level.cta?.label ? <CTAButton cta={level.cta} class={visual.cta} /> : null}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
