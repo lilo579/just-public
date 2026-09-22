@@ -335,6 +335,10 @@ export const justLegalPages = Object.freeze({
       "O cliente é responsável pela veracidade das informações fornecidas, pela gestão de acessos e pelo uso adequado dos recursos disponibilizados.",
       "A JUST pode evoluir a estrutura em camadas ao longo do tempo, preservando a organização e a continuidade do serviço.",
       "Dúvidas sobre prestação de serviço, escopo ou operação podem ser encaminhadas pelo suporte da JUST.",
+      "Prestação de Serviços Financeiros",
+      "Os serviços financeiros e de pagamentos disponibilizados por meio da presente plataforma, incluindo abertura e manutenção de conta de pagamento, processamento de transações, emissão de boletos, transferências, pagamentos e demais movimentações de valores, são prestados pelo ASAAS GESTÃO FINANCEIRA INSTITUIÇÃO DE PAGAMENTOS S.A., instituição de pagamento autorizada a funcionar pelo Banco Central do Brasil.",
+      "A SHEFA MARKETING LTDA atua exclusivamente como integradora tecnológica e distribuidora da experiência do produto, não sendo instituição financeira ou de pagamento, nem realizando intermediação financeira em nome próprio.",
+      "O cliente declara ciência de que o relacionamento financeiro/ de pagamentos e a responsabilidade regulatória pelos serviços acima descritos são do ASAAS GESTÃO FINANCEIRA S.A., nos termos da regulamentação vigente.",
     ],
   },
   seguranca: {
