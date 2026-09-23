@@ -158,8 +158,8 @@ test("internal catalog/about/contact/product routes redirect under interstitial"
 test("legal pages stay reachable and share JustLegalLayout", () => {
   assert.equal(isInterstitialLegalPath("/privacidade"), true)
   assert.equal(isInterstitialLegalPath("/termos"), true)
-  assert.equal(isInterstitialLegalPath("/seguranca"), true)
-  for (const file of ["privacidade.astro", "termos.astro", "seguranca.astro"]) {
+  assert.equal(isInterstitialLegalPath("/seguranca"), false)
+  for (const file of ["privacidade.astro", "termos.astro"]) {
     const src = readFileSync(join(root, "src/pages", file), "utf8")
     assert.match(src, /JustLegalLayout/)
     assert.match(src, /loadJustInstitutionalChrome/)

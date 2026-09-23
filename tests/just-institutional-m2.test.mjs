@@ -18,7 +18,7 @@ test("resolvePackagedInstitutionalSite: JUST hosts only", () => {
 test("isInterstitialLegalPath: allowlist", () => {
   assert.equal(isInterstitialLegalPath("/privacidade"), true)
   assert.equal(isInterstitialLegalPath("/termos"), true)
-  assert.equal(isInterstitialLegalPath("/seguranca"), true)
+  assert.equal(isInterstitialLegalPath("/seguranca"), false)
   assert.equal(isInterstitialLegalPath("/catalogo"), false)
 })
 

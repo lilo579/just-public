@@ -59,7 +59,6 @@ export const justComingSoonModeConfig = Object.freeze({
   legalLinks: [
     { href: "/privacidade", label: "Privacidade" },
     { href: "/termos", label: "Termos" },
-    { href: "/seguranca", label: "Segurança" },
   ],
   leadForm: {
     nameLabel: "Nome",
@@ -313,7 +312,6 @@ export const justFooter = Object.freeze({
   legalLinks: [
     { href: "/privacidade", label: "Privacidade" },
     { href: "/termos", label: "Termos" },
-    { href: "/seguranca", label: "Segurança" },
   ],
   supportLabel: "Suporte",
   supportHref: JUST_WHATSAPP_URL,
@@ -324,17 +322,6 @@ export const justLegalPages = Object.freeze({
   privacidade: justPrivacyPolicyV1,
   /** Public Terms of Use v1.0 — structured document (JUST hosts only). */
   termos: justTermsOfUseV1,
-  seguranca: {
-    slug: "seguranca",
-    title: "Segurança",
-    body: [
-      "A JUST opera com foco em confiabilidade, proteção de dados e continuidade operacional.",
-      "Adotamos práticas de acesso controlado, comunicação segura e monitoramento adequado ao porte da operação.",
-      "O cliente deve proteger suas credenciais de acesso e notificar a JUST em caso de uso indevido suspeito.",
-      "Incidentes relevantes de segurança são tratados com prioridade, com comunicação objetiva ao cliente quando necessário.",
-      "Para questões de segurança, utilize o canal de suporte da JUST.",
-    ],
-  },
 })
 
 export const justNotFound = Object.freeze({

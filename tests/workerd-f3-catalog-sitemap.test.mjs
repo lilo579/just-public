@@ -246,9 +246,8 @@ test("workerd F3 catalog sitemap is tenant-scoped; non-F3 and JUST stay unchange
     `https://${JUST_HOST}/`,
     `https://${JUST_HOST}/privacidade`,
     `https://${JUST_HOST}/termos`,
-    `https://${JUST_HOST}/seguranca`,
   ])
-  assert.doesNotMatch(justSitemap.body, /\/catalogo|\/p\//)
+  assert.doesNotMatch(justSitemap.body, /\/catalogo|\/p\/|\/seguranca/)
 
   const [seqJewish, seqPeer] = [
     await requestWithHost(port, F3_JEWISH_HOST, "/sitemap.xml"),

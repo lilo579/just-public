@@ -182,7 +182,7 @@ test("non-F3 and packaged JUST sitemaps keep current path sets", () => {
       tenantId: "just",
       productRows: rowsFor("just", ["/p/should-not-appear"]),
     }),
-    ["/", "/privacidade", "/termos", "/seguranca"],
+    ["/", "/privacidade", "/termos"],
   )
 })
 

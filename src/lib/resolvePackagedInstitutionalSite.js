@@ -22,7 +22,6 @@ const PACKAGED_INSTITUTIONAL_BY_HOST = Object.freeze(
 export const INTERSTITIAL_LEGAL_PATHS = Object.freeze([
   "/privacidade",
   "/termos",
-  "/seguranca",
 ])
 
 /**
@@ -79,7 +78,7 @@ export function resolvePackagedInstitutionalSite(host) {
     footer: justFooter,
     legalPages: justLegalPages,
     notFound: justNotFound,
-    sitemapPaths: ["/", "/privacidade", "/termos", "/seguranca"],
+    sitemapPaths: ["/", "/privacidade", "/termos"],
   }
 }
 
