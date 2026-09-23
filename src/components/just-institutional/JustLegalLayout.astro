@@ -1,6 +1,7 @@
 ---
 /**
  * Shared JUST legal page shell — accessible under COMING_SOON and NORMAL (M1).
+ * Supports legacy `body: string[]` and structured `document` blocks (Terms v1.0+).
  */
 import PublicSiteHead from "../PublicSiteHead.astro"
 import SiteTheme from "../SiteTheme.astro"
@@ -9,9 +10,27 @@ import JustFooter from "./JustFooter.astro"
 import justInstitutionalCssUrl from "../../styles/just-institutional.css?url"
 import { themeTokensFromBranding } from "../../lib/themeFromBranding.js"
 
+interface LegalPart {
+  text: string
+  href?: string
+}
+
+interface LegalBlock {
+  type: string
+  text?: string
+  parts?: LegalPart[]
+  style?: "alpha" | "disc"
+  items?: string[]
+}
+
 interface Props {
   title: string
-  body: string[]
+  /** Legacy flat paragraphs (privacidade / segurança). */
+  body?: string[]
+  /** Structured legal document blocks (Termos v1.0). */
+  document?: LegalBlock[]
+  version?: string
+  effectiveDateLabel?: string
   host: string
   branding: Record<string, unknown>
   seoTitle: string
@@ -25,7 +44,10 @@ interface Props {
 
 const {
   title,
-  body,
+  body = [],
+  document: legalDocument = [],
+  version,
+  effectiveDateLabel,
   branding,
   seoTitle,
   seoDescription,
@@ -38,6 +60,8 @@ const {
 const tokens = themeTokensFromBranding(branding)
 const fontLoadUrl =
   typeof tokens.__fontLoadUrl === "string" ? tokens.__fontLoadUrl : null
+
+const useStructured = Array.isArray(legalDocument) && legalDocument.length > 0
 ---
 
 <html lang="pt-BR">
@@ -66,10 +90,57 @@ const fontLoadUrl =
           <h1 class="font-display text-4xl font-semibold tracking-[-0.045em] md:text-5xl">
             {title}
           </h1>
-          <div class="mt-8 max-w-2xl space-y-4 text-base leading-7 legal-body">
-            {body.map((paragraph) => (
-              <p>{paragraph}</p>
-            ))}
+          {(version || effectiveDateLabel) && (
+            <p class="legal-meta mt-4">
+              {version ? <span>Versão {version}</span> : null}
+              {version && effectiveDateLabel ? <span aria-hidden="true"> · </span> : null}
+              {effectiveDateLabel ? <span>Vigência: {effectiveDateLabel}</span> : null}
+            </p>
+          )}
+          <div class="mt-8 max-w-2xl legal-body">
+            {useStructured ? (
+              legalDocument.map((block) => {
+                if (block.type === "h2" && block.text) {
+                  return <h2 class="legal-h2">{block.text}</h2>
+                }
+                if (block.type === "h3" && block.text) {
+                  return <h3 class="legal-h3">{block.text}</h3>
+                }
+                if (block.type === "ul" && Array.isArray(block.items)) {
+                  const ListTag = block.style === "alpha" ? "ol" : "ul"
+                  const listClass =
+                    block.style === "alpha" ? "legal-ol-alpha" : "legal-ul-disc"
+                  return (
+                    <ListTag class={listClass}>
+                      {block.items.map((item) => (
+                        <li>{item}</li>
+                      ))}
+                    </ListTag>
+                  )
+                }
+                if (block.type === "p" && Array.isArray(block.parts)) {
+                  return (
+                    <p class="legal-p">
+                      {block.parts.map((part) =>
+                        part.href ? (
+                          <a href={part.href} class="legal-inline-link">
+                            {part.text}
+                          </a>
+                        ) : (
+                          part.text
+                        ),
+                      )}
+                    </p>
+                  )
+                }
+                if (block.type === "p" && block.text) {
+                  return <p class="legal-p">{block.text}</p>
+                }
+                return null
+              })
+            ) : (
+              body.map((paragraph) => <p class="legal-p">{paragraph}</p>)
+            )}
           </div>
           <p class="mt-10">
             <a href="/" class="legal-back">Voltar para a homepage</a>
@@ -84,16 +155,55 @@ const fontLoadUrl =
 <style>
   .pt-28 { padding-top: 7rem; }
   .mb-5 { margin-bottom: 1.25rem; }
+  .mt-4 { margin-top: 1rem; }
   .mt-8 { margin-top: 2rem; }
   .mt-10 { margin-top: 2.5rem; }
   .max-w-2xl { max-width: 42rem; }
-  .space-y-4 > * + * { margin-top: 1rem; }
   .text-4xl { font-size: 2.25rem; }
   .font-semibold { font-weight: 600; }
   .tracking-\[-0\.045em\] { letter-spacing: -0.045em; }
   .text-base { font-size: 1rem; }
   .leading-7 { line-height: 1.75rem; }
-  .legal-body { color: var(--site-color-text-muted, #616161); }
+  .legal-meta {
+    font-size: 0.9375rem;
+    line-height: 1.5rem;
+    color: var(--site-color-text-muted, #616161);
+  }
+  .legal-body { color: var(--site-color-text-muted, #616161); font-size: 1rem; line-height: 1.75rem; }
+  .legal-p { margin: 0 0 1rem; }
+  .legal-h2 {
+    margin: 2.25rem 0 0.75rem;
+    font-family: var(--font-display, inherit);
+    font-size: 1.375rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.35;
+    color: var(--site-color-text, #121212);
+  }
+  .legal-h2:first-child { margin-top: 0; }
+  .legal-h3 {
+    margin: 1.5rem 0 0.5rem;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--site-color-text, #121212);
+  }
+  .legal-ul-disc,
+  .legal-ol-alpha {
+    margin: 0 0 1rem;
+    padding-left: 1.25rem;
+  }
+  .legal-ul-disc { list-style: disc; }
+  .legal-ol-alpha { list-style: lower-alpha; }
+  .legal-ul-disc > li + li,
+  .legal-ol-alpha > li + li { margin-top: 0.5rem; }
+  .legal-inline-link {
+    color: var(--site-color-text, #121212);
+    font-weight: 600;
+    text-underline-offset: 3px;
+    text-decoration: underline;
+  }
+  .legal-inline-link:hover { opacity: 0.85; }
   .legal-back {
     font-size: 0.875rem;
     font-weight: 600;

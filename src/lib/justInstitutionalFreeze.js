@@ -1,7 +1,10 @@
 /**
  * Frozen JUST institutional content — M1 Content Freeze SHA 18dfcd6.
  * Do not edit copy without an approved freeze amendment.
+ * Terms of Use v1.0: see justTermsOfUseV1.js (JUST hosts only via justLegalPages).
  */
+
+import { justTermsOfUseV1 } from "./justTermsOfUseV1.js"
 
 export const JUST_BRAND_PACK_SLUG = "just"
 
@@ -326,21 +329,8 @@ export const justLegalPages = Object.freeze({
       "Para exercer direitos de acesso, correção ou exclusão, ou para dúvidas sobre privacidade, entre em contato pelo suporte da JUST.",
     ],
   },
-  termos: {
-    slug: "termos",
-    title: "Termos de Uso",
-    body: [
-      "Ao utilizar a JUST, você concorda em usar a plataforma de forma lícita, ética e compatível com a operação do seu negócio.",
-      "A JUST entrega estrutura profissional para negócios de serviço — incluindo presença digital, organização financeira e painel administrativo — conforme o escopo acordado com cada cliente.",
-      "O cliente é responsável pela veracidade das informações fornecidas, pela gestão de acessos e pelo uso adequado dos recursos disponibilizados.",
-      "A JUST pode evoluir a estrutura em camadas ao longo do tempo, preservando a organização e a continuidade do serviço.",
-      "Dúvidas sobre prestação de serviço, escopo ou operação podem ser encaminhadas pelo suporte da JUST.",
-      "Prestação de Serviços Financeiros",
-      "Os serviços financeiros e de pagamentos disponibilizados por meio da presente plataforma, incluindo abertura e manutenção de conta de pagamento, processamento de transações, emissão de boletos, transferências, pagamentos e demais movimentações de valores, são prestados pelo ASAAS GESTÃO FINANCEIRA INSTITUIÇÃO DE PAGAMENTOS S.A., instituição de pagamento autorizada a funcionar pelo Banco Central do Brasil.",
-      "A SHEFA MARKETING LTDA atua exclusivamente como integradora tecnológica e distribuidora da experiência do produto, não sendo instituição financeira ou de pagamento, nem realizando intermediação financeira em nome próprio.",
-      "O cliente declara ciência de que o relacionamento financeiro/ de pagamentos e a responsabilidade regulatória pelos serviços acima descritos são do ASAAS GESTÃO FINANCEIRA S.A., nos termos da regulamentação vigente.",
-    ],
-  },
+  /** Public Terms of Use v1.0 — structured document (JUST hosts only). */
+  termos: justTermsOfUseV1,
   seguranca: {
     slug: "seguranca",
     title: "Segurança",
