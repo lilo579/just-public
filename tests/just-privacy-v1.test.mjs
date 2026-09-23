@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import { readFileSync } from "node:fs"
 
 import { justLegalPages } from "../src/lib/justInstitutionalFreeze.js"
 import {
@@ -49,6 +50,15 @@ test("Privacy v1.0 metadata and H1 title", () => {
   assert.equal(justPrivacyPolicyV1.version, "1.0")
   assert.equal(justPrivacyPolicyV1.effectiveDateLabel, "23 de setembro de 2026")
   assert.equal(justLegalPages.privacidade, justPrivacyPolicyV1)
+})
+
+test("Privacy page uses shared Atualizado em metadata label", () => {
+  const layout = readFileSync(
+    new URL("../src/components/just-institutional/JustLegalLayout.astro", import.meta.url),
+    "utf8",
+  )
+  assert.match(layout, /Atualizado em: \{effectiveDateLabel\}/)
+  assert.equal(layout.includes("Vigência:"), false)
 })
 
 test("Privacy v1.0 has exactly 18 main H2 sections", () => {
