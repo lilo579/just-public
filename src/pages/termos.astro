@@ -21,7 +21,9 @@ const page = chrome.packaged.legalPages.termos
 
 <JustLegalLayout
   title={page.title}
-  body={page.body}
+  document={page.document}
+  version={page.version}
+  effectiveDateLabel={page.effectiveDateLabel}
   host={chrome.host}
   branding={chrome.branding}
   seoTitle={`${page.title} | JUST`}
