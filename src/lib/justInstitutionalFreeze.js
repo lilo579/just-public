@@ -2,8 +2,10 @@
  * Frozen JUST institutional content — M1 Content Freeze SHA 18dfcd6.
  * Do not edit copy without an approved freeze amendment.
  * Terms of Use v1.0: see justTermsOfUseV1.js (JUST hosts only via justLegalPages).
+ * Privacy Policy v1.0: see justPrivacyPolicyV1.js (JUST hosts only via justLegalPages).
  */
 
+import { justPrivacyPolicyV1 } from "./justPrivacyPolicyV1.js"
 import { justTermsOfUseV1 } from "./justTermsOfUseV1.js"
 
 export const JUST_BRAND_PACK_SLUG = "just"
@@ -318,17 +320,8 @@ export const justFooter = Object.freeze({
 })
 
 export const justLegalPages = Object.freeze({
-  privacidade: {
-    slug: "privacidade",
-    title: "Privacidade",
-    body: [
-      "A JUST trata dados pessoais com responsabilidade, finalidade clara e transparência.",
-      "Coletamos apenas as informações necessárias para prestar o serviço, responder solicitações de contato e operar a estrutura contratada pelo cliente.",
-      "Não vendemos dados pessoais. O acesso às informações é restrito a quem precisa delas para operação e suporte.",
-      "O cliente permanece responsável pelos conteúdos e dados que publica em sua presença digital e no painel administrativo.",
-      "Para exercer direitos de acesso, correção ou exclusão, ou para dúvidas sobre privacidade, entre em contato pelo suporte da JUST.",
-    ],
-  },
+  /** Public Privacy Policy v1.0 — structured document (JUST hosts only). */
+  privacidade: justPrivacyPolicyV1,
   /** Public Terms of Use v1.0 — structured document (JUST hosts only). */
   termos: justTermsOfUseV1,
   seguranca: {

@@ -56,7 +56,9 @@ const justPage = Astro.locals.__justPrivacy
   ) : (
     <JustLegalLayout
       title={justPage.page.title}
-      body={justPage.page.body}
+      document={justPage.page.document}
+      version={justPage.page.version}
+      effectiveDateLabel={justPage.page.effectiveDateLabel}
       host={justPage.chrome.host}
       branding={justPage.chrome.branding}
       seoTitle={`${justPage.page.title} | JUST`}

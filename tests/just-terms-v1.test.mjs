@@ -88,14 +88,12 @@ test("Asaas BaaS clause §9 is literal (three paragraphs)", () => {
   assert.equal(p3.text, ASAAS_P3)
 })
 
-test("Privacy policy page body unchanged (not Terms)", () => {
-  assert.ok(Array.isArray(justLegalPages.privacidade.body))
-  assert.equal(justLegalPages.privacidade.title, "Privacidade")
-  assert.ok(
-    justLegalPages.privacidade.body.some((p) =>
-      p.includes("suporte da JUST"),
-    ),
-  )
+test("Privacy policy is structured v1.0 (not legacy body; not Terms)", () => {
+  assert.equal(justLegalPages.privacidade.title, "Política de Privacidade da JUST")
+  assert.equal(justLegalPages.privacidade.version, "1.0")
+  assert.ok(Array.isArray(justLegalPages.privacidade.document))
+  assert.ok(justLegalPages.privacidade.document.length > 0)
+  assert.notEqual(justLegalPages.privacidade, justTermsOfUseV1)
 })
 
 test("Routing: JUST institutional hosts get Terms v1.0 pack", () => {
