@@ -26,7 +26,6 @@ export const STATIC_PUBLIC_PATHS = Object.freeze([
   "/termos",
   "/termos-do-clube",
   "/clube/assinar",
-  "/seguranca",
   "/robots.txt",
   "/sitemap.xml",
   "/homepage",
