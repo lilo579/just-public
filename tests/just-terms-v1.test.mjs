@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import { readFileSync } from "node:fs"
 
 import { justLegalPages } from "../src/lib/justInstitutionalFreeze.js"
 import {
@@ -40,6 +41,15 @@ test("Terms v1.0 metadata and H1 title", () => {
   assert.equal(justTermsOfUseV1.version, "1.0")
   assert.equal(justTermsOfUseV1.effectiveDateLabel, "23 de setembro de 2026")
   assert.equal(justLegalPages.termos, justTermsOfUseV1)
+})
+
+test("Legal layout metadata label is Atualizado em (not Vigência)", () => {
+  const layout = readFileSync(
+    new URL("../src/components/just-institutional/JustLegalLayout.astro", import.meta.url),
+    "utf8",
+  )
+  assert.match(layout, /Atualizado em: \{effectiveDateLabel\}/)
+  assert.equal(layout.includes("Vigência:"), false)
 })
 
 test("Terms v1.0 sections 1–21 present as H2", () => {
