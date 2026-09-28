@@ -42,14 +42,16 @@ test("closed beta: stage line + commercial CTA + pricing access note", () => {
   assert.equal(JUST_COMMERCIAL_CTA_LABEL, "Quero conhecer a JUST")
   assert.equal(justHero.primaryCta.label, JUST_COMMERCIAL_CTA_LABEL)
   assert.equal(justPricing.ctaLabel, JUST_COMMERCIAL_CTA_LABEL)
-  assert.equal(justFinalCta.ctaLabel, JUST_COMMERCIAL_CTA_LABEL)
   assert.equal(
     justPricing.accessNote,
     "Acesso disponível para clientes selecionados durante o beta fechado.",
   )
   assert.equal(justPricing.amount, "67")
-  assert.equal(justFinalCta.headline, "Conheça a JUST.")
+  assert.equal(justFinalCta.headline, "Conheça a JUST")
   assert.doesNotMatch(justFinalCta.headline, /Agora é só começar/)
+  // Commercial exit is the lead mini-form — not a WhatsApp button on final CTA.
+  assert.equal("ctaHref" in justFinalCta, false)
+  assert.equal("ctaLabel" in justFinalCta, false)
 })
 
 test("closed beta: fake trust names removed from freeze and components", () => {

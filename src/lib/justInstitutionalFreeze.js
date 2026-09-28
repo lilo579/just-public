@@ -383,12 +383,33 @@ export const justPricing = Object.freeze({
   ],
 })
 
+/** Closed-beta interest mini-form — replaces commercial WhatsApp exit on final CTA. */
+export const justLeadMiniForm = Object.freeze({
+  sourceType: "just_closed_beta_interest",
+  ctaId: "just-final-lead-form",
+  nameLabel: "Nome",
+  companyLabel: "Empresa / negócio",
+  websiteLabel: "Website",
+  websitePlaceholder: "https://suaempresa.com.br",
+  phoneLabel: "WhatsApp",
+  emailLabel: "E-mail",
+  messageLabel: "Conte brevemente sobre o seu negócio",
+  submitLabel: "Enviar",
+  successTitle: "Recebemos seu interesse.",
+  successBody: "Em breve entraremos em contato pelo WhatsApp ou e-mail.",
+  errors: Object.freeze({
+    required: "Preencha os campos obrigatórios para continuar.",
+    email: "Informe um e-mail válido.",
+    website: "Informe um website válido (ex.: empresa.com.br).",
+    unavailable: "Envio indisponível no momento.",
+    failed: "Não foi possível enviar agora. Tente novamente.",
+  }),
+})
+
 export const justFinalCta = Object.freeze({
   id: "cta-final",
-  headline: "Conheça a JUST.",
-  lead: "Você já viu como a JUST pode organizar seu negócio em um só lugar.",
-  ctaLabel: JUST_COMMERCIAL_CTA_LABEL,
-  ctaHref: JUST_WHATSAPP_URL,
+  headline: "Conheça a JUST",
+  lead: "A JUST está em beta fechado com clientes selecionados. Deixe seus dados e entraremos em contato.",
 })
 
 export const justFooter = Object.freeze({

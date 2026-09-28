@@ -1,6 +1,6 @@
 ---
 import { justFinalCta } from "../../lib/justInstitutionalFreeze.js"
-import JustIcon from "./JustIcon.astro"
+import JustLeadMiniForm from "./JustLeadMiniForm.astro"
 ---
 
 <section
@@ -14,15 +14,7 @@ import JustIcon from "./JustIcon.astro"
         {justFinalCta.headline}
       </h2>
       <p class="just-final-cta__lead">{justFinalCta.lead}</p>
-      <a
-        href={justFinalCta.ctaHref}
-        target="_blank"
-        rel="noopener noreferrer"
-        class="premium-button just-final-cta__button"
-      >
-        {justFinalCta.ctaLabel}
-        <JustIcon name="arrow-right" class="premium-button__icon" />
-      </a>
+      <JustLeadMiniForm />
     </div>
   </div>
 </section>
