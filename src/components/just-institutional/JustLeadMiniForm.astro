@@ -1,0 +1,280 @@
+---
+/**
+ * JUST institutional closed-beta lead mini-form.
+ * Persists via generic /functions/v1/leads (create_lead_from_site).
+ * Company / website / message live in metadata — no DB migration.
+ */
+import { PUBLIC_LEADS_INTAKE_URL } from "../../config/publicSite"
+import {
+  isLeadIntakeSafeMode,
+  resolveDeployEnv,
+  resolveSupabaseAnonKey,
+} from "../../lib/runtimeEnv.js"
+import { justLeadMiniForm } from "../../lib/justInstitutionalFreeze.js"
+
+const deployEnv = resolveDeployEnv(Astro.locals)
+const safeMode = isLeadIntakeSafeMode(deployEnv)
+// Prefer Worker runtime binding (production secret). Build-time import.meta.env
+// is often empty in Cloudflare dist and must not be the sole authority.
+const runtimeAnon = resolveSupabaseAnonKey(Astro.locals)?.trim() || ""
+const leadsUrl = safeMode ? "" : PUBLIC_LEADS_INTAKE_URL
+const anonKey = safeMode ? "" : runtimeAnon
+const form = justLeadMiniForm
+---
+
+<div
+  class:list={["just-lead-form", { "just-lead-form--safe": safeMode }]}
+  data-just-lead-form
+  data-just-lead-form-safe={safeMode ? "true" : undefined}
+  data-leads-url={leadsUrl}
+  data-anon-key={anonKey}
+  data-source-type={form.sourceType}
+  data-cta-id={form.ctaId}
+  data-error-required={form.errors.required}
+  data-error-email={form.errors.email}
+  data-error-website={form.errors.website}
+  data-error-unavailable={form.errors.unavailable}
+  data-error-failed={form.errors.failed}
+  data-submit-label={form.submitLabel}
+>
+  {safeMode && (
+    <p class="just-lead-form__safe-notice" role="status">
+      Envio indisponível neste momento.
+    </p>
+  )}
+
+  <form class="just-lead-form__form" data-just-lead-form-fields novalidate>
+    <div class="just-lead-form__field">
+      <label for="just-lead-name">{form.nameLabel}</label>
+      <input
+        id="just-lead-name"
+        name="full_name"
+        type="text"
+        autocomplete="name"
+        required
+        disabled={safeMode}
+      />
+    </div>
+
+    <div class="just-lead-form__field">
+      <label for="just-lead-company">{form.companyLabel}</label>
+      <input
+        id="just-lead-company"
+        name="company"
+        type="text"
+        autocomplete="organization"
+        required
+        disabled={safeMode}
+      />
+    </div>
+
+    <div class="just-lead-form__field">
+      <label for="just-lead-website">{form.websiteLabel}</label>
+      <input
+        id="just-lead-website"
+        name="website"
+        type="url"
+        inputmode="url"
+        autocomplete="url"
+        placeholder={form.websitePlaceholder}
+        disabled={safeMode}
+      />
+    </div>
+
+    <div class="just-lead-form__field">
+      <label for="just-lead-phone">{form.phoneLabel}</label>
+      <input
+        id="just-lead-phone"
+        name="phone"
+        type="tel"
+        autocomplete="tel"
+        inputmode="tel"
+        required
+        disabled={safeMode}
+      />
+    </div>
+
+    <div class="just-lead-form__field">
+      <label for="just-lead-email">{form.emailLabel}</label>
+      <input
+        id="just-lead-email"
+        name="email"
+        type="email"
+        autocomplete="email"
+        required
+        disabled={safeMode}
+      />
+    </div>
+
+    <div class="just-lead-form__field just-lead-form__field--message">
+      <label for="just-lead-message">{form.messageLabel}</label>
+      <textarea
+        id="just-lead-message"
+        name="message"
+        rows="3"
+        disabled={safeMode}
+      ></textarea>
+    </div>
+
+    <button
+      type="submit"
+      class="premium-button just-lead-form__submit"
+      disabled={safeMode}
+      data-just-lead-submit
+    >
+      {form.submitLabel}
+    </button>
+
+    <p
+      class="just-lead-form__status"
+      data-just-lead-status
+      role="alert"
+      aria-live="polite"
+    ></p>
+  </form>
+
+  <div
+    class="just-lead-form__success"
+    data-just-lead-success
+    hidden
+    role="status"
+    aria-live="polite"
+  >
+    <p class="just-lead-form__success-title">{form.successTitle}</p>
+    <p class="just-lead-form__success-body">{form.successBody}</p>
+  </div>
+</div>
+
+<script>
+  import { normalizeBusinessWebsite } from "../../lib/normalizeBusinessWebsite.js"
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+  function buildAttributionMetadata(currentUrl) {
+    const getParam = (key) => currentUrl.searchParams.get(key)?.trim() || null
+    return {
+      utm_source: getParam("utm_source"),
+      utm_medium: getParam("utm_medium"),
+      utm_campaign: getParam("utm_campaign"),
+      utm_term: getParam("utm_term"),
+      utm_content: getParam("utm_content"),
+      referrer: document.referrer || null,
+    }
+  }
+
+  document.querySelectorAll("[data-just-lead-form]").forEach((root) => {
+    if (!(root instanceof HTMLElement)) return
+
+    const formEl = root.querySelector("[data-just-lead-form-fields]")
+    const successEl = root.querySelector("[data-just-lead-success]")
+    const statusEl = root.querySelector("[data-just-lead-status]")
+    const submitButton = root.querySelector("[data-just-lead-submit]")
+
+    if (!(formEl instanceof HTMLFormElement) || !(successEl instanceof HTMLElement)) {
+      return
+    }
+
+    formEl.addEventListener("submit", async (event) => {
+      event.preventDefault()
+
+      const setStatus = (text) => {
+        if (statusEl) statusEl.textContent = text || ""
+      }
+
+      if (root.dataset.submitting === "true") return
+
+      if (root.dataset.justLeadFormSafe === "true") {
+        setStatus(root.dataset.errorUnavailable || "Envio indisponível no momento.")
+        return
+      }
+
+      const leadsUrl = root.dataset.leadsUrl || ""
+      const anonKey = root.dataset.anonKey || ""
+      const sourceType = root.dataset.sourceType || "just_closed_beta_interest"
+      const ctaId = root.dataset.ctaId || "just-final-lead-form"
+
+      if (!leadsUrl || !anonKey) {
+        setStatus(root.dataset.errorUnavailable || "Envio indisponível no momento.")
+        return
+      }
+
+      const formData = new FormData(formEl)
+      const fullName = String(formData.get("full_name") || "").trim()
+      const company = String(formData.get("company") || "").trim()
+      const phone = String(formData.get("phone") || "").trim()
+      const email = String(formData.get("email") || "").trim()
+      const message = String(formData.get("message") || "").trim()
+      const websiteRaw = String(formData.get("website") || "").trim()
+
+      if (!fullName || !company || !phone || !email) {
+        setStatus(root.dataset.errorRequired || "Preencha os campos obrigatórios.")
+        return
+      }
+
+      if (!EMAIL_RE.test(email)) {
+        setStatus(root.dataset.errorEmail || "Informe um e-mail válido.")
+        return
+      }
+
+      const websiteResult = normalizeBusinessWebsite(websiteRaw)
+      if (!websiteResult.ok) {
+        setStatus(root.dataset.errorWebsite || "Informe um website válido.")
+        return
+      }
+
+      root.dataset.submitting = "true"
+      if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = true
+        submitButton.textContent = "Enviando..."
+      }
+      setStatus("")
+
+      try {
+        const currentUrl = new URL(window.location.href)
+        const resolvedHost =
+          currentUrl.searchParams.get("host")?.trim() || window.location.host
+
+        const metadata = {
+          source: "just-public",
+          surface: "institutional_homepage",
+          cta_id: ctaId,
+          company,
+          ...buildAttributionMetadata(currentUrl),
+        }
+
+        if (websiteResult.value) metadata.website = websiteResult.value
+        if (message) metadata.message = message
+
+        const response = await fetch(leadsUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${anonKey}`,
+            apikey: anonKey,
+          },
+          body: JSON.stringify({
+            host: resolvedHost,
+            full_name: fullName,
+            email,
+            phone,
+            source_type: sourceType,
+            path: window.location.pathname,
+            metadata,
+          }),
+        })
+
+        if (!response.ok) throw new Error("lead_submit_failed")
+
+        formEl.hidden = true
+        successEl.hidden = false
+      } catch {
+        root.dataset.submitting = "false"
+        setStatus(root.dataset.errorFailed || "Não foi possível enviar agora.")
+        if (submitButton instanceof HTMLButtonElement) {
+          submitButton.disabled = false
+          submitButton.textContent = root.dataset.submitLabel || "Enviar"
+        }
+      }
+    })
+  })
+</script>
