@@ -9,7 +9,7 @@ import {
   JUST_OG_IMAGE_HEIGHT,
   JUST_OG_IMAGE_WIDTH,
 } from "../src/lib/justInstitutionalSeo.js"
-import { justComingSoonSeo } from "../src/lib/justInstitutionalFreeze.js"
+import { justComingSoonSeo, justInstitutionalSeo } from "../src/lib/justInstitutionalFreeze.js"
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..")
 
@@ -54,7 +54,20 @@ test("buildJustComingSoonJsonLd uses contract origin only", () => {
   assert.throws(() => buildJustComingSoonJsonLd({}), /requires canonical origin/)
 })
 
+test("NORMAL institutional SEO is distinct from Coming Soon residual", () => {
+  assert.doesNotMatch(
+    justInstitutionalSeo.ogDescription,
+    /finalizando a primeira versão/i,
+  )
+  assert.match(justComingSoonSeo.ogDescription, /finalizando a primeira versão/i)
+  assert.match(
+    justInstitutionalSeo.description,
+    /A JUST reúne gestão, site, agenda, financeiro e marketing/,
+  )
+})
+
 test("index.astro JUST JSON-LD passes publicCanonical.origin", () => {
   const indexSrc = readFileSync(join(root, "src/pages/index.astro"), "utf8")
   assert.match(indexSrc, /origin:\s*publicCanonical\.origin/)
+  assert.match(indexSrc, /institutionalSeo/)
 })

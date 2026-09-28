@@ -460,8 +460,14 @@ const noindex =
 const planForSeo =
   choice.mode === "canonical" ? choice.plan : homepageWithSource.serializablePlan
 
-const justSeo = packagedInstitutional?.comingSoonSeo || null
-/** R1 JUST-scoped: empty Hub meta.seo must not suppress packaged Coming Soon SEO. */
+/** NORMAL uses institutional SEO; COMING_SOON interstitial keeps comingSoonSeo. */
+const justSeo = packagedInstitutional
+  ? isJustInstitutionalNormal
+    ? packagedInstitutional.institutionalSeo
+    : packagedInstitutional.comingSoonSeo
+  : null
+/** R1 JUST-scoped: empty Hub meta.seo must not suppress packaged SEO.
+ * NORMAL institutional: freeze SEO is authoritative (no Hub Coming Soon residual). */
 function hubSeoHasNonEmptyString(seo) {
   if (!seo || typeof seo !== "object") return false
   return Object.values(seo).some(
@@ -480,9 +486,11 @@ const packagedJustSeoExplicit = justSeo
     }
   : null
 const seoExplicit = packagedInstitutional
-  ? hubSeoHasNonEmptyString(hubSeo)
-    ? hubSeo
-    : packagedJustSeoExplicit
+  ? isJustInstitutionalNormal
+    ? packagedJustSeoExplicit
+    : hubSeoHasNonEmptyString(hubSeo)
+      ? hubSeo
+      : packagedJustSeoExplicit
   : hubSeo && typeof hubSeo === "object"
     ? hubSeo
     : null

@@ -1,6 +1,9 @@
 ---
 import { justHero } from "../../lib/justInstitutionalFreeze.js"
 import JustIcon from "./JustIcon.astro"
+
+/** Presentation-only duplicate for seamless infinite marquee loop. */
+const marqueeGroups = [justHero.clientProof, justHero.clientProof]
 ---
 
 <section class="relative overflow-hidden pt-28 md:pt-36 pb-16 md:pb-20">
@@ -29,6 +32,9 @@ import JustIcon from "./JustIcon.astro"
       <p class="mx-auto mt-9 max-w-[30rem] text-base leading-7 text-muted-foreground md:mt-11 md:max-w-[32rem] md:text-[1.0625rem] md:leading-8">
         {justHero.body}
       </p>
+      <p class="hero-stage-line mx-auto mt-5 max-w-[34rem] md:mt-6">
+        {justHero.stageLine}
+      </p>
       <div class="mt-11 flex flex-col items-center justify-center gap-3 sm:mt-12 sm:flex-row">
         <a class="premium-button" href={`#${justHero.primaryCta.targetId}`}>
           {justHero.primaryCta.label}
@@ -40,16 +46,34 @@ import JustIcon from "./JustIcon.astro"
       </div>
     </div>
 
-    <div class="hero-trust-band mx-auto mt-20 max-w-5xl md:mt-24">
-      <p class="sr-only">Negócios que operam com a JUST</p>
-      <ul class="flex flex-wrap items-center justify-center gap-x-10 gap-y-8 sm:gap-x-14 md:gap-x-16 lg:gap-x-20">
-        {justHero.trustNames.map((name) => (
-          <li>
-            <span class="hero-trust-mark" aria-hidden="true">{name}</span>
-            <span class="sr-only">{name}</span>
-          </li>
-        ))}
-      </ul>
+    <div class="hero-trust-band mt-16 md:mt-20">
+      <p class="hero-trust-label">{justHero.trustLabel}</p>
+      <div class="hero-trust-marquee" data-hero-trust-marquee>
+        <div class="hero-trust-marquee__track">
+          {marqueeGroups.map((group, groupIndex) => (
+            <ul
+              class="hero-trust-marquee__group"
+              aria-hidden={groupIndex > 0 ? "true" : undefined}
+            >
+              {group.map((client) => (
+                <li
+                  class="hero-trust-item"
+                  data-surface={client.surface === "dark" ? "dark" : undefined}
+                  style={`--trust-scale: ${client.opticalScale ?? 1}`}
+                >
+                  <img
+                    class="hero-trust-logo"
+                    src={client.logoSrc}
+                    alt={groupIndex > 0 ? "" : client.logoAlt || client.name}
+                    loading={groupIndex > 0 ? "eager" : "lazy"}
+                    decoding="async"
+                  />
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -62,10 +86,10 @@ import JustIcon from "./JustIcon.astro"
   .text-center { text-align: center; }
   .max-w-\[1080px\] { max-width: 1080px; }
   .max-w-\[30rem\] { max-width: 30rem; }
-  .max-w-5xl { max-width: 64rem; }
+  .mt-5 { margin-top: 1.25rem; }
   .mt-9 { margin-top: 2.25rem; }
   .mt-11 { margin-top: 2.75rem; }
-  .mt-20 { margin-top: 5rem; }
+  .mt-16 { margin-top: 4rem; }
   .pt-28 { padding-top: 7rem; }
   .pb-16 { padding-bottom: 4rem; }
   .text-base { font-size: 1rem; }
@@ -75,39 +99,21 @@ import JustIcon from "./JustIcon.astro"
   .text-muted-foreground { color: var(--site-color-text-muted, #616161); }
   .flex { display: flex; }
   .flex-col { flex-direction: column; }
-  .flex-wrap { flex-wrap: wrap; }
   .items-center { align-items: center; }
   .justify-center { justify-content: center; }
   .gap-3 { gap: 0.75rem; }
-  .gap-x-10 { column-gap: 2.5rem; }
-  .gap-y-8 { row-gap: 2rem; }
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
   @media (min-width: 640px) {
     .sm\:flex-row { flex-direction: row; }
     .sm\:mt-12 { margin-top: 3rem; }
-    .sm\:gap-x-14 { column-gap: 3.5rem; }
   }
   @media (min-width: 768px) {
     .md\:pt-36 { padding-top: 9rem; }
     .md\:pb-20 { padding-bottom: 5rem; }
+    .md\:mt-6 { margin-top: 1.5rem; }
     .md\:mt-11 { margin-top: 2.75rem; }
-    .md\:mt-24 { margin-top: 6rem; }
+    .md\:mt-20 { margin-top: 5rem; }
     .md\:max-w-\[32rem\] { max-width: 32rem; }
     .md\:text-\[1\.0625rem\] { font-size: 1.0625rem; }
     .md\:leading-8 { line-height: 2rem; }
-    .md\:gap-x-16 { column-gap: 4rem; }
-  }
-  @media (min-width: 1024px) {
-    .lg\:gap-x-20 { column-gap: 5rem; }
   }
 </style>
