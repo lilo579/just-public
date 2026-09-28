@@ -3,6 +3,7 @@
  * JUST institutional header — frozen IA; M4 sheet/icon presentation parity.
  */
 import {
+  JUST_COMMERCIAL_CTA_LABEL,
   JUST_SIGN_IN_URL,
   justInstitutionalNav,
 } from "../../lib/justInstitutionalFreeze.js"
@@ -43,7 +44,7 @@ const navItems = isHomepage
           Entrar
         </a>
         <a href="/#cta-final" class="premium-button">
-          Começar agora
+          {JUST_COMMERCIAL_CTA_LABEL}
           <JustIcon name="arrow-right" class="premium-button__icon" />
         </a>
         <button
@@ -100,7 +101,7 @@ const navItems = isHomepage
           Entrar
         </a>
         <a href="/#cta-final" class="premium-button just-header__sheet-cta" data-just-menu-close>
-          Começar agora
+          {JUST_COMMERCIAL_CTA_LABEL}
           <JustIcon name="arrow-right" class="premium-button__icon" />
         </a>
       </div>

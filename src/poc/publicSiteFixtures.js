@@ -402,8 +402,8 @@ export const POC_FIXTURES_BY_HOST = Object.freeze({
       isPrimaryRequest: false,
     }),
   }),
-  "www.justwebsites.com.br": FIXTURE_JUST_COMING_SOON,
-  "justwebsites.com.br": FIXTURE_JUST_COMING_SOON,
+  "www.justwebsites.com.br": FIXTURE_JUST_NORMAL,
+  "justwebsites.com.br": FIXTURE_JUST_NORMAL,
   [SYNTHETIC_F4_HOST]: FIXTURE_SYNTHETIC_F4,
 })
 

@@ -3,6 +3,14 @@
  * Do not edit copy without an approved freeze amendment.
  * Terms of Use v1.0: see justTermsOfUseV1.js (JUST hosts only via justLegalPages).
  * Privacy Policy v1.0: see justPrivacyPolicyV1.js (JUST hosts only via justLegalPages).
+ *
+ * Freeze amendment (Closed Beta Commercial Alignment v1):
+ * - hero closed-beta status line
+ * - commercial CTA → "Quero conhecer a JUST"
+ * - pricing access microcopy
+ * - final CTA headline alignment
+ * - fictional trust names removed; editorial real beta client proof
+ * - NORMAL homepage SEO/OG (no Coming Soon residual)
  */
 
 import { justPrivacyPolicyV1 } from "./justPrivacyPolicyV1.js"
@@ -19,7 +27,7 @@ export const JUST_SIGN_IN_URL = "https://hub.justwebsites.com.br/login/admin"
 export const JUST_WHATSAPP_URL = "https://wa.me/5511956480018"
 export const JUST_WHATSAPP_DIGITS = "5511956480018"
 
-/** M1 Coming Soon SEO + document meta */
+/** M1 Coming Soon SEO + document meta (COMING_SOON mode only) */
 export const justComingSoonSeo = Object.freeze({
   title: "JUST",
   description:
@@ -31,6 +39,25 @@ export const justComingSoonSeo = Object.freeze({
   robots: "index, follow",
   themeColor: "#121212",
 })
+
+/**
+ * NORMAL institutional homepage SEO / OG / Twitter.
+ * Must not reuse Coming Soon “finalizando a primeira versão pública” narrative.
+ */
+export const justInstitutionalSeo = Object.freeze({
+  title: "JUST",
+  description:
+    "A JUST reúne gestão, site, agenda, financeiro e marketing para pequenos negócios operarem de forma mais organizada e integrada.",
+  ogTitle: "JUST",
+  ogDescription:
+    "A JUST reúne gestão, site, agenda, financeiro e marketing para pequenos negócios operarem de forma mais organizada e integrada.",
+  author: "JUST",
+  robots: "index, follow",
+  themeColor: "#121212",
+})
+
+/** Shared commercial CTA label (header / hero / pricing / final). */
+export const JUST_COMMERCIAL_CTA_LABEL = "Quero conhecer a JUST"
 
 /** Canonical site.mode.config fields (M1 §2.3) + form/legal for platform Coming Soon */
 export const justComingSoonModeConfig = Object.freeze({
@@ -83,15 +110,72 @@ export const justHero = Object.freeze({
     "como um negócio de verdade.",
   ],
   body: "A JUST organiza o seu negócio para que você possa dedicar menos tempo à operação e mais tempo ao crescimento.",
-  primaryCta: { label: "Começar agora", targetId: "cta-final" },
+  stageLine:
+    "A plataforma já está operacional com clientes selecionados. Estamos em beta fechado, preparando o lançamento comercial.",
+  primaryCta: { label: JUST_COMMERCIAL_CTA_LABEL, targetId: "cta-final" },
   secondaryCta: { label: "Como funciona", targetId: "como-funciona-junto" },
-  trustNames: [
-    "Vértice",
-    "Ateliê Norte",
-    "Leme",
-    "Forma",
-    "Praxis",
-    "Oficina Alma",
+  trustLabel: "Negócios que operam com a JUST",
+  /**
+   * Editorial closed-beta client proof (explicit allowlist — not DB-driven).
+   * Classification: live JUST Public Layer tenants + Dorot Publications.
+   * Excludes: just (platform), sandboxes, fixtures, demos, shop-template.
+   * opticalScale: presentation-only size balance (does not alter source files).
+   * surface: optional contrast plate — "transparent" (default) | "dark".
+   * All entries require a real graphical logoSrc (no HTML wordmark fallback).
+   */
+  clientProof: [
+    {
+      id: "3d-jewish",
+      name: "3D Jewish",
+      logoSrc: "/branding/just/client-proof/3d-jewish.png",
+      logoAlt: "3D Jewish",
+      opticalScale: 1,
+    },
+    {
+      id: "celina-pires",
+      name: "Celina Pires",
+      logoSrc: "/branding/just/client-proof/celina-pires.png",
+      logoAlt: "Celina Pires",
+      opticalScale: 1.18,
+    },
+    {
+      id: "marcelo-borer",
+      name: "Marcelo Borer",
+      logoSrc: "/branding/just/client-proof/marcelo-borer.png",
+      logoAlt: "Marcelo Borer",
+      // Horizontal lockup (site/logo/logo.png) — taller optical scale vs square monogram.
+      opticalScale: 1.32,
+    },
+    {
+      id: "rossana-mendonca",
+      name: "Rossana Mendonça",
+      logoSrc: "/branding/just/client-proof/rossana-mendonca.png",
+      logoAlt: "Rossana Mendonça",
+      opticalScale: 1,
+    },
+    {
+      id: "soraya-barbosa",
+      name: "Soraya Barbosa",
+      logoSrc: "/branding/just/client-proof/soraya-barbosa.png",
+      logoAlt: "Soraya Barbosa",
+      opticalScale: 0.88,
+    },
+    {
+      id: "flavio-personal",
+      name: "Flávio Henrique",
+      logoSrc: "/branding/just/client-proof/flavio-personal.png",
+      logoAlt: "Flávio Henrique",
+      // Live crest has white detail on transparent plate — needs dark surface on cream band.
+      opticalScale: 1.35,
+      surface: "dark",
+    },
+    {
+      id: "dorot-publications",
+      name: "Dorot Publications",
+      logoSrc: "/branding/just/client-proof/dorot-publications.png",
+      logoAlt: "Dorot Publications",
+      opticalScale: 1.08,
+    },
   ],
 })
 
@@ -286,8 +370,10 @@ export const justPricing = Object.freeze({
     { title: "Crescimento", items: ["Marketing", "Área do cliente"] },
     { title: "Sempre incluso", items: ["Atualizações contínuas", "Suporte"] },
   ],
-  ctaLabel: "Começar agora",
+  ctaLabel: JUST_COMMERCIAL_CTA_LABEL,
   ctaHref: "/#cta-final",
+  accessNote:
+    "Acesso disponível para clientes selecionados durante o beta fechado.",
   micro: "Sem fidelidade.",
   microQuiet: "Sem taxas de implantação. Sem módulos extras.",
   trust: [
@@ -299,9 +385,9 @@ export const justPricing = Object.freeze({
 
 export const justFinalCta = Object.freeze({
   id: "cta-final",
-  headline: "Agora é só começar.",
+  headline: "Conheça a JUST.",
   lead: "Você já viu como a JUST pode organizar seu negócio em um só lugar.",
-  ctaLabel: "Começar agora",
+  ctaLabel: JUST_COMMERCIAL_CTA_LABEL,
   ctaHref: JUST_WHATSAPP_URL,
 })
 

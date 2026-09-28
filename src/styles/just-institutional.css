@@ -558,20 +558,195 @@
   }
 
   /* Quiet client marks — trust without noise */
-  .hero-trust-mark {
-    display: block;
+  .hero-stage-line {
     font-family: "Geist", "Inter", system-ui, sans-serif;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    line-height: 1;
-    color: hsl(0 0% 7% / 0.28);
-    user-select: none;
+    font-size: 0.875rem;
+    font-weight: 450;
+    letter-spacing: -0.01em;
+    line-height: 1.55;
+    color: hsl(0 0% 7% / 0.48);
   }
 
   @media (min-width: 768px) {
-    .hero-trust-mark {
-      font-size: 1.0625rem;
+    .hero-stage-line {
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+  }
+
+  .hero-trust-band {
+    width: 100%;
+    max-width: none;
+  }
+
+  .hero-trust-label {
+    margin: 0 0 1.15rem;
+    text-align: center;
+    font-family: "Geist", "Inter", system-ui, sans-serif;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(0 0% 7% / 0.38);
+  }
+
+  @media (min-width: 768px) {
+    .hero-trust-label {
+      margin-bottom: 1.35rem;
+      font-size: 0.75rem;
+    }
+  }
+
+  .hero-trust-marquee {
+    overflow: hidden;
+    width: 100%;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 6%,
+      #000 94%,
+      transparent
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 6%,
+      #000 94%,
+      transparent
+    );
+  }
+
+  .hero-trust-marquee__track {
+    display: flex;
+    width: max-content;
+    align-items: center;
+    gap: 0;
+    animation: just-hero-trust-marquee 68s linear infinite;
+    will-change: transform;
+  }
+
+  .hero-trust-marquee:hover .hero-trust-marquee__track {
+    animation-play-state: paused;
+  }
+
+  .hero-trust-marquee__group {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 2.75rem;
+    margin: 0;
+    padding: 0 1.375rem;
+    list-style: none;
+  }
+
+  @media (min-width: 768px) {
+    .hero-trust-marquee__group {
+      gap: 3.5rem;
+      padding: 0 1.75rem;
+    }
+  }
+
+  .hero-trust-item {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    height: 2.75rem;
+    max-width: 10.5rem;
+    box-sizing: border-box;
+  }
+
+  @media (min-width: 768px) {
+    .hero-trust-item {
+      height: 3.15rem;
+      max-width: 12rem;
+    }
+  }
+
+  /*
+   * Adaptive logo surface (editorial metadata only).
+   * Default: transparent — logo sits directly on the JUST band.
+   * surface=dark: compact neutral plate for marks with white/light detail.
+   * Tunable via CSS vars so Product can compare treatments without new tokens.
+   */
+  .hero-trust-item[data-surface="dark"] {
+    --trust-surface-bg: hsl(0 0% 10%);
+    --trust-surface-pad-y: 0.18rem;
+    --trust-surface-pad-x: 0.28rem;
+    --trust-surface-radius: 0.35rem;
+    background: var(--trust-surface-bg);
+    padding: var(--trust-surface-pad-y) var(--trust-surface-pad-x);
+    border-radius: var(--trust-surface-radius);
+    /* Allow crest plate a touch more room without raising the band. */
+    height: 2.95rem;
+    max-width: 4.25rem;
+  }
+
+  @media (min-width: 768px) {
+    .hero-trust-item[data-surface="dark"] {
+      height: 3.35rem;
+      max-width: 4.75rem;
+    }
+  }
+
+  .hero-trust-item[data-surface="dark"] .hero-trust-logo {
+    opacity: 1;
+    height: calc(2.05rem * var(--trust-scale, 1));
+    max-height: 100%;
+  }
+
+  @media (min-width: 768px) {
+    .hero-trust-item[data-surface="dark"] .hero-trust-logo {
+      height: calc(2.35rem * var(--trust-scale, 1));
+    }
+  }
+
+  .hero-trust-logo {
+    display: block;
+    width: auto;
+    height: calc(1.85rem * var(--trust-scale, 1));
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    object-position: center;
+    opacity: 0.82;
+  }
+
+  @media (min-width: 768px) {
+    .hero-trust-logo {
+      height: calc(2.15rem * var(--trust-scale, 1));
+    }
+  }
+
+  @keyframes just-hero-trust-marquee {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-trust-marquee {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      -webkit-mask-image: none;
+      mask-image: none;
+      scrollbar-width: thin;
+    }
+
+    .hero-trust-marquee__track {
+      animation: none;
+      will-change: auto;
+    }
+
+    .hero-trust-marquee__group[aria-hidden="true"] {
+      display: none;
+    }
+
+    .hero-trust-marquee__group {
+      padding-inline: 0.25rem;
     }
   }
 
@@ -1979,6 +2154,14 @@
     width: 100%;
     margin-top: 2rem;
     justify-content: center;
+  }
+
+  .just-pricing__access-note {
+    margin: 0.85rem 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    font-weight: 450;
+    color: var(--site-color-text-muted, #616161);
   }
 
   .just-pricing__micro {

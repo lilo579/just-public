@@ -9,6 +9,7 @@ import {
   justComingSoonModeConfig,
   justComingSoonSeo,
   justFooter,
+  justInstitutionalSeo,
   justLegalPages,
   justNotFound,
   justThemeBranding,
@@ -58,6 +59,7 @@ export function isInterstitialLegalPath(pathname) {
  *   themeBranding: typeof justThemeBranding
  *   comingSoonConfig: typeof justComingSoonModeConfig
  *   comingSoonSeo: typeof justComingSoonSeo
+ *   institutionalSeo: typeof justInstitutionalSeo
  *   footer: typeof justFooter
  *   legalPages: typeof justLegalPages
  *   notFound: typeof justNotFound
@@ -75,6 +77,7 @@ export function resolvePackagedInstitutionalSite(host) {
     themeBranding: justThemeBranding,
     comingSoonConfig: justComingSoonModeConfig,
     comingSoonSeo: justComingSoonSeo,
+    institutionalSeo: justInstitutionalSeo,
     footer: justFooter,
     legalPages: justLegalPages,
     notFound: justNotFound,
