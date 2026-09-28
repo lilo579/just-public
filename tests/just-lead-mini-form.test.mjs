@@ -89,7 +89,7 @@ test("success copy mentions WhatsApp as contact channel, not a CTA", () => {
 test("fields: required + optional Website/message; visual order", () => {
   assert.equal(justLeadMiniForm.nameLabel, "Nome")
   assert.equal(justLeadMiniForm.companyLabel, "Empresa / negócio")
-  assert.equal(justLeadMiniForm.websiteLabel, "Website")
+  assert.equal(justLeadMiniForm.websiteLabel, "Website (se tiver)")
   assert.equal(justLeadMiniForm.phoneLabel, "WhatsApp")
   assert.equal(justLeadMiniForm.emailLabel, "E-mail")
   assert.equal(
@@ -209,6 +209,25 @@ test("double-submit prevention + success/error UX markers", () => {
   assert.match(src, /successEl\.hidden = false/)
   assert.match(src, /data-just-lead-status/)
   assert.match(src, /errorFailed|Não foi possível enviar/)
+  // Success must clear submitting and hide form/button panel.
+  assert.match(src, /dataset\.state = "success"/)
+  assert.match(src, /dataset\.submitting = "false"/)
+  assert.match(src, /payload\.ok !== true/)
+  const css = readFileSync(join(root, "src/styles/just-institutional.css"), "utf8")
+  assert.match(css, /\[data-state="success"\][\s\S]*just-lead-form__form/)
+})
+
+test("success contract: only after HTTP ok + JSON ok:true", () => {
+  const src = formSrc()
+  const successIdx = src.indexOf('dataset.state = "success"')
+  const okCheckIdx = src.indexOf("payload.ok !== true")
+  const responseOkIdx = src.indexOf("if (!response.ok)")
+  assert.ok(responseOkIdx >= 0)
+  assert.ok(okCheckIdx > responseOkIdx)
+  assert.ok(successIdx > okCheckIdx)
+  // Failed path restores Enviar and keeps form usable.
+  assert.match(src, /dataset\.state = "error"/)
+  assert.match(src, /submitButton\.disabled = false/)
 })
 
 test("no migration; Hub-only notify in this gate", () => {

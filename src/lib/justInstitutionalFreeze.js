@@ -389,7 +389,7 @@ export const justLeadMiniForm = Object.freeze({
   ctaId: "just-final-lead-form",
   nameLabel: "Nome",
   companyLabel: "Empresa / negócio",
-  websiteLabel: "Website",
+  websiteLabel: "Website (se tiver)",
   websitePlaceholder: "https://suaempresa.com.br",
   phoneLabel: "WhatsApp",
   emailLabel: "E-mail",

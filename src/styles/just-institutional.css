@@ -2331,6 +2331,14 @@
     gap: 1rem;
   }
 
+  .just-lead-form[data-state="success"] .just-lead-form__form {
+    display: none;
+  }
+
+  .just-lead-form[data-state="success"] .just-lead-form__safe-notice {
+    display: none;
+  }
+
   .just-lead-form__field {
     display: grid;
     gap: 0.4rem;

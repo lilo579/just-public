@@ -265,10 +265,21 @@ const form = justLeadMiniForm
 
         if (!response.ok) throw new Error("lead_submit_failed")
 
+        const payload = await response.json().catch(() => null)
+        if (!payload || payload.ok !== true) throw new Error("lead_submit_rejected")
+
+        // Success: end submitting state and replace form with success panel only.
+        root.dataset.submitting = "false"
+        root.dataset.state = "success"
         formEl.hidden = true
         successEl.hidden = false
+        if (submitButton instanceof HTMLButtonElement) {
+          submitButton.disabled = true
+          submitButton.textContent = root.dataset.submitLabel || "Enviar"
+        }
       } catch {
         root.dataset.submitting = "false"
+        root.dataset.state = "error"
         setStatus(root.dataset.errorFailed || "Não foi possível enviar agora.")
         if (submitButton instanceof HTMLButtonElement) {
           submitButton.disabled = false
