@@ -38,6 +38,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
+    max-width: 100%;
     height: 2.75rem;
     padding: 0 1.5rem;
     border-radius: 9999px;
@@ -136,15 +138,18 @@
   }
 
   .just-header__row {
+    /* Mobile/tablet: logo + actions only. A 3-column grid collapses badly when
+       the center nav is `display: none`, letting the CTA overlap the mark. */
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     height: 4rem;
-    gap: 1rem;
+    gap: 0.75rem;
   }
 
   .just-header__brand {
     justify-self: start;
+    min-width: 0;
   }
 
   .just-header__logo {
@@ -178,6 +183,13 @@
     align-items: center;
     justify-self: end;
     gap: 0.65rem;
+    min-width: 0;
+  }
+
+  /* Header CTA stays in the sheet + hero below lg; avoids logo collision on phones. */
+  .just-header__cta {
+    display: none;
+    white-space: nowrap;
   }
 
   .just-header__signin {
@@ -341,27 +353,27 @@
     overflow: hidden;
   }
 
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
+    .just-header__row {
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 1rem;
+    }
+
     .just-header__nav {
       display: flex;
+      gap: 1.85rem;
     }
 
     .just-header__signin--desktop {
       display: inline-flex;
     }
 
+    .just-header__cta {
+      display: inline-flex;
+    }
+
     .just-header__menu-trigger {
       display: none;
-    }
-
-    .just-header__nav {
-      gap: 1.5rem;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .just-header__nav {
-      gap: 1.85rem;
     }
 
     .just-header__logo {
