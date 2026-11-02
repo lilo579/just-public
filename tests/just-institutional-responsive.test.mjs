@@ -56,3 +56,15 @@ test("desktop header chrome (nav, Entrar, CTA) starts at lg, not md", () => {
     /@media \(min-width: 1024px\) \{[\s\S]*?\.just-header__menu-trigger\s*\{[\s\S]*?display:\s*none/,
   )
 })
+
+test("hero headline stays fluid and never forces nowrap that clips on mid widths", () => {
+  const heroStart = css.indexOf("/* Hero display type")
+  const heroEnd = css.indexOf("/* Quiet client marks")
+  assert.ok(heroStart >= 0 && heroEnd > heroStart)
+  const heroCss = css.slice(heroStart, heroEnd)
+
+  assert.match(heroCss, /\.hero-headline\s*\{[\s\S]*?font-size:\s*clamp\(/)
+  assert.match(heroCss, /\.hero-headline\s*\{[\s\S]*?max-width:\s*100%/)
+  assert.match(heroCss, /\.hero-headline__line\s*\{[\s\S]*?overflow-wrap:\s*break-word/)
+  assert.doesNotMatch(heroCss, /white-space:\s*nowrap/)
+})

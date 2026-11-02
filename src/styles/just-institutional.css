@@ -530,25 +530,23 @@
     top: 86%;
   }
 
-  /* Hero display type — editorial weight and density */
+  /* Hero display type — fluid scale; editorial lines may soft-wrap, never clip */
   .hero-headline {
-    font-size: clamp(2.125rem, 1.85rem + 1.4vw, 2.75rem);
+    max-width: 100%;
+    font-size: clamp(1.875rem, 1.05rem + 3.8vw, 4.5rem);
     line-height: 1.08;
+    letter-spacing: -0.065em;
+    text-wrap: balance;
   }
 
   .hero-headline__line {
     display: block;
-  }
-
-  @media (min-width: 430px) {
-    .hero-headline__line {
-      white-space: nowrap;
-    }
+    max-width: 100%;
+    overflow-wrap: break-word;
   }
 
   @media (min-width: 640px) {
     .hero-headline {
-      font-size: clamp(2.45rem, 1.15rem + 3.4vw, 3.7rem);
       line-height: 1.03;
       letter-spacing: -0.068em;
     }
@@ -556,7 +554,6 @@
 
   @media (min-width: 1024px) {
     .hero-headline {
-      font-size: clamp(3.5rem, 2.2rem + 2.2vw, 4.5rem);
       line-height: 1.01;
       letter-spacing: -0.072em;
     }
@@ -564,7 +561,6 @@
 
   @media (min-width: 1280px) {
     .hero-headline {
-      font-size: 4.65rem;
       letter-spacing: -0.074em;
     }
   }
